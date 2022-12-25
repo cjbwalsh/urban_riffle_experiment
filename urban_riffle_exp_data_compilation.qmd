@@ -1,0 +1,428 @@
+---
+title: "Urban riffle experiment data compilation"
+author: "Chris Walsh"
+format: html
+editor: visual
+bibliography: references.bib
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+source("https://tools.thewerg.unimelb.edu.au/documents/mwstr/mwstr_functions.R")
+source("https://tools.thewerg.unimelb.edu.au/data/mwbugs/bugDatabaseFunctions.R")
+
+taxon_all <- sqlQuery("SELECT * FROM taxon_all;", "mwbugs")
+taxon_syn <- sqlQuery("SELECT * FROM taxon_syn;", "mwbugs")
+taxon_rank1 <- sqlQuery("SELECT * FROM taxon_rank1;", "mwbugs")
+taxon_fam <- sqlQuery("SELECT * FROM taxon_fam;", "mwbugs")
+taxon_gen <- sqlQuery("SELECT * FROM taxon_gen;", "mwbugs")
+taxon_spp <- sqlQuery("SELECT * FROM taxon_spp;", "mwbugs")
+morphospp_etc <- sqlQuery("SELECT * FROM morphospp_etc;", "mwbugs")
+metadata_db <- sqlQuery("SELECT * FROM metadata;", "mwbugs")
+
+tipulid_syn <- readxl::read_excel("~/uomShare/wergProj/bugDatabase/data_as_supplied/Tipulidae_synonyms_Zac_Billingham.xlsx", sheet = "synonyms")
+tipulid_species <- readxl::read_excel("~/uomShare/wergProj/bugDatabase/data_as_supplied/Tipulidae_synonyms_Zac_Billingham.xlsx", sheet = "species")
+tipulid_genera <- readxl::read_excel("~/uomShare/wergProj/bugDatabase/data_as_supplied/Tipulidae_synonyms_Zac_Billingham.xlsx", sheet = "genera")
+
+```
+
+## Introduction
+
+This is a record of the compilation of all data for the urban riffle experiment (referred to in my old files as HE).
+
+Most of the original data was stored in the Microsoft Access database inverts.mdb. I copied that file into the directory \`\~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/data_sources\`: yielding four tables.
+
+```{r}
+db <- Hmisc::mdb.get("~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/data_sources/inverts.mdb")
+# names(db) to get all table names (Note there are Hotham, BAUS, Yarra and other 
+# tables in there...and there are other old mdb files in this directory that I haven't looked at...)
+samples_mdb <- db$`HE sample list`
+substrates_mdb <- db$`HE samples: substrates`
+biota_mdb <- db$`HE data entry`
+wq_mdb <- db$`HE Water Quality data`
+```
+
+There was no reliable spatial data for the 9 sites, so I manually plotted the 9 points, snapping to the mwstr network [@kunapo_etal_2020]. Here I add additional information from the mwstr and mwbugs [@walsh_etal_2020] databases.
+
+```{r}
+#| echo: false
+sites <- sf::st_read("~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/data_sources/urban_riffle_experiment_sites.gpkg")
+site_order <- c('BLI_2492g', 'DNG_7141a', 'BRS_1572d', 'OLN_5632h', 
+                'FER_2210e', 'MNB_3032g', 
+                'HVD_7836d', 'EUM_5211f', 'SCO_1555g')
+sites$str_nm[match(site_order, sites$sitecode)] <-
+  c("Blind Creek (Trib of Dandenong)","Dandenong Creek","Brushy Creek", "Olinda Creek",
+    "Ferny Creek", "Monbulk Creek","Hallam Valley Main Drain","Eumemmerring Creek", 
+    "Scotchmans Creek (Trib of Gardiners")
+sites$location[match(site_order, sites$sitecode)] <-
+  c("100 m downstream of Timothy Drive, Wantirna South",
+    "Downstream of Juniper Road, Wantirna",
+    "Imm. downstream of Brushy Creek Trail footbridge, Esther Park, Mooroolbark",
+    " ~ 200 m upstream of Coldstream West Road, Coldstream",
+    "rear Knox Park (Rushdale St)- Knoxfield",
+    "Behind Italian Club, Karoo Road, Rowville",
+    "Off Hallam Valley Trail, just downstream of Kensington Court, Hampton Park",
+    "50m upstream of railway line- Dandenong Sth",
+    "150 m downstream Huntingdale Rd- Chadstone, just downstream of Gillon Ct")
+sites <- sites[c(names(sites)[names(sites) != "geometry"],"geometry")]
+metadata1 <- data.frame(table_name = "sites", field = names(sites),
+            definition = c("sitecode using convention of mwbugs and mwstr databases",
+                           "sitecode used in urban riffle experiment data collection",
+                           "Experimental treatment (riffle or control)",
+                           "stream name as used by mwstr database (mwstr capitalises str_nms)",
+                           "Location for access",
+                           "simple features geometry MGA 9455, crs = 28355"))
+```
+Prepare samples table.
+
+```{r}
+biota <- biota_mdb
+# review past lumping decisions:
+old_taxonomy <- db$`EPA Taxa list`
+rounded_taxa <- old_taxonomy$Taxoncode[duplicated(old_taxonomy$Taxoncode)]
+# # I went throught the 14 rounded taxa manually as follows
+# i <- 1
+# old_taxonomy[old_taxonomy$Taxoncode == rounded_taxa[i],]
+# i <- i + 1
+# subsequent correction
+old_taxonomy$Taxoncode[old_taxonomy$lowesttaxon == "Pseudosmittia"] <- "QDAF3100"
+
+samples <- samples_mdb[grepl("suction sampler", tolower(samples_mdb$Collection.method)) & 
+                           substr(samples_mdb$Sample.code,1,1) %in% 1:6,]
+# sum(samples$Sample.code %in% unique(biota$Sample.code))
+# sum(unique(biota$Sample.code) %in% samples$Sample.code)
+# sum(!unique(biota$Sample.code) %in% samples$Sample.code) # 376 samples
+samples <- samples[samples$Sample.code %in% unique(biota$Sample.code),]
+# Having checked content of NA-dominated columns...
+samples$sitec[samples$sitec == "B"] <- "Bl"
+samples$sitec[samples$sitec == "b"] <- "Br"
+samples <- data.frame(smpcode = NA, date = as.Date(samples$Date),
+                      sitecode = sites$sitecode[match(samples$sitec,sites$he_sitecode)],
+                      monthcode = calcMonthDate(as.Date(samples$Date)),
+                      area_m2 = 0.04, 
+                      replicate = as.numeric(substr(samples$Sample.code,
+                            nchar(samples$Sample.code),nchar(samples$Sample.code))),
+                      collection_method = "Boulton suction sampler, benthos, single sample",
+                      processing_method = "lab-subsample to 300, ID to lowest taxon",
+                      nsamples = NA, subsample_perc = samples$Subsample.size,
+                      sourcecode = 63, 
+                      comment = NA, embargoed = 0, 
+                      old_sitecode = samples$Site.code,
+                      old_samplecode = samples$Sample.code,
+                      signal_wov2003 = NA, samppr = NA, signal2 = NA, n_ept_fam = NA) 
+samples$replicate[samples$old_samplecode == "1EM5"] <- 2
+samples$replicate[samples$old_samplecode == "5HM5"] <- 3
+samples$replicate[samples$old_samplecode == "5OM5"] <- 1
+samples$replicate[substr(samples$old_samplecode,nchar(samples$old_samplecode)-1,nchar(samples$old_samplecode)-1) == "L"] <- 
+  samples$replicate[substr(samples$old_samplecode,nchar(samples$old_samplecode)-1,nchar(samples$old_samplecode)-1) == "L"] + 4
+samples$replicate[substr(samples$old_samplecode,nchar(samples$old_samplecode)-1,nchar(samples$old_samplecode)-1) == "U"] <- 
+  samples$replicate[substr(samples$old_samplecode,nchar(samples$old_samplecode)-1,nchar(samples$old_samplecode)-1) == "U"] + 8
+samples$smpcode = paste(samples$monthcode, samples$sitecode, samples$replicate, 
+                        "LH", sep = "-")
+sample_groups <- unique(substr(samples$old_samplecode,1,nchar(samples$old_samplecode)-2))
+for(i in 1:length(sample_groups)){
+  samples$nsamples[substr(samples$old_samplecode,1,nchar(samples$old_samplecode)-2) == sample_groups[i]] <- sum(substr(samples$old_samplecode,1,nchar(samples$old_samplecode)-2) == sample_groups[i])
+}
+```
+
+Finally, I compiled the depth and velocity data for the experiment to send to Angus for a revision of an earlier draft. The following is the explanation of the data that I sent Angus.
+
+1.  The three sections, L, M, and U, really only applied for trips 1-4, where I sampled from below and above the riffle (or where it would go) (U and L), and in the riffle (or where it would be if there was one) (M). I believe we have ended up discarding all my hard work in the Us and Ls in these analyses (because I only sampled M sections in trips 5 and 6). (It's all there, bug and physical data) if you can think of a use for it).
+
+2.  In each section (L, M or U) in each stream I took four randomly placed replicate samples with the suction sampler (sampling essentially a quadrat with its four corners set at random angles). After I finished collecting the bugs, I measured the near-bed velocity and depth (using one of those old propellor jobs, so near-bed means \~1-4 cm above the bed...I can find the exact depth range if you like), at the four corners of the sampled area and one in the middle of the sampled area. Each velocity measurement was a count of 10 s. I figure you could use the variance of these five measures to get an estimate of small-scale variability in flow and depth, and the variance of the means of the four replicate samples in each section as a measure of large-scale variability in the section.
+
+```{r}
+depth_vel <- as.data.frame(readxl::read_excel("~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/data_sources/HE all depth and velocity measurements.xls"))
+depth_vel$Comments[1] <- NA
+names(depth_vel) <- c("old_samplecode","depth_m","vel_counts_per_10s","comment","vel_m_s","trip","site","section")
+depth_vel <- data.frame(smpcode =samples$smpcode[match(depth_vel$old_samplecode,samples$old_samplecode)],
+                        depth_vel)
+metadata2 <- data.frame(table_name = "depth_vel",
+                        field = names(depth_vel),
+                        definition = c("Sample code as in samples table",
+                                       "old sample code as in samples table",
+                                       "Depth (in m) of one of five points in sample area (four corners and centre point",
+                                       "Velocity in counts per minute of flow meter at each of the 5 points",
+                                       "Comment",
+                                       "Velocity in m/s at each of the 5 points",
+                                       "Sampling trip (1 of 6) in experiment", 
+                                       "Site (Old sitecode)",
+                                       "Section L, below the putatitive (or real) riffle, M in the riffle, or U upstream of the riffle"))
+```
+
+Now to prepare other tables for consistency
+
+```{r}
+biota$smpcode <- samples$smpcode[match(biota$Sample.code,samples$old_samplecode)]
+# Some changes to ensure match with taxa list in the old database
+db$`EPA Taxa list`$lowesttaxon <- trimws(db$`EPA Taxa list`$lowesttaxon, "both")
+biota$lowesttaxon <- gsub("unident","Unident",biota$lowesttaxon)
+biota$lowesttaxon[biota$lowesttaxon == "Megadrili"] <- "MEGADRILI"
+biota$lowesttaxon[biota$lowesttaxon == "Necterosoma(Larva)"] <- 
+  "Necterosoma sp.(Unident.)(Larva)"
+biota$lowesttaxon[biota$lowesttaxon == "Necterosoma(Adult)"] <- 
+  "Necterosoma sp.(Unident.)(Adult)"
+biota$lowesttaxon[biota$lowesttaxon == "Austrolimnius(Larva)"] <- 
+  "Austrolimnius sp.(Unident.)(Larva)"
+biota$lowesttaxon[biota$lowesttaxon == "Austrolimnius(Adult)"] <- 
+  "Austrolimnius sp.(Unident.)(Adult)"
+biota$lowesttaxon[biota$lowesttaxon == "Rhantus(Larva)"] <- 
+  "Rhantus sp.(Unident.)(Larva)"
+biota$lowesttaxon[biota$lowesttaxon == "Rhaphium"] <- "Rhaphium sp.(Unident.)"
+biota$taxoncode <- old_taxonomy$Taxoncode[match(biota$lowesttaxon,
+                                                      old_taxonomy$lowesttaxon)]
+# 3 remaining lowesttaxon names not in the original db taxon list. 
+# Check the latest and amend as necessary
+biota$taxoncode[biota$lowesttaxon == "Corduliidae (Unident.)"] <- "QO160000"
+biota$taxoncode[biota$lowesttaxon == "Gastropoda (Unident.)"] <- "KG999999"
+biota$taxoncode[biota$lowesttaxon == "Notriolus spp. ridged A9 (larva)"] <- "QC3403Z2"
+biota$taxoncode[biota$lowesttaxon == "Paratanytarsus/Rheotanytarsus"] <- "QDAH9978"
+biota$taxoncode[substr(biota$taxoncode,nchar(biota$taxoncode) - 1,
+                       nchar(biota$taxoncode)) == "9I"] <- 
+  gsub("9I","99",biota$taxoncode[substr(biota$taxoncode,nchar(biota$taxoncode) - 1,
+                       nchar(biota$taxoncode)) == "9I"]) # make larvae codes same as adult codes
+
+# Correct taxoncodes
+biota$taxoncode[substr(biota$taxoncode,1,4) %in% c("MM59","MM51")]  <- "MM9999A1" # Oribatida, Galumnidae
+biota$taxoncode[substr(biota$taxoncode,1,4) == "MM39"] <- "MM9999A2" # Mesostigmata
+biota$taxoncode[substr(biota$taxoncode,1,4) %in% c("MM61","MM41")] <- "MM9999A3" # Trombidiidae, Bdellidae
+biota$taxoncode[substr(biota$taxoncode,1,4) == "MM70"] <- "MM9999A7" # Astigmata
+biota$taxoncode[biota$taxoncode == "LO0499C1"] <- "LO0499A1" # Tubificidae group A
+biota$taxoncode[biota$taxoncode == "LO0499C2"] <- "LO0499A2" # Tubificidae group B
+biota$taxoncode[substr(biota$taxoncode,1,2) == "OJ"] <- 
+  paste0(substr(biota$taxoncode[substr(biota$taxoncode,1,2) == "OJ"],1,3),"00000") # superfluous zeros in copepod codes
+biota$taxoncode[biota$taxoncode == "QDAH0676"] <- "QDAH9978" # Paratanytarsus/Rheotanytarsus
+biota$taxoncode[biota$taxoncode == "LO0399E6"] <- "LO0399A5" # Phreodrilidae Gp. E (couplet 6)
+biota$taxoncode[biota$taxoncode == "QC34039G"] <- "QC3403Z2" # Notriolus spp. ridged A9
+biota$taxoncode[substr(biota$taxoncode,1,4) == "MMC9"] <- "MM9999A8" # Hydracarina
+biota$taxoncode[substr(biota$taxoncode,1,6) == "QE0617"] <- "QE0699A2" # Leptophlebiidae Genus Z
+biota$taxoncode[biota$taxoncode == "QE02A1M5"] <- "QE020602"  #Baetid genus 1 = Offadens
+biota$taxoncode[biota$taxoncode == "QE02A2M6"] <- "QE020603"  #Baetid genus 2 = Offadens
+biota$taxoncode[substr(biota$taxoncode,1,6) == "QD0901"] <- "QD090400"  #Two Bezzia morphospecies, with incorrect taxoncode in old_taxonomy
+biota$taxoncode[biota$taxoncode %in% c("QD3599C1","QD3599C4")] <- "QD350000"  # Two Empididae morphospecies
+biota$taxoncode[biota$taxoncode == "QC3402C1"] <- "QC3402B4"  #Simsonia sp.L42E
+biota$taxoncode[biota$taxoncode == "QO180801"] <- "QO210801"  #Telephlebia brevicauda 
+biota$taxoncode[biota$taxoncode == "QE02A2M1"] <- "QE0206Z3"  #Baetid genus 2 = Offadens
+biota$taxoncode[substr(biota$taxoncode,1,4) == "QCZZ"] <- "QC999999"  #Coleoptera unident.QD45
+biota$taxoncode[biota$taxoncode == "QT159998"] <- "QT150000"  #Only Conoesucidae taxon identified. Combine to family
+biota$taxoncode[biota$taxoncode == "QD0903E1"] <- "QD090300"  #Round single species of Dasyhelea to genus
+biota$taxoncode[substr(biota$taxoncode,1,6) == "QD0904"] <- "QD090400"  #Round single species of Bezzia to genus
+biota$taxoncode[substr(biota$taxoncode,1,6) %in% 
+                  c("IB0101","IH0101","KG0601","KG0708","KG0710","KP0301",
+                    "LO0501","LO0502","LO0505","LO0506","LO0509","LO0510","LO0511",
+                    "OP0601","OR1801","QC0920","QC0923","QC1303","QC3401","QC3402",
+                    "QC3403","QC3404","QC3405","QC3701","QE0202","QE0601","QE0608",
+                    "QE0609")] <- 
+  paste0(substr(biota$taxoncode[substr(biota$taxoncode,1,6) %in% 
+                  c("IB0101","IH0101","KG0601","KG0708","KG0710","KP0301",
+                    "LO0501","LO0502","LO0505","LO0506","LO0509","LO0510","LO0511",
+                    "OP0601","OR1801","QC0920","QC0923","QC1303","QC3401","QC3402",
+                    "QC3403","QC3404","QC3405","QC3701","QE0202","QE0601","QE0608",
+                    "QE0609")],1,6),"00")
+#Hydra, Prostoma, Ferrissia, Bayardella, Leichhardtia, Pisidium, non-tubificid Naididae, ...,Sclerocyphon identified to genus
+biota$taxoncode[substr(biota$taxoncode,1,2) %in% c("II","LA")] <- 
+  paste0(substr(biota$taxoncode[substr(biota$taxoncode,1,2) %in% c("II","LA")],1,2),"000000")
+#Nematoda, Aphanoneura, identified to class (omit anyway?)
+biota$taxoncode[substr(biota$taxoncode,1,4) %in% 
+                  c("KG05","LH01","LH05","LO08","LO11","OR25","OR26","QC05","QC36",
+                    "QCAN","QD15","QD89","QE08","QH65","QH67","QL01","QO02","QO12","QO13","QO16")] <- 
+  paste0(substr(biota$taxoncode[substr(biota$taxoncode,1,4) %in% 
+                  c("KG05","LH01","LH05","LO08","LO11","OR25","OR26","QC05","QC36",
+                    "QCAN","QD15","QD89","QE08","QH65","QH67","QL01","QO02","QO12","QO13","QO16")],1,4),"0000")
+#Lymnaidae, Glossiphoniidae, Erpobdellidae, Enchytraeidae, Megadrili, Heteroceridae, Oniscidae, Carabidae, Styloniscidae, Circulionidae, Scatopsidae, Muscidae,Caenidae,Corixidae, Notonectidae, Crambidae, Coenagrionidae, Aeshnidae, Gomphidae, Corduliidae identified to family
+biota$taxoncode[substr(biota$taxoncode,1,4) %in% c("QDAE","QDAF","QDAH","QDAI") & substr(biota$taxoncode,5,6) != "99"] <- 
+    paste0(substr(biota$taxoncode[substr(biota$taxoncode,1,4) %in% c("QDAE","QDAF","QDAH","QDAI") & substr(biota$taxoncode,5,6) != "99"],1,6),"00")
+# Chironomids to genus
+biota$taxoncode[substr(biota$taxoncode,1,2) %in% c("QT") & substr(biota$taxoncode,5,6) != "99"] <- 
+    paste0(substr(biota$taxoncode[substr(biota$taxoncode,1,2) %in% c("QT") & substr(biota$taxoncode,5,6) != "99"],1,6),"00")
+# Trichopterans to genus (only species-level ID was Cheumatopsyche - all AV2, except 1 record of AV1)
+# Psychodidae, Culicidae, Dolichopodidae, Stratiomyidae and Sciomyzidae identified to personal voucher morphospecies, since lost: combine to family
+biota$taxoncode[substr(biota$taxoncode,1,4) %in% c("QD12","QD07","QD24","QD36","QD45")] <- 
+  paste0(substr(biota$taxoncode[substr(biota$taxoncode,1,4) %in% c("QD12","QD07","QD24","QD36","QD45")],1,4), "0000")
+
+# Update from synomym table
+taxon_syn <- rbind(taxon_syn, tipulid_syn)
+codes_to_update <- unique(biota$shortcode[biota$shortcode %in% taxon_syn$old_taxoncode])
+for(i in 1:length(codes_to_update)){
+  if(length(unique(taxon_syn$taxoncode[taxon_syn$old_taxoncode == codes_to_update[i]])) > 1) stop()
+  biota$taxoncode[biota$shortcode == codes_to_update[i]] <- unique(taxon_syn$taxoncode[taxon_syn$old_taxoncode == codes_to_update[i]])
+}
+
+biota$shortcode <- biota$taxoncode
+biota$shortcode[substr(biota$taxoncode,3,8) %in% c("000000","999999","999997","999998")] <- 
+  substr(biota$taxoncode[substr(biota$taxoncode, 3, 8) %in% c("000000","999999","999997","999998")],1,2)
+biota$shortcode[nchar(biota$shortcode) == 8 & 
+                  substr(biota$taxoncode,5,8) %in% c("0000","9999","9998")] <- 
+  substr(biota$taxoncode[nchar(biota$shortcode) == 8 & 
+                  substr(biota$taxoncode, 5, 8) %in% c("0000","9999","9998")],1,4)
+biota$shortcode[nchar(biota$shortcode) == 8 & 
+                  substr(biota$taxoncode,7,8) %in% c("00","99")] <- 
+  substr(biota$taxoncode[nchar(biota$shortcode) == 8 & 
+                  substr(biota$taxoncode, 7, 8) %in% c("00","99")],1,6)
+
+biota$shortcode[substr(biota$taxoncode,1,2) == "OJ"] <- 
+  substr(biota$shortcode[substr(biota$taxoncode,1,2) == "OJ"],1,3) # superfluous zeros in copepod codes
+
+# check <- unique(biota[c("taxoncode","shortcode")])
+
+tipulid_genera <- data.frame(shortcode = tipulid_genera$shortcode,  taxon = tipulid_genera$Genus, table = "taxon_gen")
+tipulid_species <- data.frame(shortcode = tipulid_species$taxoncode...4,  taxon = tipulid_species$Species, table = "taxon_spp")
+taxon_all <- rbind(taxon_all,tipulid_genera, tipulid_species)
+code_mismatches <- unique(biota$shortcode)[!unique(biota$shortcode) %in% c(taxon_all$shortcode,"QE020602","QE020603","QE0206Z3")]
+# biota[biota$shortcode %in% code_mismatches,]
+
+#Inspect crosstab in excel to make decisions about lumping and exclusion of ambiguous taxa
+biota$s <- samples$subsample_perc[match(biota$smpcode,samples$smpcode)]*0.01
+biota$naive <- biota$abundance/biota$s
+biota_ct <- ct(biota$Sample.code, biota$shortcode, biota$naive)
+biota_ct <- data.frame(sample = row.names(biota_ct),
+                       site = samples$sitecode[match(row.names(biota_ct),
+                                                     samples$old_samplecode)],
+                       biota_ct)
+taxa <- data.frame(taxoncode = names(biota_ct), 
+                   taxon = taxon_all$taxon[match(names(biota_ct),taxon_all$shortcode)])
+WriteXLS::WriteXLS(list(biota = biota_ct, taxa = taxa), "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/biota_third_check.xlsx")
+
+# with biota looking right reformat for addition to mwbugs database
+biota$notes <- paste(biota$notes, "[original ID: ",biota$lt.backup, "]")
+biota$count <- biota$abundance
+biota$taxon <- biota$lowesttaxon
+biota$coarsepick <- 0 
+# Having checked lab sheets, there were a few coarsepicks (and an annoying partial 30% subsample for oligochates in 1FL2. As L samples will not be used in the major analysis, I'll just leave those count estimates as they are [four values of 3.3].  In addition 1BrU4 was a complicated subsample [1 jar sampled 100%, 2nd jar 55% subsample.  I virtually subsampled the 1st jar to make the whole sample 55%] - just round the four fractional records 0.55 and 1.1 to make them 1 each)
+biota$count[biota$count %in% c(0.55,1.1)] <- round(biota$count[biota$count %in% c(0.55,1.1)])
+biota$coarsepick[biota$count %% 1 > 0 & biota$count < 3] <- 1
+biota$originalbugcode <- NA
+biota <- biota[c("smpcode","taxoncode","count","taxon","coarsepick","notes","originalbugcode","shortcode")]
+
+taxon_tab <- codeTaxonomy(unique(biota$taxoncode))
+
+metadata <- rbind(metadata1, metadata_db[metadata_db$table_name %in% c("samples","biota","taxon_all"),],
+                  metadata2)
+
+WriteXLS::WriteXLS(list(sites = sites, samples = samples, biota = biota,
+                        taxon_all = taxon_all, taxonomy = taxon_tab, 
+                        depth_vel = depth_vel,
+                        metadata = metadata),
+   "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/urban_riffle_experiment_data.xlsx")
+sf::st_write(sites,dsn = "~/temp/urban_riffle_experiment_data.gpkg", layer = "sites")
+sf::st_write(samples,dsn = "~/temp/urban_riffle_experiment_data.gpkg", layer = "samples", append = TRUE)
+sf::st_write(biota,dsn = "~/temp/urban_riffle_experiment_data.gpkg", layer = "biota", append = TRUE)
+sf::st_write(taxon_all,dsn = "~/temp/urban_riffle_experiment_data.gpkg", layer = "taxon_all", append = TRUE)
+sf::st_write(taxon_tab,dsn = "~/temp/urban_riffle_experiment_data.gpkg", layer = "taxon_tab", append = TRUE)
+sf::st_write(metadata,dsn = "~/temp/urban_riffle_experiment_data.gpkg", layer = "metadata", append = TRUE)
+system("cp ~/temp/urban_riffle_experiment_data.gpkg ~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment")
+```
+
+I aim to make adjustments for two analytical purposes. First, I need to identify ambiguous taxa at the lowest taxonomic level, which should be omitted from the multi-taxon analysis of the experiment. In making this decision, I need to consider:
+
+-   the likely reliability of identifications to lower levels. e.g. would it be more parsimonious to combine morphospecies to the genus level? In such cases, I would retain the identified taxon name, but assign them all a genus level taxon code (ending in 0000 to identify genus as the designated level of identification for that taxon).
+
+-   Should clearly ambiguous taxa be omitted, or should their counts be distributed across identified taxa in the study? This should only be done where there are a large number of ambiguous taxa and the relative abundances of identified species are clear. Any such adjustments should be made at the analysis stage rather than at this data compilation stage.
+
+Second, I need to retain all ambiguous records (flagging them as ambiguous by trailing 9s and by a U in the notes column). Note that I will leave trailing 9s on taxa that should be excluded from analysis (e.g. taxa too small to be reliably collected in 250 um mesh, such as nematodes and microcrustacea, or semi-aquatic taxa such as Collembola, Carabidae).
+
+...This can all wait for now.  I'll start a second qmd for Dana's exploratory analysis.
+
+```{r}
+# 1. Adjust taxoncodes to clarify ambiguous from non-ambiguousn(with checks that the shortcode matches the taxoncode)
+biota$taxoncode[biota$taxoncode == "KG059999"] <- "KG050000"; unique(biota$shortcode[biota$taxoncode == "KG050000"])
+biota$taxoncode[biota$taxoncode == "LA999999"] <- "LA000000"; unique(biota$shortcode[biota$taxoncode == "LA000000"])
+biota$taxoncode[biota$taxoncode == "LH019999"] <- "LH010000"; unique(biota$shortcode[biota$taxoncode == "LH010000"])
+biota$taxoncode[biota$taxoncode == "LH059999"] <- "LH050000"; unique(biota$shortcode[biota$taxoncode == "LH050000"])
+biota$taxoncode[biota$taxoncode == "LO051199"] <- "LO051100"; unique(biota$shortcode[biota$taxoncode == "LO051100"])
+biota$taxoncode[biota$taxoncode == "LO089999"] <- "LO080000"; unique(biota$shortcode[biota$taxoncode == "LO080000"])
+biota$taxoncode[biota$taxoncode == "LO119999"] <- "LO110000"; unique(biota$shortcode[biota$taxoncode == "LO110000"])
+biota$taxoncode[biota$taxoncode == "MM399999"] <- "MM9999A2"; unique(biota$shortcode[biota$taxoncode == "MM9999A2"])
+biota$taxoncode[biota$taxoncode == "MM410199"] <- "MM9999A3"; unique(biota$shortcode[biota$taxoncode == "MM9999A3"])
+biota$taxoncode[biota$taxoncode == "MM519999"] <- "MM9999A1"; unique(biota$shortcode[biota$taxoncode == "MM9999A1"])
+biota$taxoncode[biota$taxoncode == "MM599999"] <- "MM9999A1"; unique(biota$shortcode[biota$taxoncode == "MM9999A1"])
+biota$taxoncode[biota$taxoncode == "MM619999"] <- "MM9999A3"; unique(biota$shortcode[biota$taxoncode == "MM9999A3"])
+biota$taxoncode[biota$taxoncode == "MM700099"] <- "MM9999A7"; unique(biota$shortcode[biota$taxoncode == "MM9999A7"])
+biota$taxoncode[biota$taxoncode == "MMC99999"] <- "MM9999A8"; unique(biota$shortcode[biota$taxoncode == "MM9999A8"])
+biota$taxoncode[grep("QC09",biota$taxoncode)] <- paste0(substr(biota$taxoncode[grep("QC09",biota$taxoncode)],1,6),"00")
+
+
+# Adjustments to consider
+# Gastropoda (Unident.) -seems to be solely a trip 5/6 phenomenon. No explanatory notes on any records. 
+# 5BlM2 47 unidentified gastropods - no Physa identified. In the other reps from this sample, Physa was the dominant gastropod.  Change these 47 to Physa?
+# 5BrM4, 5DM3, 6DM1, 5EM2, 5HM1, 5MM1, 6OM1, 5SM1: distribute pro-rata unidentified gastropods among the larger numbers of Physa and Potamopyrgus that have been identified???
+# Hirudinea (Unident.) LH999999. Only one record. Explanatory note identifies it as a new species of uncertain family. (couldn't find voucher specimen Dec 2022) Delete.
+biota <- biota[biota$taxoncode != "LH999999",]
+# Naididae (Unident.) LO059999. Only 3 records. No explanatory notes.  Delete.
+biota <- biota[biota$taxoncode != "LO059999",]
+# Oligochaeta (Unident.) LO059999. Only 2 records in M samples. Notes all say 'no setae'. All in Monbulk Creek, where identified oligochaets outnumber them. Delete.
+biota <- biota[biota$taxoncode != "LO999999",]
+# Hydracarina (Unident.) MMC99999 is a valid taxon (Mostly Caenobates), and separate from the other mite groups that have been identified. Leave.
+# Microcrustacea. OG, OH and OJ, Normally, I delete these taxa (and Nematoda, II), on the basis of them mostly being smaller than the 250 micron mesh used.  Quite a lot of cycloid copepods recorded though...Think about this???
+# Collembola - semi-aquatic. Only one record  Delete
+biota <- biota[biota$taxoncode != "QA999999",]
+# Combine adult and larvae records
+biota$taxoncode[biota$taxoncode %in% c("QC09209I","QC092099")] <- "QC092000"
+biota$taxoncode[biota$taxoncode %in% c("QC09239I","QC092399")] <- "QC092300"
+biota$taxoncode[biota$taxoncode %in% c("QC34019I","QC340199")] <- "QC340100"
+# lump Elmids to Genus (not confident of consistent species-level IDs)
+biota$taxoncode[substr(biota$taxoncode,1,6) == "QC3402"] <- "QC340200"
+biota$taxoncode[substr(biota$taxoncode,1,6) == "QC3403"] <- "QC340300"
+# Elmidae (Unident.) - constituting in all cases <~50% of Elmids in each sample - mainly in Monbulk Creek samples.  Distribute as per Gastropods, or delete???
+#Coleoptera (Unident.) - one specimen 2BrM3, note says lost prior to id (there are other coleoptera in the sample). Delete
+biota <- biota[biota$taxoncode != "QCZZ9999",]
+# Simulidae (Unident) QD109999: two species of Simulid identified, rarely occuring together. 
+# 5 records (of multiple specimens, two where unident greatly outnumbers identified specimens) of Simulidae (Unident).  Combine.
+biota$taxoncode[substr(biota$taxoncode,1,4) == "QD10"] <- "QD10000"
+# Psychodidae.  Three morphospecies distinguished and one record of Psychodidae (Unident.). Combine.
+biota$taxoncode[substr(biota$taxoncode,1,4) == "QD12"] <- "QD120000"
+# Empididae Three morphospecies distinguished. Combine.
+biota$taxoncode[substr(biota$taxoncode,1,4) == "QD35"] <- "QD350000"
+# Dolichopodidae - one unident record and several Rhaphium records: Combine
+biota$taxoncode[substr(biota$taxoncode,1,4) == "QD36"] <- "QD360000"
+# Sciomyzidae Three morphospecies distinguished. Combine.
+biota$taxoncode[substr(biota$taxoncode,1,4) == "QD45"] <- "QD450000"
+# Tanypodinae (Unident.) - constituting in all but one cases <~50% of Tanypods in each sample (one early instar record in 2EM3 the only Tanypod in the sample (most likely Procladius that occrs in two of the other samples).  Distribute as per Gastropods, or delete???
+# Orthocladiinae (Unident.)  all a small proportion of identified Orthoclads = all 1-3 records. Delete.
+biota <- biota[biota$taxoncode != "QDAF9999",]
+```
+
+Need to give some thought as to the usefulness of the substrates table (seems to only apply to trips 1-3
+
+### Text from HE prelim findings.doc
+
+Some notes on preliminary results of habitat experiment
+
+1\. Physical effects of riffle structures.
+
+In all streams, the smallest rocks (a few cm larger than the minimum size calculated by the method of Newbury and Gaboury) in each structure remained in place over one year. None of the structures have been outflanked. In all cases, the structures have resulted in a deeper pool upstream, and increased hydraulic diversity among the emplaced rocks. Some changes in sedimentation patterns have been evident in most cases, with increased loads of fine sediment upstream in all cases, and in some cases, downstream of and within the riffle also (see below).
+
+2\. Differences between treatments
+
+I think there will be little or no difference evident between the large-rock and graded-rock treatments. This may be a result of the actual differences in rock size between the two treatments not being as great as originally envisioned. Also, although it was intended that the large rock treatment would not alter the slope, some damming behind the structure was inevitable. Hydraulic changes due to each treatment type were therefore quite similar.
+
+3\. Direct effects of rock emplacement
+
+The fauna colonising the emplaced rocks were, in all cases, different from the fauna of the channel prior to placement. Tubificid and lumbriculid worms tended to dominate the pre-treatment substrata. Chironomid larvae (mainly Cricotopus and Chironomus) were more abundant among the emplaced rocks in Blind Creek. Simuliid larvae (mainly Simulium ornatipes) were more abundant on the emplaced rocks in the faster flowing (and better WQ) Olinda Creek. Differences among the emplaced rocks were less pronounced in Scotchmans Creek, probably as a result of sedimentation.
+
+Although the assemblage structure changed with the addition of rocks, species richness in the section to which rocks were added tended to be lower after the rock emplacement than before.
+
+4\. Wider reach effects of riffle structures
+
+The following conclusions require confirmation with the full dataset (it is really too early to be publishing this).
+
+Algal biomass increased (not necessarily just in the riffle itself) after emplacement.
+
+Fauna typical of slower flowing waters tended to occur more commonly.
+
+Although the overall species richness of each reach tended not to change, in at least one creek (Scotchmans) some species that were rare prior to emplacement were more common after, thus increasing per sample richness. No such change was evident in Blind Creek, where it is assumed poor WQ remains the limiting factor.
+
+Taxa indicative of good water quality were absent or rare both before and after emplacement.
+
+Temporal trends differed between streams. In Scotchmans, overall species richness declined in the November after emplacement, but rose to pre-emplacement levels by January (Colonization effect?) (Total abundances were higher on both after occasions than before). In Olinda, total abundance and species richness increased in the November after emplacement, but declined dramatically by January, presumably due to high levels of siltation.
+
+5\. Conclusions.
+
+The effects of riffle emplacement in urban streams on community structure tend to be small and variable. Smallest effects were obtained in streams with the poorest WQ.
+
+The likely efficacy of habitat restoration measures can probably be assessed by an a priori assessment of water quality of the stream in question. This study will hopefully be able to provide an guide as to the likely changes to community structure, based on existing community structure.
+
+Deleterious effects are possible if the stream carries high silt loads and the structure acts as a silt trap.
+
+### Text from riffle specifications
