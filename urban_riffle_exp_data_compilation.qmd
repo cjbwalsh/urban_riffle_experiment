@@ -74,6 +74,7 @@ metadata1 <- data.frame(table_name = "sites", field = names(sites),
                            "Location for access",
                            "simple features geometry MGA 9455, crs = 28355"))
 ```
+
 Prepare samples table.
 
 ```{r}
@@ -246,6 +247,7 @@ biota$taxoncode[substr(biota$taxoncode,1,2) %in% c("QT") & substr(biota$taxoncod
 biota$taxoncode[substr(biota$taxoncode,1,4) %in% c("QD12","QD07","QD24","QD36","QD45")] <- 
   paste0(substr(biota$taxoncode[substr(biota$taxoncode,1,4) %in% c("QD12","QD07","QD24","QD36","QD45")],1,4), "0000")
 
+
 # Update from synomym table
 taxon_syn <- rbind(taxon_syn, tipulid_syn)
 codes_to_update <- unique(biota$shortcode[biota$shortcode %in% taxon_syn$old_taxoncode])
@@ -327,7 +329,6 @@ I aim to make adjustments for two analytical purposes. First, I need to identify
 
 Second, I need to retain all ambiguous records (flagging them as ambiguous by trailing 9s and by a U in the notes column). Note that I will leave trailing 9s on taxa that should be excluded from analysis (e.g. taxa too small to be reliably collected in 250 um mesh, such as nematodes and microcrustacea, or semi-aquatic taxa such as Collembola, Carabidae).
 
-
 ```{r}
 #connect to the gpkg database
 re_db <- RSQLite::dbConnect(RSQLite::SQLite(),
@@ -351,7 +352,7 @@ biota$s <- samples$subsample_perc[match(biota$smpcode,samples$smpcode)]/100
 biota$s[biota$coarsepick == 1] <- 1
 biota$naive <- biota$count/biota$s
 
-# Adjustments to consider, still undecided
+# Adjustments for multi-taxon model
 # Gastropoda (Unident.) -seems to be solely a trip 5/6 phenomenon. No explanatory notes on any records. 
 # 5BlM2 47 unidentified gastropods - no Physa identified. In the other reps from this sample, Physa was the dominant gastropod.  Change these 47 to Physa?
 # Given the bias of this id to the last two trips, 5BrM4, 5DM3, 6DM1, 5EM2, 5HM1, 5MM1, 6OM1, 5SM1: distribute pro-rata unidentified gastropods among the larger numbers of Physa and Potamopyrgus that have been identified???
@@ -363,6 +364,7 @@ for(i in gast_unid){
 }
 biota <- biota[biota$taxoncode != "KG999999",]
 
+
 # Elmidae (Unident.) - constituting in all cases <~50% of Elmids in each sample - mainly in Monbulk Creek samples.  Distribute as per Gastropods
 qc34_unid <- which(biota$taxoncode == "QC349999")
 for(i in qc34_unid){
@@ -370,7 +372,7 @@ for(i in qc34_unid){
   biotai <- biota[substr(biota$shortcode,1,6) %in% paste0("QC340",1:5) & biota$smpcode == sampi,]
   biota$count[substr(biota$shortcode,1,6) %in% paste0("QC340",1:5) & biota$smpcode == sampi] <- round(biotai$count * biota$count[i]/sum(biotai$count)) + biota$count[substr(biota$shortcode,1,6) %in% paste0("QC340",1:5) & biota$smpcode == sampi]
 }
-biota <- biota[biota$taxoncode != "KC349999",]
+biota <- biota[biota$taxoncode != "QC349999",]
 
 # Tanypodinae (Unident.) - constituting in all but one cases <~50% of Tanypods in each sample (one early instar record in 2EM3 the only Tanypod in the sample (most likely Procladius that occurs in two of the other samples).  Distribute as per Gastropods, and set 2EM3 tanypod as Procladius
 qdae_unid <- which(biota$taxoncode == "QDAE9999")
@@ -400,7 +402,6 @@ biota$taxoncode[substr(biota$taxoncode,1,4) == "QD09"] <- "QD090000"
 biota$shortcode[substr(biota$taxoncode,1,4) == "QD35"] <- "QD35"
 biota$taxoncode[substr(biota$taxoncode,1,4) == "QD35"] <- "QD350000"
 
-# Adjustments decided
 # Hirudinea (Unident.) LH999999. Only one record. Explanatory note identifies it as a new species of uncertain family. (couldn't find voucher specimen Dec 2022) Delete.
 biota <- biota[biota$taxoncode != "LH999999",]
 # Naididae (Unident.) LO059999. Only 3 records. No explanatory notes.  Delete.
@@ -416,7 +417,7 @@ biota <- biota[biota$taxoncode != "QA999999",]
 # Curculionidae - semi-aquatic at best. Only two records. Delete
 biota <- biota[biota$taxoncode != "QCAN0000",]
 #Coleoptera (Unident.) - one specimen 2BrM3, note says lost prior to id (there are other coleoptera in the sample). Delete
-biota <- biota[biota$taxoncode != "QCZZ9999",]
+biota <- biota[biota$taxoncode != "QC999999",]
 
 # Orthocladiinae (Unident.)  all a small proportion of identified Orthoclads = all 1-3 records. Delete.
 biota <- biota[biota$taxoncode != "QDAF9999",]
@@ -459,7 +460,8 @@ biota <- biota[names(biota) != "naive"]
 WriteXLS::WriteXLS(list(sites = sites, samples = samples, biota = biota),
                    "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/data_for_model.xlsx")
 
-biota_ct <- ct(biota$smpcode, biota$shortcode, biota$naive)
+
+biota_ct <- ct(biota$smpcode, biota$shortcode, biota$count/biota$s)
 biota_ct <- data.frame(sample = row.names(biota_ct),
                        site = samples$sitecode[match(row.names(biota_ct),
                                                      samples$smpcode)],

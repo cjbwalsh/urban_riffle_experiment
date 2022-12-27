@@ -59,7 +59,7 @@ Depth, velocity, substrate(?), catchment effective imperviousness
 
 ### Statistical models
 
-We modelled the total count of taxon *j* in each sample, *i*, ($Y_{i,j}$) as a negative binomial distribution (given the highly skewed distributions of taxon counts) and the count of taxon *j* in a subsample of proportion $s_{i,j}$ ($c_{i,j}$) as a binomial distribution given s and Y. Thus:
+We modelled the total count of taxon *j* in each sample unit, *i*, ($Y_{i,j}$) as a negative binomial distribution (given the highly skewed distributions of taxon counts) and the count of taxon *j* in a subsample of proportion $s_{i,j}$ ($c_{i,j}$) as a binomial distribution given $s_{i,j}$ and $Y_{i,j}$. Thus:
 
 $$
 \begin{align}
@@ -69,7 +69,7 @@ $$
 \end{align}
 $$ {#eq-taxon_count_likelihood}
 
-where $\mu$ = the mean total count in the sample, and $\phi_j$ = the dispersion parameter of the negative binomial distribution for taxon j.
+where $mu_{i,j}$ = the mean total count of taxon *j* in sample unit *i*, and $\phi_j$ = the dispersion parameter of the negative binomial distribution for taxon *j*.
 
 We modelled $\mu_{i,j}$ as a linear model of 4 (5?) fixed predictors and four (5?) random predictors, thus:
 
@@ -87,25 +87,25 @@ All $\beta$ parameters were formulated as random effects drawn from community-le
 There are full sets of L and U samples for trips 1-4. Could be worth exploring effects over the three sections, but for now, let's just stick with M samples.
 
 ```{r}
+samples$seg <- substr(samples$old_samplecode,nchar(samples$old_samplecode)-1,
+                      nchar(samples$old_samplecode)-1)
+# aggregate(samples$smpcode, by = list(site = samples$sitecode, 
+#                                      t = samples$t, seg = samples$seg), FUN = length)
 samples <- samples[samples$seg == "M",]
 biota_ct <- as.data.frame(ct(biota$smpcode, biota$shortcode, biota$count))
 biota_ct <- biota_ct[match(samples$smpcode,row.names(biota_ct)),]
-# test with subset of taxa 
-biota_ct <- biota_ct[apply(biota_ct, 2, FUN = function(x) sum(x > 0)) > 100]
+# # test with subset of taxa 
+# biota_ct <- biota_ct[apply(biota_ct, 2, FUN = function(x) sum(x > 0)) > 100] #9 taxa
 ss_ct <- biota_ct
 for(i in 1:nrow(samples)){
   ss_ct[i,] <- samples$subsample_perc[i]/100
 }
-# for(i in which(biota$coarsepick == 1)){
-#   ss_ct[row.names(ss_ct) == biota$smpcode[i], biota$shortcode[i]] <- 1
-# }
-samples$seg <- substr(samples$old_samplecode,nchar(samples$old_samplecode)-1,
-                      nchar(samples$old_samplecode)-1)
-aggregate(samples$smpcode, by = list(site = samples$sitecode, 
-                                     t = samples$t, seg = samples$seg), FUN = length)
+for(i in which(biota$coarsepick == 1)){
+  ss_ct[row.names(ss_ct) == biota$smpcode[i], biota$shortcode[i]] <- 1
+}
 samples$ba <- as.numeric(as.numeric(substr(samples$old_samplecode,1,1))  > 2) 
 # 0 = before, 1 = after
-samples$ci <- as.numeric(sites$exp_treatment[match(samples$sitecode,sites$sitecode)] == "control") #0 = experimental, 1 = riffle
+samples$ci <- as.numeric(sites$exp_treatment[match(samples$sitecode,sites$sitecode)] == "riffle") #0 = control, 1 = riffle
 samples$baci <- samples$ba*samples$ci
 samples$ai <- sites$ai[match(samples$sitecode, sites$sitecode)]
 i_scaled <- scale(log10(samples$ai*100 + 0.1))
@@ -133,10 +133,11 @@ sdata <- list(n_obs = nrow(biota_ct),
               s = as.matrix(ss_ct)
               )
 mod <- cmdstan_model("nbinom_me_randomsite_fixedmatrix_baci.stan", pedantic = TRUE) 
-ni <- 2000; nt <- 1; nb <- 2000; nc <- 1  #with 1000 samples lowest ess_bulk (of first trial) was ~50
+ni <- 4000; nt <- 4; nb <- 1000; nc <- 4  
 stanfit_i <- mod$sample(data = sdata,
                         seed = rand_seed, chains = nc,
                         parallel_chains = nc, iter_warmup = nb,
-                        iter_sampling = ni - nb, refresh = 100) # min (6250 iter)
-
+                        iter_sampling = ni - nb, refresh = 200) 
+# 4000 iters 3.6 h (need ~7000 to achieve min ess of ~400)
+summ <- stanfit_i$summary()
 ```
