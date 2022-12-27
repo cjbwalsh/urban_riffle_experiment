@@ -1,0 +1,142 @@
+---
+title: "Urban riffle experiment: methods, results"
+author: "Christopher J Walsh, J. Angus Webb, et al."
+format: html
+editor: visual
+---
+
+```{r}
+#| echo: false
+#| message: false
+#| error: false
+
+library(cmdstanr)
+check_cmdstan_toolchain(fix = TRUE, quiet = TRUE)
+rand_seed = 9430572
+
+source("https://tools.thewerg.unimelb.edu.au/documents/mwstr/mwstr_functions.R")
+source("https://tools.thewerg.unimelb.edu.au/data/mwbugs/bugDatabaseFunctions.R")
+
+## Load data: ultimately from OSF
+# library(osfr); library(dplyr)
+# if(!"data" %in% dir()){system("mkdir data")}
+# if(!"wq_data_compiled.xlsx" %in% dir("data")){
+# wq_files <- osf_retrieve_node("4ywvq") %>% osf_ls_files()
+# osf_download(wq_files[wq_files$name == "wq_data_compiled.xlsx",], path = "data")
+# }
+# compile data 
+sites <- readxl::read_excel("~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/data_for_model.xlsx", sheet = "sites")
+samples <- readxl::read_excel("~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/data_for_model.xlsx", sheet = "samples")
+biota <- readxl::read_excel("~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/data_for_model.xlsx", sheet = "biota")
+subcs <- sqlQuery(paste0("SELECT site, reach FROM subcs WHERE reach IN ('",
+                         paste(substr(sites$sitecode,1,nchar(sites$sitecode) -1),
+                               collapse = "', '"), "');"), "mwstr")
+load("~/uomShare/wergStaff/ChrisW/git-data/mwstr/mwstr_v12_corrections/imp_subcs.rda")
+sites$site <- subcs$site[match(substr(sites$sitecode,1,nchar(sites$sitecode) -1),
+                               subcs$reach)]
+sites$ai <- imp_subcs$c_ai[match(sites$site, imp_subcs$site)]
+```
+
+## Introduction
+
+Working methods and results for paper on the urban riffle experiment.
+
+## Methods
+
+### Study area and experimental design
+
+### Riffle design and construction
+
+### Macroinvertebrate assemblage sampling and identification
+
+Four replicate sample units taken along the reach of each site on each date comprise a sample.
+
+Identified to lowest practicable taxonomic level (Details)
+
+### Environmental variable determination
+
+Depth, velocity, substrate(?), catchment effective imperviousness
+
+### Statistical models
+
+We modelled the total count of taxon *j* in each sample, *i*, ($Y_{i,j}$) as a negative binomial distribution (given the highly skewed distributions of taxon counts) and the count of taxon *j* in a subsample of proportion $s_{i,j}$ ($c_{i,j}$) as a binomial distribution given s and Y. Thus:
+
+$$
+\begin{align}
+&Y_{i,j} \sim \textrm{Neg. Binomial}(\mu_{i,j}, \phi_{j}) \\
+\\
+&c_{i,j} \sim \textrm{Binomial}(s_{i,j}, Y_{i,j})
+\end{align}
+$$ {#eq-taxon_count_likelihood}
+
+where $\mu$ = the mean total count in the sample, and $\phi_j$ = the dispersion parameter of the negative binomial distribution for taxon j.
+
+We modelled $\mu_{i,j}$ as a linear model of 4 (5?) fixed predictors and four (5?) random predictors, thus:
+
+$$
+\begin{align}
+\mu_{(i,j)} \sim  &\alpha_j + \beta\_ba_{j} * BA_i + \beta\_ci_{j} * CI_i  + \beta\_baci_{j} * BA_i * CI_i + \beta\_i_j * I_i\\
+& \theta_{1(i,si)} + \theta_{2(i,sa)} + \theta_{3(i,t)}+ \epsilon_{(i,j)}
+\end{align}
+$$ {#eq-exp_linear_model}
+
+where $\alpha_j$ is the model intercept for taxon *j*, $\beta\_ba_{j}$ is the before-after effect (*BA*), $\beta\_ci_{j}$ is the control-impact effect (*CI*), and $\beta\_baci_{j}$ is the interaction of the *BA* and *CI* effects. $\beta\_i_{j}$ is the the effect of catchment effective imperviousness (*I*). The $\theta$ and $\epsilon$ parameters model the error structure of the dataset. $\theta_{1(i,si)}$ models variation among samples within each site, indexed by *si*. $\theta_{2(i,sa)}$ models variation among the four sample units within each sample, indexed by *sa*. $\theta_{3(i,t)}$ models variation among samples within each sampling campaign, indexed by *t*. $\epsilon_{(i,j)}$ models extra-negative-binomial variation among all sample units.
+
+All $\beta$ parameters were formulated as random effects drawn from community-level hyper-distributions with the mean parameters specified as normal distributions and the parameters for each species drawn from a multivariate normal distribution with a variance-covariance matrix that describes the residual associations among species.
+
+There are full sets of L and U samples for trips 1-4. Could be worth exploring effects over the three sections, but for now, let's just stick with M samples.
+
+```{r}
+samples <- samples[samples$seg == "M",]
+biota_ct <- as.data.frame(ct(biota$smpcode, biota$shortcode, biota$count))
+biota_ct <- biota_ct[match(samples$smpcode,row.names(biota_ct)),]
+# test with subset of taxa 
+biota_ct <- biota_ct[apply(biota_ct, 2, FUN = function(x) sum(x > 0)) > 100]
+ss_ct <- biota_ct
+for(i in 1:nrow(samples)){
+  ss_ct[i,] <- samples$subsample_perc[i]/100
+}
+# for(i in which(biota$coarsepick == 1)){
+#   ss_ct[row.names(ss_ct) == biota$smpcode[i], biota$shortcode[i]] <- 1
+# }
+samples$seg <- substr(samples$old_samplecode,nchar(samples$old_samplecode)-1,
+                      nchar(samples$old_samplecode)-1)
+aggregate(samples$smpcode, by = list(site = samples$sitecode, 
+                                     t = samples$t, seg = samples$seg), FUN = length)
+samples$ba <- as.numeric(as.numeric(substr(samples$old_samplecode,1,1))  > 2) 
+# 0 = before, 1 = after
+samples$ci <- as.numeric(sites$exp_treatment[match(samples$sitecode,sites$sitecode)] == "control") #0 = experimental, 1 = riffle
+samples$baci <- samples$ba*samples$ci
+samples$ai <- sites$ai[match(samples$sitecode, sites$sitecode)]
+i_scaled <- scale(log10(samples$ai*100 + 0.1))
+samples$i <- as.vector(i_scaled)
+sites <- sites[order(sites$exp_treatment,sites$ai),]
+sites$site_no <- 1:nrow(sites)
+samples$site_no <- sites$site_no[match(samples$sitecode,sites$sitecode)]
+samples$sample <- substr(samples$old_samplecode,1,nchar(samples$old_samplecode)-1)
+sample_nos <- data.frame(sample = unique(samples$sample))
+sample_nos$sample_no <- 1:nrow(sample_nos)
+samples$sample_no <- sample_nos$sample_no[match(samples$sample, sample_nos$sample)]
+samples$t <- as.numeric(substr(samples$old_samplecode, 1,1))
+u <- model.matrix(~ ba + ci + baci + i, data = samples)
+sdata <- list(n_obs = nrow(biota_ct),
+              n_taxa = ncol(biota_ct),
+              n_site = nrow(sites),
+              n_sample = nrow(sample_nos),
+              n_pred = ncol(u),
+              n_t = max(samples$t),
+              site_no = samples$site_no,
+              samp_no = samples$sample_no,
+              t = samples$t,
+              u = u,
+              c = as.matrix(biota_ct),
+              s = as.matrix(ss_ct)
+              )
+mod <- cmdstan_model("nbinom_me_randomsite_fixedmatrix_baci.stan", pedantic = TRUE) 
+ni <- 2000; nt <- 1; nb <- 2000; nc <- 1  #with 1000 samples lowest ess_bulk (of first trial) was ~50
+stanfit_i <- mod$sample(data = sdata,
+                        seed = rand_seed, chains = nc,
+                        parallel_chains = nc, iter_warmup = nb,
+                        iter_sampling = ni - nb, refresh = 100) # min (6250 iter)
+
+```
