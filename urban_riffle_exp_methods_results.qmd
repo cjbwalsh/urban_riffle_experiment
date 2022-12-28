@@ -133,11 +133,91 @@ sdata <- list(n_obs = nrow(biota_ct),
               s = as.matrix(ss_ct)
               )
 mod <- cmdstan_model("nbinom_me_randomsite_fixedmatrix_baci.stan", pedantic = TRUE) 
-ni <- 4000; nt <- 4; nb <- 1000; nc <- 4  
-stanfit_i <- mod$sample(data = sdata,
-                        seed = rand_seed, chains = nc,
-                        parallel_chains = nc, iter_warmup = nb,
-                        iter_sampling = ni - nb, refresh = 200) 
-# 4000 iters 3.6 h (need ~7000 to achieve min ess of ~400)
-summ <- stanfit_i$summary()
+# ni <- 7000; nt <- 4; nb <- 1000; nc <- 4  
+# stanfit_i <- mod$sample(data = sdata,
+#                         seed = rand_seed, chains = nc,
+#                         parallel_chains = nc, iter_warmup = nb,
+#                         iter_sampling = ni - nb, refresh = 200) 
+# # 7000 iters 5 h 
+# #  save csv files rather than the model object to use less RAM
+# stanfit_i$save_output_files(
+#   dir = "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/",
+#   basename = "fit_nbinom_baci_6000iter", timestamp = FALSE, random = FALSE)
+# stanfit_i$sampler_diagnostics()
+# saveRDS(stanfit_i, file = "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/fit_nbinom_baci_6000iter.rds")
+# stanfit_i$diagnostic_summary()
+# # The above three steps required < 500 Mb RAM
+# summ <- stanfit_i$summary() # This took > 2h and needed ~80 Gb Ram
+# min(summ$ess_bulk,na.rm=TRUE) # 383 (near enough to ~100 per chain- the one parameter <400 was mu_gamma[4]: i.e. baci
+# min(summ$ess_tail,na.rm=TRUE) # 761
+
+m_nb_fit <- readRDS("~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/fit_nbinom_baci_6000iter.rds")
+system.time({
+m_nb_draws <- as.data.frame(m_nb_fit$draws(format = "df", variables = c("a_si","a_sa","a_t","gamma","phi")))
+}) # 8 min
+# #Extract prediction for each taxon
+# pred <- list()
+# system.time({
+# for(i in 1:sdata$n_taxa){
+#   drawsi <- m_nb_draws[grep(paste0(",",i,"]"),names(m_nb_draws))]
+#   pred[[i]] <-
+#     drawsi[grep("a_si",names(drawsi))][match(samples$site_no, 1:sdata$n_site)] +
+#     drawsi[grep("a_sa",names(drawsi))][match(samples$sample_no, 1:sdata$n_sample)] +
+#     drawsi[grep("a_t",names(drawsi))][match(samples$t, 1:sdata$n_t)] +
+#       drawsi[,paste0("gamma[1,",i,"]")] %*% t(u[,1]) +
+#        drawsi[,paste0("gamma[2,",i,"]")] %*% t(u[,2]) +
+#        drawsi[,paste0("gamma[3,",i,"]")] %*% t(u[,3]) +
+#        drawsi[,paste0("gamma[4,",i,"]")] %*% t(u[,4]) +
+#        drawsi[,paste0("gamma[5,",i,"]")] %*% t(u[,5])
+# }
+# })  # 176 s
+# names(pred) <- colnames(sdata$c)
+# save(pred, file = "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/fit_nbinom_baci_6000iter_ypred_draws.rda")
+ypred_draws <- get(load("~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/fit_nbinom_baci_6000iter_ypred_draws.rda"))
+# a_si_means <-  apply(m_nb_draws[,grep("a_si",names(m_nb_draws))], 2, FUN = mean)
+# phi_means <- apply(m_nb_draws[,grep("phi",names(m_nb_draws))], 2, FUN = mean)
+# b_means <- apply(m_nb_draws[substr(names(m_nb_draws),1,5) %in% c("gamma")], 2, FUN = mean)
+prevalence <- apply(biota_ct, 2, FUN = function(x){sum(x > 0)})
+n_obs_samps <- 1000
+# Create a matrix of (estimated) observed total counts, given c and s
+# This function takes a sample of size n (with replacement) of all integers 
+# between 0 and 1 million, with each integer having the probability of T 
+# (a total count) given c and s.
+sample_T_given_c_s <- function(n, c, s){
+sample(0:1e6, n, replace = TRUE, prob = dbinom(c,0:1e6,s))
+}
+  ss <- sdata$s
+  ss[ss == 1 ] <- 0.99
+obs <- list()
+system.time({
+for(i in 1:sdata$n_taxa){
+  obs[[i]] <- matrix(data = NA, nrow = n_obs_samps, ncol = nrow(samples))
+  for(j in 1:nrow(samples)){
+    obs[[i]][,j] <- sample_T_given_c_s(n_obs_samps, sdata$c[j,i], ss[j,i])
+    names(obs)[i] <- colnames(sdata$c)[i]
+  }
+}
+}) #37 s
+# save(obs, file = "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/total_count_estimates_urban_exp_baci.rda")
+load("~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/total_count_estimates_46sites.rda") #list object called obs
+
+# prepare output matrices for estimates of T (obs), and correlations and slopes betwen O and P
+cors <- matrix(nrow = n_obs_samps, ncol = length(taxa))
+oe_slopes <- matrix(nrow = n_obs_samps, ncol =length(taxa))
+system.time({
+for(i in 1:sdata$n_taxa){
+  predi <- apply(ypred_draws[[colnames(sdata$c)]],2,FUN = mean)
+  y <- log(exp(aggregate(predi, by = list(site = samples_m$site_no), FUN = mean)[,-1] + 1))
+  for(j in 1:n_obs_samps){
+    x_raw <- log(obs[[i]][j,] + 1)
+    x <- aggregate(x_raw, by = list(site = samples_m$site_no), FUN = mean)[,-1]
+  cors[j,i] <- cor(x,y)
+  oe_slopes[j,i] <- coefficients(lm(y ~ x))[2]
+  }
+  if(i %% 5 == 0)
+ cat(i,"\n")
+}
+})
+# save(cors, oe_slopes, file = "~/uomShare/wergStaff/ChrisW/git-data/species_response_46_sites/nbinom_me_fit_by_taxon.rda")
+load("~/uomShare/wergStaff/ChrisW/git-data/species_response_46_sites/nbinom_me_fit_by_taxon.rda")
 ```

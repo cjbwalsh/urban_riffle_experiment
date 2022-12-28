@@ -9,6 +9,7 @@ editor_options:
 ---
 
 ```{r}
+## Need to have mdbtools installed on system for Hmisc::mdb.get()
 source("https://tools.thewerg.unimelb.edu.au/documents/mwstr/mwstr_functions.R")
 source("https://tools.thewerg.unimelb.edu.au/data/mwbugs/bugDatabaseFunctions.R")
 
@@ -349,6 +350,7 @@ biota <- aggregate(biota["count"],
 # And retrieve standard name for taxon from taxon_all table
 biota$taxon <- biota$taxon[match(biota$shortcode, taxon_all$shortcode)]
 biota$s <- samples$subsample_perc[match(biota$smpcode,samples$smpcode)]/100
+biota$count[biota$coarsepick == 1] <- biota$count[biota$coarsepick == 1]/biota$s[biota$coarsepick == 1]
 biota$s[biota$coarsepick == 1] <- 1
 biota$naive <- biota$count/biota$s
 
