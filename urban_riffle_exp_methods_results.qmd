@@ -3,6 +3,8 @@ title: "Urban riffle experiment: methods, results"
 author: "Christopher J Walsh, J. Angus Webb, et al."
 format: html
 editor: visual
+editor_options: 
+  chunk_output_type: inline
 ---
 
 ```{r}
@@ -134,7 +136,7 @@ sdata <- list(n_obs = nrow(biota_ct),
               s = as.matrix(ss_ct)
               )
 mod <- cmdstan_model("nbinom_me_randomsite_fixedmatrix_baci.stan", pedantic = TRUE) 
-# ni <- 7000; nt <- 4; nb <- 1000; nc <- 4  
+# ni <- 5400; nt <- 4; nb <- 1000; nc <- 4  
 # stanfit_i <- mod$sample(data = sdata,
 #                         seed = rand_seed, chains = nc,
 #                         parallel_chains = nc, iter_warmup = nb,
@@ -149,15 +151,17 @@ mod <- cmdstan_model("nbinom_me_randomsite_fixedmatrix_baci.stan", pedantic = TR
 # stanfit_i$diagnostic_summary()
 # # The above three steps required < 500 Mb RAM
 # summ <- stanfit_i$summary() # This took > 2h and needed ~80 Gb Ram
-# min(summ$ess_bulk,na.rm=TRUE) # 365 (near enough to ~100 per chain- the one parameter <400 was mu_gamma[4]: i.e. baci
-# min(summ$ess_tail,na.rm=TRUE) # 825
+# min(summ$ess_bulk,na.rm=TRUE) # 571 from 6000
+# min(summ$ess_tail,na.rm=TRUE) # 853
 # all diagnostic statistics fine.
 
 m_nb_fit <- readRDS("~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/fit_nbinom_baci_6000iter.rds")
 system.time({
 m_nb_draws <- as.data.frame(m_nb_fit$draws(format = "df", variables = c("a_si","a_sa","a_t","gamma","phi")))
 }) # 8 min
-#Extract prediction of mean abundance for each taxon in each sample
+save(m_nb_draws, file = "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/fit_nbinom_baci_6000iter_param_draws.rda")
+
+# 1. Extract prediction of mean abundance for each taxon in each sample (Assessment of model fit)
 predx <- unique(data.frame(site_no = samples$site_no,
                            sample_no = samples$sample_no,
                            t = samples$t,u))
@@ -178,7 +182,58 @@ for(i in 1:sdata$n_taxa){
 })  # 55 s
 names(predy) <- colnames(sdata$c)
 save(predy, file = "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/fit_nbinom_baci_6000iter_predy_draws.rda")
+
+# 2. Extract prediction of mean abundance for each taxon in samples across the gradient of imperviousness for ba = 1, ci = 1, baci = 0 and 1, omitting random sample, site and t errors (For counterfactual plot demonstrating effect of riffle emplacement under different levels of urban impact). 
+
+predx_cf <- data.frame(intercept = 1,ba = 1, ci = 1, 
+                    baci = rep(c(0,1),each = 10),
+                    i = rep(seq(min(u[,5]),max(u[,5]),length.out = 10),2))
+scale(log10(samples$ai*100 + 0.1))
+predx_cf$ai <- 10^(predx_cf$i * attr(i_scaled, 'scaled:scale') + 
+                 attr(i_scaled, 'scaled:center') - 0.1)
+predy_cf <- list()
+system.time({
+for(i in 1:sdata$n_taxa){
+  drawsi <- m_nb_draws[grep(paste0(",",i,"]"), names(m_nb_draws))]
+  predy[[i]] <-
+      drawsi[,paste0("gamma[1,",i,"]")] %*% t(predx_cf$intercept) +
+       drawsi[,paste0("gamma[2,",i,"]")] %*% t(predx_cf$ba) +
+       drawsi[,paste0("gamma[3,",i,"]")] %*% t(predx_cf$ci) +
+       drawsi[,paste0("gamma[4,",i,"]")] %*% t(predx_cf$baci) +
+       drawsi[,paste0("gamma[5,",i,"]")] %*% t(predx_cf$i)
+}
+})  # 55 s
+save(predy_cf, file = "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/fit_nbinom_baci_6000iter_predy_cf_draws.rda")
+```
+
+```{r}
+# Fixed effect coefficient summary
+param_draws <- get(load( "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/fit_nbinom_baci_6000iter_param_draws.rda"))
+system.time({
+for(i in 1:sdata$n_taxa){
+  drawsi <- param_draws[grepl(paste0(",",i,"]"), names(m_nb_draws)) & 
+                          grepl("gamma", names(m_nb_draws))]
+  qlsi <- apply(drawsi,2, FUN = quantile, probs = c(0.025,0.1,0.5,0.9,0.975))
+  meani <- apply(drawsi,2, FUN = mean)
+  summi <- data.frame(shortcode = colnames(biota_ct)[i],
+                      stat = c(row.names(qlsi),"mean"),
+                      rbind(qlsi, meani))
+  names(summi)[-(1:2)] <- c("intercept","b_ba","b_ci","b_baci","b_i")
+  if(i == 1){
+   param_summs <- summi
+  }else{
+     param_summs <- rbind(param_summs, summi)
+   }
+}
+}) # 1.6 s
+
+param_summs$shortcode[param_summs$b_baci > 0 & param_summs$stat == "2.5%"]
+param_summs$shortcode[param_summs$b_baci < 0 & param_summs$stat == "97.5%"]
+```
+
+```{r}
 predy_draws <- get(load("~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/fit_nbinom_baci_6000iter_ypred_draws.rda"))
+
 # a_si_means <-  apply(m_nb_draws[,grep("a_si",names(m_nb_draws))], 2, FUN = mean)
 # phi_means <- apply(m_nb_draws[,grep("phi",names(m_nb_draws))], 2, FUN = mean)
 # b_means <- apply(m_nb_draws[substr(names(m_nb_draws),1,5) %in% c("gamma")], 2, FUN = mean)
@@ -194,22 +249,23 @@ n_obs_samps <- 1000
 # This function takes a sample of size n (with replacement) of all integers 
 # between 0 and 1 million, with each integer having the probability of T 
 # (a total count) given c and s.
-# sample_T_given_c_s <- function(n, c, s){
-# sample(0:1e6, n, replace = TRUE, prob = dbinom(c,0:1e6,s))
-# }
-#   ss <- sdata$s
-#   ss[ss == 1 ] <- 0.99
-# obs <- list()
-# system.time({
-# for(i in 1:sdata$n_taxa){
-#   obs[[i]] <- matrix(data = NA, nrow = n_obs_samps, ncol = nrow(samples))
-#   for(j in 1:nrow(samples)){
-#     obs[[i]][,j] <- sample_T_given_c_s(n_obs_samps, sdata$c[j,i], ss[j,i])
-#     names(obs)[i] <- colnames(sdata$c)[i]
-#   }
-# }
-# }) #26 min
-# save(obs, file = "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/total_count_estimates_urban_exp_baci.rda")
+sample_T_given_c_s <- function(n, c, s){
+sample(0:1e6, n, replace = TRUE, prob = dbinom(c,0:1e6,s))
+}
+  ss <- sdata$s
+  ss[ss == 1 ] <- 0.99
+obs <- list()
+system.time({
+for(i in 1:sdata$n_taxa){
+  obs[[i]] <- matrix(data = NA, nrow = n_obs_samps, ncol = nrow(samples))
+  for(j in 1:nrow(samples)){
+    obs[[i]][,j] <- sample_T_given_c_s(n_obs_samps, sdata$c[j,i], ss[j,i])
+    names(obs)[i] <- colnames(sdata$c)[i]
+  }
+}
+}) #38 min
+save(obs, file = "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/total_count_estimates_urban_exp_baci.rda")
+
 load("~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/total_count_estimates_urban_exp_baci.rda") #list object called obs
 
 # prepare output matrices for estimates of T (obs), and correlations and slopes betwen O and P
@@ -229,7 +285,7 @@ for(i in 1:sdata$n_taxa){
   if(i %% 5 == 0)
  cat(i,"\n")
 }
-})
+}) # 4.5 min
 # save(cors, oe_slopes, file = "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/total_count_estimates_urban_exp_baci_fit_by_taxon.rda")
 
 ```
@@ -241,28 +297,144 @@ for(i in 1:sdata$n_taxa){
 #| message: false
 #| fig-width: 7
 #| fig-height: 3.5
-#| fig-cap: "a) Correlation coefficients for each taxon of between observed (O, mean and 95th percentiles of 1000 estimates of total abundance given the observed count in each subsample) and predicted (P) abundances (log-mean abundances of each taxon in each pair of samples from each site), and b) Slopes of the regression for each taxon of predicted log-mean abundances as a function of observed log-mean abundances, both plotted against prevalence of each taxon."
+#| fig-cap: "a) Correlation coefficients for each taxon of between observed (O, mean and 95th percentiles of 1000 estimates of total abundance, given the observed count in each subsample, log(x + 1)-transformed and averaged for all sample units in each sample) and predicted (P) abundances (log-mean abundances of each taxon in the sample from each site), and b) Slopes of the regression for each taxon of predicted log-mean abundances as a function of observed log-mean abundances, both plotted against prevalence of each taxon."
 
 load("~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/total_count_estimates_urban_exp_baci_fit_by_taxon.rda")
 layout(matrix(c(1,2,3,3),2,2,byrow=TRUE), widths = c(12,12), heights = c(12,1))
 par(mar = c(2,4,1,1))
-plot(jitter(prevalence), apply(cors,2,mean),ylim = c(-0.5,1),
+plot(jitter(prevalence_by_sample$prev), apply(cors,2,mean),ylim = c(-0.5,1),
      axes = FALSE, ylab = "R (O:P)", xlab = "")
 abline(h = 1, lty = 3)
 for(i in 1:ncol(cors)){
-  lines(rep(prevalence[i],2), quantile(cors[,i],probs = c(0.025,0.975)))
+  lines(rep(prevalence_by_sample$prev[i],2), quantile(cors[,i],probs = c(0.025,0.975)))
 }
 axis(1); axis(2, las = 1); box(bty = "l")
 title("A.", adj = 0)
-plot(jitter(prevalence), apply(oe_slopes,2,mean),ylim = c(-1,2.25),
+plot(jitter(prevalence_by_sample$prev), apply(oe_slopes,2,mean),ylim = c(-2,3),
      axes = FALSE, ylab = "Regression slope (O ~ P)", xlab = "")
 abline(h = 1, lty = 3)
 for(i in 1:ncol(cors)){
-  lines(rep(prevalence[i],2), quantile(oe_slopes[,i],probs = c(0.025,0.975)))
+  lines(rep(prevalence_by_sample$prev[i],2), quantile(oe_slopes[,i],probs = c(0.025,0.975)))
 }
 axis(1); axis(2, las = 1); box(bty = "l")
 title("B.", adj = 0)
 par(mar = c(0,0,0,0))
 plot.new()
+title(xlab = "Prevalence (number of samples with abundance > 0)", line = -1.5)
+```
+
+```{r}
+#| label: fig-nbinom_pa_stats
+#| echo: false
+#| warning: false
+#| message: false
+#| fig-width: 4
+#| fig-height: 4
+#| fig-cap: "a) Area under the receiver operator characteristic curve (AUC) of predictions of presence-absence from the negative-binomial model for all `r sdata$n_taxa` taxa as a function of their prevalence in the `r sdata$n_sample` samples."
+
+phi_draws <- m_nb_draws[,grep("phi",names(m_nb_draws))]
+p_mat <- list()
+system.time({
+for(t in 1:sdata$n_taxa){
+p_mat[[t]] <- ypred_draws[[colnames(biota_ct)[t]]]
+for(i in 1:ncol(p_mat[[t]]))
+p_mat[[t]][,i] <- 1 - pnbinom(0,mu = exp(ypred_draws[[colnames(biota_ct)[t]]][,i]),size = phi_draws[t][,1])
+}
+})
+names(p_mat) <- colnames(biota_ct)
+p_mean <- matrix(nrow = nrow(samples), ncol= sdata$n_taxa)
+for(t in 1:sdata$n_taxa){
+  p_mean[,t] <- apply(p_mat[[t]], 2, FUN = mean)
+}
+
+p_per_n <- function(x) {  # x a vector of probabilities, length n
+#  aggregate(x, by = list(pair = rep(1:(length(x)/n), each = n)), 
+#            FUN = function(y) {
+  1 - prod(1 - x)  # })
+}
+
+p_mean_per_sample <- matrix(ncol = sdata$n_sample, nrow = sdata$n_taxa)
+for(t in 1:sdata$n_taxa){
+    p_mean_per_sample[t,] <- aggregate(p_mean[,t], 
+                                  by = list(sample_no = samples$sample_no), 
+                                  FUN = p_per_n)$x
+  }
+
+# Probability of presence in observed data
+obs_per_sample <- matrix(ncol = sdata$n_sample, nrow = sdata$n_taxa)
+for(t in 1:sdata$n_taxa){
+    obs_per_sample[t,] <- aggregate(biota_ct[,t], 
+                                     list(sample_no = samples$sample_no), 
+                                     FUN = function(y) {sum(y > 0) > 0})$x
+  }
+
+library("PresenceAbsence")
+pa_stats <- data.frame(shortcode = colnames(biota_ct),
+                       taxon = taxa$taxon[match(colnames(biota_ct),taxa$shortcode)], 
+                       prevalence = prevalence_by_sample$prev[match(prevalence_by_sample$shortcode, colnames(biota_ct))],
+                       PCC = NA,
+                       sensitivity = NA, specificity = NA, Kappa = NA, AUC = NA)
+for(t in 1:sdata$n_taxa){
+  pa_data <- data.frame(taxon = colnames(biota_ct)[t],
+                        obs_per_sample[t,],p_mean_per_sample[t,])
+  pa_stats[t,-(1:3)] <- presence.absence.accuracy(pa_data)[c("PCC","sensitivity","specificity","Kappa","AUC")] 
+}
+par(mar = c(4,4,1,1),mfrow = c(1,1))
+plot(pa_stats$prevalence, pa_stats$AUC, ylim = c(0.5,1),xlab = "", ylab = "AUC")
 title(xlab = "Prevalence (number of samples with abundance > 0)", line = -2)
+```
+
+```{r}
+#| label: fig-richness_op
+#| echo: false
+#| warning: false
+#| message: false
+#| fig-width: 7
+#| fig-height: 3.5
+#| fig-cap: "Predicted taxon richness (A. total, B. EPT) in the 92 samples (mean and 95% CLs) plotted against observed richness.  The solid line indicates the 1:1 relationship, and the dashed line the linear regression of predicted as a function of observed . "
+
+tot_rich_mat <- Reduce('+', p_mat)
+# see https://stackoverflow.com/questions/11641701/sum-a-list-of-matrices
+ept_rich_mat <- Reduce('+', p_mat[substr(names(p_mat),1,2) %in% c("QE","QP","QT")])
+
+tot_rich_pred_mean <- apply(tot_rich_mat,2, FUN = mean)
+tot_rich_pred_cls <- apply(tot_rich_mat,2, FUN = quantile, probs = c(0.025, 0.975))
+
+ept_rich_pred_mean <- apply(ept_rich_mat,2, FUN = mean)
+ept_rich_pred_cls <- apply(ept_rich_mat,2, FUN = quantile, probs = c(0.025, 0.975))
+
+tot_rich_obs <- apply(biota_ct, 1, FUN = function(y){sum(y > 0)})
+ept_rich_obs <- apply(biota_ct[,substr(colnames(biota_ct),1,2) %in% c("QE","QP","QT")], 1, FUN = function(y){sum(y > 0)})
+
+par(mfrow = c(1,2))
+tot_lm <- lm(tot_rich_pred_mean ~ tot_rich_obs)
+plot(tot_rich_obs, tot_rich_pred_mean, xlim = c(0,40), ylim = c(0,40),axes = FALSE,
+     xlab  = "Observed total richness", ylab = "Predicted total richness")
+for(i in 1:nrow(samples)){
+  lines(rep(tot_rich_obs[i],2), tot_rich_pred_cls[,i])
+}
+axis(1); axis(2, las = 1); box(bty = 'l')
+title("A.", adj = 0)
+abline(0,1)
+abline(tot_lm, lty = 3)
+
+ept_lm <- lm(ept_rich_pred_mean ~ ept_rich_obs)
+plot(ept_rich_obs, ept_rich_pred_mean, xlim = c(0,10), ylim = c(0,10), axes = FALSE,
+     xlab  = "Observed EPT richness", ylab = "Predicted EPT richness")
+for(i in 1:nrow(samples)){
+  lines(rep(ept_rich_obs[i],2), ept_rich_pred_cls[,i])
+}
+axis(1); axis(2, las = 1); box(bty = 'l')
+title("B.", adj = 0)
+abline(0,1)
+abline(ept_lm, lty = 3)
+
+summary(ept_lm)$r.squared  # 0.70
+x1 <- samples$subsample_perc
+ept_lm1 <- lm(ept_rich_pred_mean ~ ept_rich_obs + x1)
+summary(ept_lm1)$r.squared # 0.70
+
+summary(tot_lm)$r.squared  # 0.35
+tot_lm1 <- lm(tot_rich_pred_mean ~ tot_rich_obs + x1)
+summary(tot_lm1)$r.squared # 0.45
 ```
