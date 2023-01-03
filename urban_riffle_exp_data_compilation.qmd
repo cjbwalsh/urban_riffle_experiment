@@ -92,6 +92,9 @@ old_taxonomy$Taxoncode[old_taxonomy$lowesttaxon == "Pseudosmittia"] <- "QDAF3100
 
 samples <- samples_mdb[grepl("suction sampler", tolower(samples_mdb$Collection.method)) & 
                            substr(samples_mdb$Sample.code,1,1) %in% 1:6,]
+# Error in date for trip 4 Monbulk samples Confirmed from lab sheets)
+samples$Date[samples$HE.trip == "4" & samples$Site.code == "MCC"] <- 
+  lubridate::date(samples$Date[samples$HE.trip == "4" & samples$Site.code == "MCC"]) + lubridate::years(1)
 # sum(samples$Sample.code %in% unique(biota$Sample.code))
 # sum(unique(biota$Sample.code) %in% samples$Sample.code)
 # sum(!unique(biota$Sample.code) %in% samples$Sample.code) # 376 samples
