@@ -114,6 +114,12 @@ legend("bottomleft", pch = 21, pt.bg = RColorBrewer::brewer.pal(3,"Dark2"),
 
 ### Macroinvertebrate assemblage sampling and identification
 
+Six of the sites were randomly chosen for local-scale habitat remediation works, with the other three remaining as controls (Fig. 1). 
+
+Artificial riffles were installed at these sites in May 1996. These consisted from 15-40 cm diameter rocks, specifically designed to provide an increase in both habitat heterogeneity and stability, and to mimic the typical practice used for stabilizing stream beds in Melbourne.
+
+Data were collected at the nine sites on six occasions; twice prior to the installation of riffles (Nov. 1995, Feb 1996), and four times after riffle installation (Nov. 1996, Feb. 1997, Dec. 1999, Feb. 2001). On each occasion, 4 macroinvertebrate sub-samples at each site were collected using a 0.04 m2 suction sample (Boulton 1985). 
+
 Four replicate sample units taken along the reach of each site on each date comprise a sample.
 
 Identified to lowest practicable taxonomic level (Details)

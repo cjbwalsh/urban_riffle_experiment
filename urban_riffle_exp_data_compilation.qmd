@@ -66,14 +66,32 @@ sites$location[match(site_order, sites$sitecode)] <-
     "Off Hallam Valley Trail, just downstream of Kensington Court, Hampton Park",
     "50m upstream of railway line- Dandenong Sth",
     "150 m downstream Huntingdale Rd- Chadstone, just downstream of Gillon Ct")
-sites <- sites[c(names(sites)[names(sites) != "geometry"],"geometry")]
+load("~/uomShare/wergStaff/ChrisW/git-data/mwstr/mwstr_v12_corrections/imp_subcs.rda")
+subcs <- sqlQuery(paste0("SELECT site, reach FROM subcs WHERE reach in ('",
+                      paste(substr(sites$sitecode,1,
+                                   nchar(sites$sitecode)-1), 
+                            collapse = "','"),"');"), "mwstr")
+sites$site <- subcs$site[match(substr(sites$sitecode,1,
+                                      nchar(sites$sitecode) -1),
+                               subcs$reach)]
+sites$ai <- imp_subcs$c_ai[match(sites$site, imp_subcs$site)]
+sites$mgae <- sf::st_coordinates(sites)[,1]
+sites$mgan <- sf::st_coordinates(sites)[,2]
+
+# Make non-spatial for saving in excel
+sf::st_geometry(sites) <- NULL
+
 metadata1 <- data.frame(table_name = "sites", field = names(sites),
-            definition = c("sitecode using convention of mwbugs and mwstr databases",
-                           "sitecode used in urban riffle experiment data collection",
-                           "Experimental treatment (riffle or control)",
-                           "stream name as used by mwstr database (mwstr capitalises str_nms)",
-                           "Location for access",
-                           "simple features geometry MGA 9455, crs = 28355"))
+            definition = c(
+              "sitecode using convention of mwbugs and mwstr databases",
+              "sitecode used in urban riffle experiment data collection",
+              "Experimental treatment (riffle or control)",
+              "stream name as used by mwstr database (mwstr capitalises str_nms)",
+              "Location for access",
+              "site code from mwstr database",
+      "Attenuated (effective) imperviousness Dec 2004, from mwstr database",
+               "Easting: Map Grid of Australia 1994 Zone 55 (crs = 28355)",
+               "Northing: Map Grid of Australia 1994 Zone 55 (crs = 28355)"))
 ```
 
 Prepare samples table.
@@ -130,8 +148,10 @@ for(i in 1:length(sample_groups)){
   samples$nsamples[substr(samples$old_samplecode,1,nchar(samples$old_samplecode)-2) == sample_groups[i]] <- sum(substr(samples$old_samplecode,1,nchar(samples$old_samplecode)-2) == sample_groups[i])
 }
 
-#### NEED TO CHECK subsample perc for THESE 4 on lab sheets
+# note that the four sample subsample_percs that are not integer percentages
 # samples[samples$subsample_perc %% 1 > 0,]
+# are ok.  They were cases of one subsample taken in the 100-cell subsampler, 
+# and the residue subsequentlyl spread across 100 cells and further subsampled.
 ```
 
 Finally, I compiled the depth and velocity data for the experiment to send to Angus for a revision of an earlier draft. The following is the explanation of the data that I sent Angus.
@@ -162,7 +182,7 @@ metadata2 <- data.frame(table_name = "depth_vel",
 Now to prepare other tables for consistency
 
 ```{r}
-#| eval: false
+#| eval: true
 
 biota$smpcode <- samples$smpcode[match(biota$Sample.code,samples$old_samplecode)]
 # Some changes to ensure match with taxa list in the old database
@@ -253,11 +273,11 @@ biota$taxoncode[substr(biota$taxoncode,1,4) %in% c("QD12","QD07","QD24","QD36","
 
 
 # Update from synomym table
-taxon_syn <- rbind(taxon_syn, tipulid_syn)
-codes_to_update <- unique(biota$shortcode[biota$shortcode %in% taxon_syn$old_taxoncode])
+taxon_syn <- rbind(taxon_syn, as.data.frame(tipulid_syn))
+codes_to_update <- unique(biota$taxoncode[biota$taxoncode %in% taxon_syn$old_taxoncode])
 for(i in 1:length(codes_to_update)){
   if(length(unique(taxon_syn$taxoncode[taxon_syn$old_taxoncode == codes_to_update[i]])) > 1) stop()
-  biota$taxoncode[biota$shortcode == codes_to_update[i]] <- unique(taxon_syn$taxoncode[taxon_syn$old_taxoncode == codes_to_update[i]])
+  biota$taxoncode[biota$taxoncode == codes_to_update[i]] <- unique(taxon_syn$taxoncode[taxon_syn$old_taxoncode == codes_to_update[i]])
 }
 
 biota$shortcode <- biota$taxoncode
@@ -311,18 +331,13 @@ taxon_tab <- codeTaxonomy(unique(biota$taxoncode))
 metadata <- rbind(metadata1, metadata_db[metadata_db$table_name %in% c("samples","biota","taxon_all"),],
                   metadata2)
 
+# Save data in its original form before adjusting for the multi-taxon model.
 WriteXLS::WriteXLS(list(sites = sites, samples = samples, biota = biota,
                         taxon_all = taxon_all, taxonomy = taxon_tab, 
                         depth_vel = depth_vel,
                         metadata = metadata),
    "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/urban_riffle_experiment_data.xlsx")
-sf::st_write(sites,dsn = "~/temp/urban_riffle_experiment_data.gpkg", layer = "sites")
-sf::st_write(samples,dsn = "~/temp/urban_riffle_experiment_data.gpkg", layer = "samples", append = TRUE)
-sf::st_write(biota,dsn = "~/temp/urban_riffle_experiment_data.gpkg", layer = "biota", append = TRUE)
-sf::st_write(taxon_all,dsn = "~/temp/urban_riffle_experiment_data.gpkg", layer = "taxon_all", append = TRUE)
-sf::st_write(taxon_tab,dsn = "~/temp/urban_riffle_experiment_data.gpkg", layer = "taxon_tab", append = TRUE)
-sf::st_write(metadata,dsn = "~/temp/urban_riffle_experiment_data.gpkg", layer = "metadata", append = TRUE)
-# system("cp ~/temp/urban_riffle_experiment_data.gpkg ~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment")
+
 ```
 
 I aim to make adjustments for two analytical purposes. First, I need to identify ambiguous taxa at the lowest taxonomic level, which should be omitted from the multi-taxon analysis of the experiment. In making this decision, I need to consider:
@@ -334,16 +349,6 @@ I aim to make adjustments for two analytical purposes. First, I need to identify
 Second, I need to retain all ambiguous records (flagging them as ambiguous by trailing 9s and by a U in the notes column). Note that I will leave trailing 9s on taxa that should be excluded from analysis (e.g. taxa too small to be reliably collected in 250 um mesh, such as nematodes and microcrustacea, or semi-aquatic taxa such as Collembola, Carabidae).
 
 ```{r}
-#connect to the gpkg database
-re_db <- RSQLite::dbConnect(RSQLite::SQLite(),
-          dbname="~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/urban_riffle_experiment_data.gpkg")
-sites <- sf::st_read(re_db, "sites")
-samples <- RSQLite::dbReadTable(re_db,"samples")
-biota <- RSQLite::dbReadTable(re_db,"biota")
-taxonomy <- RSQLite::dbReadTable(re_db,"taxon_tab")
-taxon_all <- RSQLite::dbReadTable(re_db,"taxon_all")
-metadata <- RSQLite::dbReadTable(re_db,"metadata")
-
 #First aggregate to achieve unique shortcode-smpcode combinations
 biota <- aggregate(biota["count"], 
                          by = list(smpcode = biota$smpcode, 
@@ -368,7 +373,6 @@ for(i in gast_unid){
   biota$count[substr(biota$shortcode,1,4) %in% c("KG05","KG08","KG02") & biota$smpcode == sampi] <- round(biotai$count * biota$count[i]/sum(biotai$count)) + biota$count[substr(biota$shortcode,1,4) %in% c("KG05","KG08","KG02") & biota$smpcode == sampi]
 }
 biota <- biota[biota$taxoncode != "KG999999",]
-
 
 # Elmidae (Unident.) - constituting in all cases <~50% of Elmids in each sample - mainly in Monbulk Creek samples.  Distribute as per Gastropods
 qc34_unid <- which(biota$taxoncode == "QC349999")
@@ -454,17 +458,11 @@ biota$taxoncode[substr(biota$taxoncode,1,4) == "QT06"] <- "QT06"
 biota$shortcode[substr(biota$taxoncode,1,4) == "QT25"] <- "QT25"
 biota$taxoncode[substr(biota$taxoncode,1,4) == "QT25"] <- "QT25"
 
-# Tables for OSF
-sites$mgae <- sf::st_coordinates(sites)[,1]
-sites$mgan <- sf::st_coordinates(sites)[,2]
-sf::st_geometry(sites) <- NULL
+# biota$count[2842] %% 1 inexplicably = 1 (for all other counts it = 0). Fix by...
+biota$count <- as.integer(biota$count)
 
 biota$taxon <- taxon_all$taxon[match(biota$shortcode, taxon_all$shortcode)]
 biota <- biota[names(biota) != "naive"]
-
-WriteXLS::WriteXLS(list(sites = sites, samples = samples, biota = biota),
-                   "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/data_for_model.xlsx")
-
 
 biota_ct <- ct(biota$smpcode, biota$shortcode, biota$count/biota$s)
 biota_ct <- data.frame(sample = row.names(biota_ct),
@@ -474,10 +472,35 @@ biota_ct <- data.frame(sample = row.names(biota_ct),
 taxa <- data.frame(taxoncode = names(biota_ct), 
                    taxon = taxon_all$taxon[match(names(biota_ct),taxon_all$shortcode)])
 taxa$taxon[taxa$taxoncode == "QD08"] <- "Pediciidae"
-WriteXLS::WriteXLS(list(biota = biota_ct, taxa = taxa), "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/biota_ct.xlsx")
-```
 
-Need to give some thought as to the usefulness of the substrates table (seems to only apply to trips 1-3
+higher_taxa <- read.csv("~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/higher_taxon_codes.csv")
+higher_taxa <- higher_taxa[!higher_taxa$higher_taxon %in% c("I","J","K"),]
+higher_taxa <- rbind(higher_taxa, data.frame(shortcode = c("IB","II","IH"), 
+                                             taxon = c("Cnidaria","Nematoda","Nemertea"),
+                                             higher_taxon = c("I","J","K")))
+taxa$higher_taxon <- higher_taxa$higher_taxon[match(substr(taxa$taxoncode,1,2),higher_taxa$shortcode)]
+taxa$higher_taxon[substr(taxa$taxoncode,1,1) == "L"] <- "A"
+taxa$higher_taxon[substr(taxa$taxoncode,1,1) == "O"] <- "Z"
+
+taxa$italic <- 0
+taxa$italic[taxa$taxon %in% 
+              taxon_all$taxon[taxon_all$table %in% c("taxon_spp", "taxon_gen")]] <- 1
+taxa <- taxa[-(1:2),]
+
+subcs <- sqlQuery(paste0("SELECT site, reach FROM subcs WHERE reach IN ('",
+                         paste(substr(sites$sitecode,1,nchar(sites$sitecode) -1),
+                               collapse = "', '"), "');"), "mwstr")
+
+metadata <- rbind(metadata, 
+                  data.frame(table_name = "taxa",field = names(taxa),
+                             definition = c("taxon code (=shortcode, links to tables taxon_all, biota and biota_ct)", "Full taxon name", "higher taxon code (links to table higher_taxa", "binary flag identifying species and generic names that require italicization")),
+                  data.frame(table_name = "higher_taxa", field = names(higher_taxa),
+                             definition = c("1- or 2-character high-level taxon code",
+                                            "high-level taxonomic group", "single-character code")))
+
+WriteXLS::WriteXLS(list(sites = sites, samples = samples, biota = biota, taxon_all = taxon_all, taxa = taxa, higher_taxa = higher_taxa, metadata = metadata),
+                   "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/data_for_model.xlsx")
+```
 
 ### Text from HE prelim findings.doc
 

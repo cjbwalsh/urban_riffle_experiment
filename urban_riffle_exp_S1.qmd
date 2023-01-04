@@ -1,0 +1,243 @@
+---
+title: "Urban riffle experiment: Supplementary Material S1"
+author: "Christopher J Walsh, J. Angus Webb, et al."
+format: html
+editor: visual
+editor_options: 
+  chunk_output_type: console
+bibliography: references.bib
+---
+
+## Appendix S1. Methods and code for fitting and assessing the models.
+
+The first part of this document details the specifications and code used to estimate models of taxon abundance and of depth, velocity, organic matter and algal mass in the main paper. The second part assesses the model fits.
+
+### 1. Model specification 
+
+We estimated the posterior distributions of parameters in the multi-taxon model of taxon abundances and the models of depth, velocity and organic matter and algal mass in the sample units using the Markov chain Monte-Carlo (MCMC) sampler of Stan [@carpenter_etal_2017], calling Stan from R using the library `cmdstanr` [@gabry_cesnovar_2022].
+
+$\beta$ parameters (of fixed effects) were formulated as random effects drawn from community-level hyper-distributions with the mean parameters specified as diffuse normal distributions (mean 0, standard deviation---sd---5) and the parameters for each species drawn from a multivariate normal distribution with a covariance matrix that describes the residual associations among species. The hyperprior correlation matrix ($\Omega$) had an LKJ prior with shape 2, and scale with an exponentially distributed prior with rate 1 [@stan_dev_team_2022] . The random effect parameters for site ($\theta_{si}$), sample ($\theta_{sa}$) and sampling occasion ($\theta_{t}$) had weakly informative normal priors with mean 0 and sd 2. The parameter modelling random error among sample units ($\epsilon$) had a normal prior with mean 0, and a normally distributed hyper-prior with mean 1, sd 1. The dispersion parameter ($\phi$) of the negative binomial distribution for each taxon had a normal prior (mean 1, sd 1).
+
+We drew inference from 5,400 posterior samples taken from 4 unthinned chains, discarding the first 1,000 samples of each chain. This number of samples was sufficient to ensure bulk and tail effective sample sizes of \>100 per chain for all parameters. We diagnosed convergence by visually inspecting the MCMC chains for adequate mixing and stationarity, and ensured that the diagnostic tests for zero-divergent transitions, Gelman-Rubin statistic ($\hat{R}$) \< 1.1, Bayesian Fraction of Missing Information \> 0.3, and zero cases of saturated tree-depth were satisfied.
+
+The multi-taxon model `nbinom_me_randomsite_fixedmatrix-baci.stan` is reproduced below, with annotations defining variables and parameters, and explaining model components. Below that is the code used to load the data, run, check and evaluate the model, and produce output objects used to produce figures in the manuscript. Note that the multi-taxon model took 2.5 h to run on a 2.6GHz system on 4 parallel cores, and compilation of the parameter draws required \~50 Gb RAM.
+
+#### The multi-taxon model: Stan code
+
+```{r}
+#| echo: true
+#| eval: false
+
+data {
+  int<lower=0> n_obs;         // Number of observations (sample-units, s-u)
+  int<lower=1> n_taxa;        // Number of taxa
+  int<lower=1> n_site;        // Number of sites
+  int<lower=1> n_sample;      // Number of samples
+  int<lower=1> n_pred;        // Number of predictor variables
+  int<lower=1> n_t;           // Number of sampling occasions
+  matrix[n_obs,n_pred] u;     // group predictors (model matrix) 
+  array[n_obs,n_taxa] int c;  // Counts of species in each subsample
+  array[n_obs,n_taxa] real s; // Subsample proportion for each observation
+  array[n_obs] int site_no;   // Site number (integer)
+  array[n_obs] int samp_no;   // Sample number (integer)
+  array[n_obs] int t;         // sampling occasion number (integer)
+}
+parameters {
+  vector[n_pred] mu_gamma;
+  matrix[n_pred,n_taxa] gamma;           // beta parameters of fixed effects in u
+  matrix[n_site,n_taxa] a_si;            // coefficient of random site effect
+  matrix[n_sample,n_taxa] a_sa;          // coefficient of random sample effect
+  matrix[n_t,n_taxa] a_t;     // coefficient of random sampling occasion effect
+  matrix<upper=5>[n_obs,n_taxa] epi_raw; // raw s-u error term (upper constraint for stability)
+  vector<lower=0>[n_taxa] phi;           // dispersion parameter for each taxon
+  vector<lower=0>[n_taxa] sd_lam;        // sd of random s-u error
+  corr_matrix[n_pred] Omega;             // Hyperprior correlation matrix among taxa
+  vector<lower=0>[n_pred] tau;           // Scale for correlation matrix
+}
+transformed parameters {
+  matrix[n_obs,n_taxa] log_lambda;     // Log total count
+  matrix[n_obs,n_taxa] epi;            // Abundance noise
+   for(i in 1:n_obs){
+    for(j in 1:n_taxa){
+      epi[i,j] =  sd_lam[j] * epi_raw[i,j];  //stable reparameterization for epi
+  }
+  }
+  for(i in 1:n_obs){
+     for(j in 1:n_taxa){
+       //The linear model
+      log_lambda[i,j] = a_si[site_no[i],j] +  a_sa[samp_no[i],j] +  
+                        a_si[t[i],j] +  u[i,] * gamma[,j] + epi[i,j]; 
+      }
+      }
+}
+model {
+  // Priors
+   mu_gamma ~ normal(0 , 5);
+   to_vector(a_si) ~ normal(0,2);
+   to_vector(a_sa) ~ normal(0,2);
+   to_vector(a_t) ~ normal(0,2);
+   to_vector(epi_raw) ~ normal(0, 1);
+   sd_lam ~ normal(1, 1);
+   phi ~ normal(1,1);
+   tau ~ exponential(1);
+   Omega ~ lkj_corr( 2 );  
+   
+   // estimation of correlated beta parameters (assembled in matrix gamma)
+   for(i in 1:n_taxa){
+   target += multi_normal_prec_lpdf(gamma[,i] | mu_gamma , quad_form_diag(Omega , tau) );
+     }
+  // Likelihood
+  for (i in 1 : n_obs) {
+    for(j in 1:n_taxa){
+  // Note this parameterization adds the marginal log-binomial-probability 
+  // resulting from subsampling error to the marginal negative-binomial 
+  // probability of the linear model.  It is equivalent to a slower (x ~50!)
+  // parameterization modelling the marginal binomial and negative-binomial
+  // probabilities separately, by looping through all feasible total counts
+  // given a each count and subsample proportion.
+    target += neg_binomial_2_log_lpmf(c[i,j] | log_lambda[i,j] + log(s[i,j]), phi[j]);
+   }
+  }
+}
+
+generated quantities {
+  // log-likelihood only used for model comparisons during model development.
+  // The most complex model considered has been used, so model comparisons not reported
+  array[n_obs,n_taxa] real log_lik;  
+ for (i in 1 : n_obs) {
+   for(j in 1 : n_taxa){
+   log_lik[i,j] = neg_binomial_2_log_lpmf(c[i,j] | log_lambda[i,j] + log(s[i,j]), phi[j]);
+ }
+ }
+}
+
+```
+
+### Assembling data and model sampling: R code
+
+
+```{r}
+#| echo: true
+#| message: false
+#| error: false
+
+source("misc_functions.R")
+# load and check cmdstanr package
+library(cmdstanr)
+check_cmdstan_toolchain(fix = TRUE, quiet = TRUE)
+# Set random seed to ensure reproducible results
+rand_seed = 9430572
+
+## Load data: ultimately from OSF repository
+# library(osfr); library(dplyr)
+# if(!"data" %in% dir()){system("mkdir data")}
+# if(!"wq_data_compiled.xlsx" %in% dir("data")){
+# wq_files <- osf_retrieve_node("4ywvq") %>% osf_ls_files()
+# osf_download(wq_files[wq_files$name == "wq_data_compiled.xlsx",], path = "data")
+# }
+# data_for_model.xlsx compiled in urban_riffle_exp_data_compilation.R
+dat_file <- 
+"~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/data_for_model.xlsx"
+sites <- data.frame(readxl::read_excel(dat_file, sheet = "sites"), 
+                    stringsAsFactors = FALSE)
+samples <- data.frame(readxl::read_excel(dat_files, sheet = "samples"), 
+                      stringsAsFactors = FALSE)
+biota <- data.frame(readxl::read_excel(dat_files, sheet = "biota"), 
+                    stringsAsFactors = FALSE)
+taxa <- data.frame(readxl::read_excel(dat_files, sheet = "taxa"), 
+                   stringsAsFactors = FALSE))
+
+samples$seg <- substr(samples$old_samplecode,nchar(samples$old_samplecode)-1,
+                      nchar(samples$old_samplecode)-1)
+# The dataset contains samples from the segments upstream and downstream of the 
+# riffle (putative or real) in each site for trip 1-4 (out of 6).  Given the 
+# small effects in the 'riffle' segments (M), theu U and L segments were not 
+# included in the analysis.
+samples <- samples[samples$seg == "M",]
+# Reduce biota table to match reduced samples table
+biota <- biota[biota$smpcode %in% samples$smpcode,]
+# Convert long-form biota table into a wide taxon-by-sample table of counts 
+# in subsamples
+biota_ct <- as.data.frame(ct(biota$smpcode, biota$shortcode, biota$count))
+biota_ct <- biota_ct[match(samples$smpcode,row.names(biota_ct)),]
+# Create a table of the same dimensions as biota_ct, with the subsample proportion
+# for each observation (for coarsepick specimens, subsample ppn = 1)
+ss_ct <- biota_ct
+for(i in 1:nrow(samples)){
+  ss_ct[i,] <- samples$subsample_perc[i]/100
+}
+for(i in which(biota$coarsepick == 1)){
+  ss_ct[row.names(ss_ct) == biota$smpcode[i], biota$shortcode[i]] <- 1
+}
+
+# Assemble random predictors (site_no, sample_no, t)
+sites <- sites[order(sites$exp_treatment,sites$ai),]
+sites$site_no <- 1:nrow(sites)
+samples$site_no <- sites$site_no[match(samples$sitecode,sites$sitecode)]
+samples$sample <- substr(samples$old_samplecode,1,nchar(samples$old_samplecode)-1)
+sample_nos <- data.frame(sample = unique(samples$sample))
+sample_nos$sample_no <- 1:nrow(sample_nos)
+samples$sample_no <- sample_nos$sample_no[match(samples$sample, sample_nos$sample)]
+samples$t <- as.numeric(substr(samples$old_samplecode, 1,1))
+
+# Assemble fixed predictors (ba, ci, baci, i, bacii, spring) into a matrix, u
+samples$ba <- as.numeric(as.numeric(substr(samples$old_samplecode,1,1))  > 2) 
+samples$ba[as.numeric(substr(samples$old_samplecode,1,1)) > 4] <- 5
+# 0 = before, 1 = in first year, 5 = 5 or 6 years later  (then scaled)
+ba_scaled <- scale(ba)
+samples$ba <- as.vector(ba_scaled)
+samples$ci <- as.numeric(sites$exp_treatment[match(samples$sitecode,sites$sitecode)] == "riffle") 
+# 0 = control, 1 = riffle
+samples$baci <- samples$ba*samples$ci
+samples$ai <- sites$ai[match(samples$sitecode, sites$sitecode)]
+i_scaled <- scale(log10(samples$ai*100 + 0.1))
+samples$i <- as.vector(i_scaled)
+samples$bai <- samples$ba * samples$i
+samples$bacii <- samples$baci * samples$i
+samples$spring <- as.integer(substr(samples$old_samplecode,1,1) %in% c(1,3,5))
+u <- model.matrix(~ ba + ci + baci + i + bacii + spring, data = samples)
+
+# Data list for Stan
+sdata <- list(n_obs = nrow(biota_ct),
+              n_taxa = ncol(biota_ct),
+              n_site = nrow(sites),
+              n_sample = nrow(sample_nos),
+              n_pred = ncol(u),
+              n_t = max(samples$t),
+              site_no = samples$site_no,
+              samp_no = samples$sample_no,
+              t = samples$t,
+              u = u,
+              c = as.matrix(biota_ct),
+              s = as.matrix(ss_ct)
+)
+
+# Check model is up-to-date: if not, compile.
+mod <- cmdstan_model("nbinom_me_randomsite_fixedmatrix_baci.stan", pedantic = TRUE) 
+
+ni <- 4000; nt <- 4; nb <- 1000; nc <- 4
+stanfit_i <- mod$sample(data = sdata,
+                        seed = rand_seed, chains = nc,
+                        parallel_chains = nc, iter_warmup = nb,
+                        iter_sampling = ni - nb, refresh = 200)
+# 5000 iters 2.5 h
+# #  save csv files rather than the model object to use less RAM
+stanfit_i$save_output_files(
+  dir = "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/",
+  basename = "fit_nbinom_bacii_4400iter", timestamp = FALSE, random = FALSE)
+stanfit_i$sampler_diagnostics()
+saveRDS(stanfit_i, file = "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/fit_nbinom_bacii_4400iter.rds")
+stanfit_i$diagnostic_summary()
+# # The above three steps required < 500 Mb RAM
+summ <- stanfit_i$summary() # This took > 2h and needed ~80 Gb Ram
+min(summ$ess_bulk,na.rm=TRUE) # 466 from 4400
+min(summ$ess_tail,na.rm=TRUE) # 1020
+# # all diagnostic statistics fine.
+
+# See loo comparison in nbinom_b12a_cii_2000iter_ll.R
+# fit_nbinom_ba012_cii_2000iter_ll.rds (ba coded as 0, 1, 2) and
+# fit_nbinom_ba012_cii_2000iter_ll.rds (ba coded as 0,2,3,8,11) were equally plausible.
+# fit_nbinom_ba015... a better representation of the distance of 5/6 years later from samples taken in year 1.
+# Should I compare 0,0,1 with 0,1,1, with 0,12?
+
+```
