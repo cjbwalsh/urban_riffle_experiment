@@ -11,7 +11,7 @@ This document has been initially drafted by Chris Walsh as a primer for Dana Dek
 
 ## Loading data
 
-I saved the data from an habitat experiment in 9 streams in eastern Melbourne into a spatial lite database (.gpkg) file (see `urban_riffle_exp_data_compilation.qmd`). gpkg format permits a mix of spatial and non-spatial tables. For non-spatial tables, it's easier to stick with excel or csv files.
+I saved the data from an habitat experiment in 9 streams in eastern Melbourne into an excel worksheet (see `urban_riffle_exp_data_compilation.qmd`), which stores the 6 tables read in the code chunk below. You'll see there is an extra step to turn the sites table into a spatial (simple features, sf) table.
 
 ```{r}
 #| echo: true
@@ -23,14 +23,21 @@ source("https://tools.thewerg.unimelb.edu.au/documents/mwstr/mwstr_functions.R")
 source("https://tools.thewerg.unimelb.edu.au/data/mwbugs/bugDatabaseFunctions.R")
 
 #connect to the gpkg database
-re_db <- dbConnect(SQLite(),
-          dbname="~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/urban_riffle_experiment_data.gpkg")
-sites <- sf::st_read(re_db, "sites")
-samples <- dbReadTable(re_db,"samples")
-biota <- dbReadTable(re_db,"biota")
-taxonomy <- dbReadTable(re_db,"taxon_tab")
-taxon_all <- dbReadTable(re_db,"taxon_all")
-metadata <- dbReadTable(re_db,"metadata")
+dat_file <- 
+"~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/urban_riffle_experiment_data.xlsx"
+sites <- data.frame(readxl::read_excel(dat_file, sheet = "sites"), 
+                    stringsAsFactors = FALSE)
+sites <- sf::st_as_sf(sites, coords = c("mgae","mgan"), crs = 28355)
+samples <- data.frame(readxl::read_excel(dat_file, sheet = "samples"), 
+                    stringsAsFactors = FALSE)
+biota <- data.frame(readxl::read_excel(dat_file, sheet = "biota"), 
+                    stringsAsFactors = FALSE)
+taxonomy <- data.frame(readxl::read_excel(dat_file, sheet = "taxonomy"), 
+                    stringsAsFactors = FALSE)
+taxon_all <- data.frame(readxl::read_excel(dat_file, sheet = "taxon_all"), 
+                    stringsAsFactors = FALSE)
+metadata <- data.frame(readxl::read_excel(dat_file, sheet = "metadata"), 
+                    stringsAsFactors = FALSE)
 
 ```
 
