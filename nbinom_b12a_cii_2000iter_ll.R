@@ -110,4 +110,4 @@ baci_compare <- loo::loo_compare(mod_b12$loo(), mod_b1234$loo(), mod_ba012$loo()
 # model1 -18.1       8.2  
 # model2 -18.1       8.2  
 
-go with the simpler ba012: fit_nbinom_ba012_cii_2000iter_ll.rds
+

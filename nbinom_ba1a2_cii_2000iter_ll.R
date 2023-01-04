@@ -44,10 +44,12 @@ for(i in 1:nrow(samples)){
 for(i in which(biota$coarsepick == 1)){
   ss_ct[row.names(ss_ct) == biota$smpcode[i], biota$shortcode[i]] <- 1
 }
-samples$ba <- as.numeric(as.numeric(substr(samples$old_samplecode,1,1))  > 4) 
-# 0 = before, 1 = after
+samples$a1 <- as.numeric(as.numeric(substr(samples$old_samplecode,1,1)) %in% c(3,4)) 
+samples$a2 <- as.numeric(as.numeric(substr(samples$old_samplecode,1,1)) %in% c(5,6)) 
+# a1 and a2 are the two after periods treated as categories with b as a reference
 samples$ci <- as.numeric(sites$exp_treatment[match(samples$sitecode,sites$sitecode)] == "riffle") #0 = control, 1 = riffle
-samples$baci <- samples$ba*samples$ci
+samples$ba1ci <- samples$a1*samples$ci
+samples$ba2ci <- samples$a2*samples$ci
 samples$ai <- sites$ai[match(samples$sitecode, sites$sitecode)]
 i_scaled <- scale(log10(samples$ai*100 + 0.1))
 samples$i <- as.vector(i_scaled)
@@ -59,10 +61,10 @@ sample_nos <- data.frame(sample = unique(samples$sample))
 sample_nos$sample_no <- 1:nrow(sample_nos)
 samples$sample_no <- sample_nos$sample_no[match(samples$sample, sample_nos$sample)]
 samples$t <- as.numeric(substr(samples$old_samplecode, 1,1))
-samples$bai <- samples$ba * samples$i
-samples$bacii <- samples$baci * samples$i
+samples$ba1cii <- samples$ba1ci * samples$i
+samples$ba2cii <- samples$ba2ci * samples$i
 samples$spring <- as.integer(substr(samples$old_samplecode,1,1) %in% c(1,3,5))
-u <- model.matrix(~ ba + ci + baci + i + bacii + spring, data = samples)
+u <- model.matrix(~ a1 + a2 + ci + ba1ci + ba2ci + i + ba1cii + ba2cii + spring, data = samples)
 sdata <- list(n_obs = nrow(biota_ct),
               n_taxa = ncol(biota_ct),
               n_site = nrow(sites),
@@ -86,28 +88,13 @@ stanfit_i <- mod$sample(data = sdata,
 #  save csv files rather than the model object to use less RAM
 stanfit_i$save_output_files(
   dir = "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/",
-  basename = "fit_nbinom_ba001_cii_2000iter_ll", timestamp = FALSE, random = FALSE)
+  basename = "fit_nbinom_ba1a2_cii_2000iter_ll", timestamp = FALSE, random = FALSE)
 stanfit_i$sampler_diagnostics()
-saveRDS(stanfit_i, file = "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/fit_nbinom_ba001_cii_2000iter_ll.rds")
+saveRDS(stanfit_i, file = "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/fit_nbinom_ba1a2_cii_2000iter_ll.rds")
 stanfit_i$diagnostic_summary()
 
 # The above three steps required < 500 Mb RAM
 summ <- stanfit_i$summary() # This took > 2h and needed ~80 Gb Ram
-min(summ$ess_bulk,na.rm=TRUE) # 43
-min(summ$ess_tail,na.rm=TRUE) # 103
+min(summ$ess_bulk,na.rm=TRUE) # 61 from 1000 iterations
+min(summ$ess_tail,na.rm=TRUE) # 120
 # all diagnostic statistics fine.
-
-mod_b12 <- stanfit_i
-mod_b1234 <- readRDS("~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/fit_nbinom_b12a_cii_2000iter_ll.rds")
-mod_ba012 <- readRDS("~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/fit_nbinom_ba012_cii_2000iter_ll.rds")
-mod_ba23811 <- readRDS("~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/fit_nbinom_ba23811_cii_2000iter_ll.rds")
-
-baci_compare <- loo::loo_compare(mod_b12$loo(), mod_b1234$loo(), mod_ba012$loo(),mod_ba23811$loo())
-
-# elpd_diff se_diff
-# model4   0.0       0.0  
-# model3  -2.9       7.6  
-# model1 -18.1       8.2  
-# model2 -18.1       8.2  
-
-go with the simpler ba012: fit_nbinom_ba012_cii_2000iter_ll.rds

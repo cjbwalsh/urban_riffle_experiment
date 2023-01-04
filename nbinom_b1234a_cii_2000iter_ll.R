@@ -45,7 +45,7 @@ for(i in which(biota$coarsepick == 1)){
   ss_ct[row.names(ss_ct) == biota$smpcode[i], biota$shortcode[i]] <- 1
 }
 samples$ba <- as.numeric(as.numeric(substr(samples$old_samplecode,1,1))  > 4) 
-# 0 = before, 1 = after
+# 0 = before (trips 1,2,3,4), 1 = after (trips 5,6)
 samples$ci <- as.numeric(sites$exp_treatment[match(samples$sitecode,sites$sitecode)] == "riffle") #0 = control, 1 = riffle
 samples$baci <- samples$ba*samples$ci
 samples$ai <- sites$ai[match(samples$sitecode, sites$sitecode)]
