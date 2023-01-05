@@ -97,17 +97,19 @@ min(summ$ess_bulk,na.rm=TRUE) # 43
 min(summ$ess_tail,na.rm=TRUE) # 103
 # all diagnostic statistics fine.
 
-mod_b12 <- stanfit_i
-mod_b1234 <- readRDS("~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/fit_nbinom_b12a_cii_2000iter_ll.rds")
+mod_ba1a2 <- readRDS("~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/fit_nbinom_ba1a2_cii_2000iter_ll.rds")
+mod_b0a1 <- readRDS("~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/fit_nbinom_b12a_cii_2000iter_ll.rds")
 mod_ba012 <- readRDS("~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/fit_nbinom_ba012_cii_2000iter_ll.rds")
 mod_ba23811 <- readRDS("~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/fit_nbinom_ba23811_cii_2000iter_ll.rds")
 
-baci_compare <- loo::loo_compare(mod_b12$loo(), mod_b1234$loo(), mod_ba012$loo(),mod_ba23811$loo())
-
-# elpd_diff se_diff
-# model4   0.0       0.0  
-# model3  -2.9       7.6  
-# model1 -18.1       8.2  
-# model2 -18.1       8.2  
+baci_compare <- loo::loo_compare(mod_ba1a2$loo(), mod_b0a1$loo(), mod_ba012$loo(),mod_ba23811$loo())
+baci_compare
+# Models 1, 2, and 4 are equally plausible, but model 1 makes the most sense, setting no expectation of a 
+# linear trend from before to after 1 to after 2.
+#         elpd_diff se_diff
+# model1   0.0       0.0  
+# model4  -7.8      21.3  
+# model2 -25.9      21.0  
+# model3 -89.6      21.5  
 
 
