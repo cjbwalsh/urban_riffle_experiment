@@ -79,12 +79,12 @@ sdata <- list(n_obs = nrow(biota_ct),
               s = as.matrix(ss_ct)
 )
 mod <- cmdstan_model("nbinom_me_randomsite_fixedmatrix_baci.stan", pedantic = TRUE) 
-ni <- 2000; nt <- 4; nb <- 1000; nc <- 4
+ni <- 4000; nt <- 4; nb <- 1000; nc <- 4
 stanfit_i <- mod$sample(data = sdata,
                         seed = rand_seed, chains = nc,
                         parallel_chains = nc, iter_warmup = nb,
                         iter_sampling = ni - nb, refresh = 200)
-# 4400 iters 2.5 h
+# 2000 iters 1 h
 #  save csv files rather than the model object to use less RAM
 stanfit_i$save_output_files(
   dir = "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/",

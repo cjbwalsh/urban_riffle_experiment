@@ -126,7 +126,7 @@ source("misc_functions.R")
 library(cmdstanr)
 check_cmdstan_toolchain(fix = TRUE, quiet = TRUE)
 # Set random seed to ensure reproducible results
-rand_seed = 9430572
+rand_seed = 9430571 #2
 
 ## Load data: ultimately from OSF repository
 # library(osfr); library(dplyr)
@@ -140,12 +140,14 @@ dat_file <-
 "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/data_for_model.xlsx"
 sites <- data.frame(readxl::read_excel(dat_file, sheet = "sites"), 
                     stringsAsFactors = FALSE)
-samples <- data.frame(readxl::read_excel(dat_files, sheet = "samples"), 
+samples <- data.frame(readxl::read_excel(dat_file, sheet = "samples"), 
                       stringsAsFactors = FALSE)
-biota <- data.frame(readxl::read_excel(dat_files, sheet = "biota"), 
+biota <- data.frame(readxl::read_excel(dat_file, sheet = "biota"), 
                     stringsAsFactors = FALSE)
-taxa <- data.frame(readxl::read_excel(dat_files, sheet = "taxa"), 
-                   stringsAsFactors = FALSE))
+taxa <- data.frame(readxl::read_excel(dat_file, sheet = "taxa"), 
+                   stringsAsFactors = FALSE)
+higher_taxa <- data.frame(readxl::read_excel(dat_file, sheet = "higher_taxa"), 
+                   stringsAsFactors = FALSE)
 
 samples$seg <- substr(samples$old_samplecode,nchar(samples$old_samplecode)-1,
                       nchar(samples$old_samplecode)-1)
@@ -180,22 +182,24 @@ sample_nos$sample_no <- 1:nrow(sample_nos)
 samples$sample_no <- sample_nos$sample_no[match(samples$sample, sample_nos$sample)]
 samples$t <- as.numeric(substr(samples$old_samplecode, 1,1))
 
-# Assemble fixed predictors (ba, ci, baci, i, bacii, spring) into a matrix, u
-samples$ba <- as.numeric(as.numeric(substr(samples$old_samplecode,1,1))  > 2) 
-samples$ba[as.numeric(substr(samples$old_samplecode,1,1)) > 4] <- 5
-# 0 = before, 1 = in first year, 5 = 5 or 6 years later  (then scaled)
-ba_scaled <- scale(ba)
-samples$ba <- as.vector(ba_scaled)
-samples$ci <- as.numeric(sites$exp_treatment[match(samples$sitecode,sites$sitecode)] == "riffle") 
-# 0 = control, 1 = riffle
-samples$baci <- samples$ba*samples$ci
+# Assemble fixed predictors (a1,a2, ci, ba1ci, ba2ci, i, ba1cii, ba2cii, spring) into a matrix, u
+samples$ba <- as.numeric(as.numeric(substr(samples$old_samplecode,1,1)) %in% c(3,4)) 
+samples$ba[as.numeric(as.numeric(substr(samples$old_samplecode,1,1))) %in% c(5,6)] <- 2
+samples$ba <- factor(samples$ba)
+samples$a1 <- as.numeric(as.numeric(substr(samples$old_samplecode,1,1)) %in% c(3,4)) 
+samples$a2 <- as.numeric(as.numeric(substr(samples$old_samplecode,1,1)) %in% c(5,6)) 
+# a1 and a2 are the two after periods treated as categories with b as a reference
+samples$ci <- as.numeric(sites$exp_treatment[match(samples$sitecode,sites$sitecode)] == "riffle") #0 = control, 1 = riffle
+samples$ba1ci <- samples$a1*samples$ci
+samples$ba2ci <- samples$a2*samples$ci
 samples$ai <- sites$ai[match(samples$sitecode, sites$sitecode)]
 i_scaled <- scale(log10(samples$ai*100 + 0.1))
 samples$i <- as.vector(i_scaled)
-samples$bai <- samples$ba * samples$i
-samples$bacii <- samples$baci * samples$i
+samples$ba1cii <- samples$ba1ci * samples$i
+samples$ba2cii <- samples$ba2ci * samples$i
 samples$spring <- as.integer(substr(samples$old_samplecode,1,1) %in% c(1,3,5))
-u <- model.matrix(~ ba + ci + baci + i + bacii + spring, data = samples)
+u <- model.matrix(~ a1 + a2 + ci + ba1ci + ba2ci + i + ba1cii + ba2cii + spring, data = samples)
+u <- model.matrix(~ ba + ci + ba:ci + i + ba:ci:i + spring, data = samples)
 
 # Data list for Stan
 sdata <- list(n_obs = nrow(biota_ct),
@@ -215,23 +219,23 @@ sdata <- list(n_obs = nrow(biota_ct),
 # Check model is up-to-date: if not, compile.
 mod <- cmdstan_model("nbinom_me_randomsite_fixedmatrix_baci.stan", pedantic = TRUE) 
 
-ni <- 4000; nt <- 4; nb <- 1000; nc <- 4
+ni <- 4400; nt <- 4; nb <- 1000; nc <- 4
 stanfit_i <- mod$sample(data = sdata,
                         seed = rand_seed, chains = nc,
                         parallel_chains = nc, iter_warmup = nb,
                         iter_sampling = ni - nb, refresh = 200)
-# 5000 iters 2.5 h
+# 4000 iters 3 h
 # #  save csv files rather than the model object to use less RAM
 stanfit_i$save_output_files(
   dir = "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/",
-  basename = "fit_nbinom_bacii_4400iter", timestamp = FALSE, random = FALSE)
+  basename = "fit_nbinom_ba1a2cii_4000iter", timestamp = FALSE, random = FALSE)
 stanfit_i$sampler_diagnostics()
-saveRDS(stanfit_i, file = "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/fit_nbinom_bacii_4400iter.rds")
+saveRDS(stanfit_i, file = "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/fit_nbinom_ba1a2cii_4000iter.rds")
 stanfit_i$diagnostic_summary()
 # # The above three steps required < 500 Mb RAM
 summ <- stanfit_i$summary() # This took > 2h and needed ~80 Gb Ram
-min(summ$ess_bulk,na.rm=TRUE) # 466 from 4400
-min(summ$ess_tail,na.rm=TRUE) # 1020
+min(summ$ess_bulk,na.rm=TRUE) # 335 from 4400
+min(summ$ess_tail,na.rm=TRUE) # 492
 # # all diagnostic statistics fine.
 
 # See loo comparison in nbinom_b12a_cii_2000iter_ll.R
@@ -240,4 +244,47 @@ min(summ$ess_tail,na.rm=TRUE) # 1020
 # fit_nbinom_ba015... a better representation of the distance of 5/6 years later from samples taken in year 1.
 # Should I compare 0,0,1 with 0,1,1, with 0,12?
 
+m_nb_draws <- as.data.frame(stanfit_i$draws(format = "df", variables = c("a_si","a_sa","a_t","gamma","phi")))
+}) 
+save(m_nb_draws, file = "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/nbinom_ba1a2cii_4000iter_param_draws.rda")
+```
+
+```{r}
+
+params <- c("b_a1", "b_a2", "b_ci","b_ba1ci","b_ba2ci","b_i","b_ba1cii", "b_ba2cii", "b_spring")
+df_empty <- data.frame(shortcode = NA, mean = NA, lo95 = NA, lo90 = NA, median = NA, hi90 = NA, hi95 = NA)[0,]
+param_summs <- list()
+for(i in 1:length(params)){
+  drawsi <- m_nb_draws[substr(names(m_nb_draws),1,ifelse(i < 9, 7, 8)) == paste0("gamma[", i + 1) & 
+                          grepl("gamma", names(m_nb_draws))]
+  qlsi <- as.data.frame(t(apply(drawsi,2, FUN = quantile, 
+                                probs = c(0.025,0.05,0.125,0.5,0.875,0.95,0.975))))
+  names(qlsi) = c("lo95","lo90","lo75","median","hi75","hi90","hi95")
+  meani <- apply(drawsi,2, FUN = mean)
+  param_summs[[i]] <- data.frame(shortcode = names(biota_ct), 
+                                 mean = meani,
+                                 qlsi)
+}
+names(param_summs) <- params
+  
+ba1ci_pos_taxa <- param_summs$b_ba1ci$shortcode[param_summs$b_ba1ci$lo90 > 0]
+ba1ci_neg_taxa <- param_summs$b_ba1ci$shortcode[param_summs$b_ba1ci$hi90 < 0]
+ba1cii_pos_taxa <- param_summs$b_ba1cii$shortcode[param_summs$b_ba1cii$lo90 > 0]
+ba1cii_neg_taxa <- param_summs$b_ba1cii$shortcode[param_summs$b_ba1cii$hi90 < 0]
+ba2ci_pos_taxa <- param_summs$b_ba2ci$shortcode[param_summs$b_ba2ci$lo90 > 0]
+ba2ci_neg_taxa <- param_summs$b_ba2ci$shortcode[param_summs$b_ba2ci$hi90 < 0]
+ba2cii_pos_taxa <- param_summs$b_ba2cii$shortcode[param_summs$b_ba2cii$lo90 > 0]
+ba2cii_neg_taxa <- param_summs$b_ba2cii$shortcode[param_summs$b_ba2cii$hi90 < 0]
+taxa_to_plot <- unique(c(ba1ci_pos_taxa,ba1ci_neg_taxa,ba1cii_pos_taxa,ba1cii_neg_taxa,
+                         ba2ci_pos_taxa,ba2ci_neg_taxa,ba2cii_pos_taxa,ba2cii_neg_taxa,
+                         param_summs$b_ba$shortcode[param_summs$b_ba$lo90 > 0],
+                         param_summs$b_ba$shortcode[param_summs$b_ba$hi90 < 0],
+                         param_summs$b_ci$shortcode[param_summs$b_ci$lo90 > 0],
+                         param_summs$b_ci$shortcode[param_summs$b_ci$hi90 < 0],
+                         param_summs$b_i$shortcode[param_summs$b_i$lo90 > 0],
+                         param_summs$b_i$shortcode[param_summs$b_i$hi90 < 0],
+                         param_summs$b_spring$shortcode[param_summs$b_spring$lo90 > 0],
+                         param_summs$b_spring$shortcode[param_summs$b_spring$hi90 < 0]))
+higher_taxa_in_plot <- higher_taxa[higher_taxa$higher_taxon %in% 
+                                     unique(taxa$higher_taxon[taxa$taxoncode %in% taxa_to_plot]),]
 ```
