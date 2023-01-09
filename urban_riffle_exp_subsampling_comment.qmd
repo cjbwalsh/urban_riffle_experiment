@@ -1,0 +1,152 @@
+---
+title: "The urban riffle experiment: a comment on subsampling"
+author: "Chris Walsh"
+format: html
+editor: visual
+bibliography: references.bib
+---
+
+## A comment on the likely effect of subsampling error in the riffle experiment data.
+
+While the conclusions from the multi-taxon analysis are broadly consistent with the earlier analysis of the study as reported in the manuscript submitted to *Ecology* in 2012(!), the earlier conclusion of a significant increase in EPT richness and abundance resulting from the riffles is not supported by the multi-taxon, measurement-error model used in this revision.
+
+The structure of the new model is not fully comparable with the original models, because of the separation of the two after periods in the new model, but the trend predicted by the new model suggests a decline in both EPT richness and abundance in the first year after riffle construction in low-urban sites, with a subsequent increase to levels similar to the pre-riffle state 5-6 years later (See final figure of manuscript).
+
+I have not done a comparison of the new model with and without a measurement error term, but it is likely that the difference results from subsampling error effects. Trends in subsample size differed among the study sites (@fig-ss_over_time). For some sites, there was a decline in subsample size over time, in part because more samples were fully processed during the before period, during the development of the subsampling protocol of [@walsh1997]. For Olinda Creek (which was the primary site in which a post-riffle increase in EPT taxa was inferred) subsample sizes increased over time, primarily resulting from the post-riffle reduction in total abundance of invertebrates at that site. In the before period, subsamples sizes from Olinda Creek tended to be among the smallest of all sites, rising to the largest in after samples.
+
+The higher EPT richness inferred for low-EI sites in the original analysis, strongly influenced by trends in Olinda Creek, is likely to be influenced by the higher probability of detecting species with low abundance in the later samples (by virtue of their larger sample size). The naive count (count in subsample divided by subsample proportion: @fig-naive_counts) in Olinda Creek suggests a stronger increase in EPT abundance than if the distribution of likely total counts given the subsample count and proportion does (@fig-subsample_count_distributions)
+
+I don't think it's worth documenting this disparity with the earlier manuscript in this paper, but I'm open to discussion...
+
+```{r}
+#| label: fig-ss_over_time
+#| echo: false
+#| fig-width: 6
+#| fig-height: 5
+#| fig-cap: "Subsample percentages of all samples used in the riffle experiment multi-taxon analysis in each site over time, with regression lines indicating trends in subsample percentage over time."
+
+source("misc_functions.R")
+dat_file <- 
+"~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/data_for_model.xlsx"
+sites <- data.frame(readxl::read_excel(dat_file, sheet = "sites"), 
+                    stringsAsFactors = FALSE)
+sites <- sf::st_as_sf(sites, coords = c("mgae","mgan"))
+samples <- data.frame(readxl::read_excel(dat_file, sheet = "samples"), 
+                      stringsAsFactors = FALSE)
+biota <- data.frame(readxl::read_excel(dat_file, sheet = "biota"), 
+                    stringsAsFactors = FALSE)
+taxa <- data.frame(readxl::read_excel(dat_file, sheet = "taxa"), 
+                   stringsAsFactors = FALSE)
+higher_taxa <- data.frame(readxl::read_excel(dat_file, sheet = "higher_taxa"), 
+                   stringsAsFactors = FALSE)
+
+samples$seg <- substr(samples$old_samplecode,nchar(samples$old_samplecode)-1,
+                      nchar(samples$old_samplecode)-1)
+# The dataset contains samples from the segments upstream and downstream of the 
+# riffle (putative or real) in each site for trip 1-4 (out of 6).  Given the 
+# small effects in the 'riffle' segments (M), theu U and L segments were not 
+# included in the analysis.
+samples <- samples[samples$seg == "M",]
+# Reduce biota table to match reduced samples table
+biota <- biota[biota$smpcode %in% samples$smpcode,]
+# Convert long-form biota table into a wide taxon-by-sample table of counts 
+# in subsamples
+biota_ct <- as.data.frame(ct(biota$smpcode, biota$shortcode, biota$count))
+biota_ct <- biota_ct[match(samples$smpcode,row.names(biota_ct)),]
+# Create a table of the same dimensions as biota_ct, with the subsample proportion
+# for each observation (for coarsepick specimens, subsample ppn = 1)
+ss_ct <- biota_ct
+for(i in 1:nrow(samples)){
+  ss_ct[i,] <- samples$subsample_perc[i]/100
+}
+for(i in which(biota$coarsepick == 1)){
+  ss_ct[row.names(ss_ct) == biota$smpcode[i], biota$shortcode[i]] <- 1
+}
+samples$date <- as.Date(samples$date)
+layout(matrix(1:2, 1,2, byrow = TRUE), widths = c(12,4))
+plot(samples$date[samples$sitecode == sites$sitecode[1]],
+     samples$subsample_perc[samples$sitecode == sites$sitecode[1]], 
+     ylim = c(10,100), type = 'n', las = 1,
+     xlab = "Date", ylab = "Subsample size")
+for(i in 1:nrow(sites)){
+  points(jitter(as.numeric(samples$date[samples$sitecode == sites$sitecode[i]])),
+       samples$subsample_perc[samples$sitecode == sites$sitecode[i]], 
+       col = RColorBrewer::brewer.pal(nrow(sites),"Paired")[i])
+  abline(lm(subsample_perc ~ date, data = samples[samples$sitecode == sites$sitecode[i],]),
+         col =  RColorBrewer::brewer.pal(nrow(sites),"Paired")[i])
+}
+par(mar = c(0,0,0,0))
+plot.new()
+legend("center",pch = 1, lty = 1, col = RColorBrewer::brewer.pal(nrow(sites),"Paired"),
+       legend = substr(sites$sitecode,1,3) )
+
+```
+
+```{r}
+#| label: fig-naive_counts
+#| fig-width: 5
+#| fig-height: 5
+#| fig-cap: "Naive estimates (count in subsample divided by subsample proportion) in each sample from each site over the 6 sampling occasions."
+
+epts <- biota[substr(biota$taxoncode,1,2) %in% c("QE","QT","QP"),]
+epts$naive <- epts$count/epts$s
+epts <- aggregate(epts["naive"], by = list(smpcode = epts$smpcode), FUN = sum)
+epts$site <- substr(samples$sitecode,1,3)[match(epts$smpcode, samples$smpcode)]
+epts$date <- as.Date(samples$date[match(epts$smpcode, samples$smpcode)])
+epts$s <- samples$subsample_perc[match(epts$smpcode,samples$smpcode)]/100
+samples$ept_n <- epts$naive[match(samples$smpcode, epts$smpcode)] 
+samples$ept_n[is.na(samples$ept_n)] <- 0
+samples$log_ept_n <- log(samples$ept_n + 1)
+par(mfrow = c(3,3))
+par(mar = c(2,2,1,1))
+for(i in 1:nrow(sites)){
+  plot(samples$date[samples$sitecode == sites$sitecode[i]],
+     samples$log_ept_n[samples$sitecode == sites$sitecode[i]], 
+     las = 1,ylab = "",xlab = "",ylim = c(0,4.5),
+     col =  RColorBrewer::brewer.pal(nrow(sites),"Paired")[i])
+  title(main = substr(sites$sitecode[i],1,3))
+}
+```
+
+```{r}
+#| label: fig-subsample_count_distributions
+#| echo: false
+#| fig-width: 7
+#| fig-height: 7
+#| fig-cap: "Distribution of total count in each sample from each site, given the count in the subsample and subsample proportion (and no other information). Samples are arranged chronologically, and the 2-4 samples collected on each data are separated by the vertical red lines."
+
+n_obs_samps <- 1000
+sample_T_given_c_s <- function(n, c, s){
+sample(0:1e6, n, replace = TRUE, prob = dbinom(c,0:1e6,s))
+}
+ept_obs <-matrix(nrow = n_obs_samps, ncol = nrow(samples))
+  for(j in 1:nrow(samples)){
+    if(samples$subsample_perc[j] == 100) {
+    ept_obs[,j] <- sum(biota_ct[j,substr(colnames(biota_ct),1,2) %in% c("QE","QT","QP")])
+           }else{
+    ept_obs[,j] <- sample_T_given_c_s(n_obs_samps,
+                  sum(biota_ct[j,substr(colnames(biota_ct),1,2) %in% c("QE","QT","QP")]),
+                                       samples$subsample_perc[j]/100)
+           }
+  }
+ept_obs <- log(ept_obs + 1)
+
+samples$numeric_date <- as.numeric(substr(samples$old_samplecode,1,1)) + 0.1 * samples$replicate
+obs_long <- data.frame(smpcode = samples$smpcode[1], date = samples$numeric_date[1],
+                       sitecode = samples$sitecode[1], ept_obs = ept_obs[,1])
+for(i in 2:ncol(ept_obs)){
+  obs_long <- rbind(obs_long,
+                    data.frame(smpcode = samples$smpcode[i], date = samples$numeric_date[i],
+                       sitecode = samples$sitecode[i], ept_obs = ept_obs[,i]))
+}
+par(mfrow = c(3,3))
+par(mar = c(2,2,1,1))
+for(i in 1:nrow(sites)){
+  dati <- obs_long[obs_long$sitecode == sites$sitecode[i],]
+  boxplot(ept_obs ~ date, data = dati,
+     col =  RColorBrewer::brewer.pal(nrow(sites),"Paired")[i])
+  abline(v = c(seq(4.5,16.5,4),max(which(unique(dati$date) <6))+ 0.5), col = "red")
+  title(main = substr(sites$sitecode[i],1,3))
+}
+
+```
