@@ -18,9 +18,10 @@ parameters {
   matrix[n_pred,n_taxa] gamma;        // beta parameters of fixed effects in u
   matrix[n_site,n_taxa] a_si;         // coefficient of random site effect
   matrix[n_sample,n_taxa] a_sa;       // coefficient of random sample effect
-  matrix[n_t,n_taxa] a_t;             // Coefficient of time effect
-  matrix[n_obs,n_taxa] eps_raw;   //<upper=5>
-  // raw s-u variability (see reparameterization below)   //, upper constraint for stability
+  matrix[n_t,n_taxa] a_t_raw;             
+  // raw coefficient of time effect (see reparameterization below)
+  matrix[n_obs,n_taxa] eps_raw;
+  // raw s-u variability (see reparameterization below)   
   real<lower=0> sigma_si;      //sd of hyperdistribution of a_sis among taxa
   real<lower=0> sigma_sa;      //sd of hyperdistribution of a_sas among taxa
   real<lower=0> sigma_t;       //sd of hyperdistribution of a_ts among taxa
@@ -30,16 +31,24 @@ parameters {
   vector<lower=0>[n_pred] tau;       // Scale for correlation matrix
 }
 transformed parameters {
+  matrix[n_t,n_taxa] a_t;           // Coefficient of time effect    
   matrix[n_obs,n_taxa] eps;         // Abundance noise
   matrix[n_obs,n_taxa] log_lambda;  // Log total count
 
-  for(i in 1:n_obs){
-    for(j in 1:n_taxa){
-      eps[i,j] =  sigma_eps[j] * eps_raw[i,j];  
-   // with eps_raw ~ std_normal(), this implies eps ~ normal(0, sigma_eps)
+//  for(i in 1:n_t){
+//    for(j in 1:n_taxa){
+      a_t = sigma_t * a_t_raw;
+   // with a_t_raw ~ std_normal(), this implies a_t ~ normal(0, sigma_t)
    // See https://mc-stan.org/docs/stan-users-guide/reparameterization.html
+//    }
+//  }
+  
+//  for(i in 1:n_obs){
+    for(j in 1:n_taxa){
+      eps[,j] =  sigma_eps[j] * eps_raw[,j];  
+   // Parameterization as for a_t
  }
-  }
+//  }
   
   for(i in 1:n_obs){
      for(j in 1:n_taxa){
@@ -49,12 +58,13 @@ transformed parameters {
       }
       }
 }
+
 model {
   // Priors
    mu_gamma ~ normal(0 , 5);
    to_vector(a_si) ~ normal(0,sigma_si);
    to_vector(a_sa) ~ normal(0,sigma_sa);
-   to_vector(a_t) ~ normal(0,sigma_t);
+   to_vector(a_t) ~ std_normal();
    to_vector(eps_raw) ~ std_normal();
    sigma_si ~ cauchy(0,2.5);
    sigma_sa ~ cauchy(0,2.5);
