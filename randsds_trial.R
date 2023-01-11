@@ -3,7 +3,7 @@ source("misc_functions.R")
 library(cmdstanr)
 check_cmdstan_toolchain(fix = TRUE, quiet = TRUE)
 # Set random seed to ensure reproducible results
-rand_seed = 9430570 #1 #2
+rand_seed = 9430569 #70 #1 #2
 
 ## Load data: ultimately from OSF repository
 # library(osfr); library(dplyr)
@@ -89,18 +89,18 @@ sdata <- list(n_obs = nrow(biota_ct),
 
 mod <- cmdstan_model("nbinom_me_rand_sa_si_t_fixedmatrix_baci.stan", pedantic = TRUE) 
 
-ni <- 8000; nt <- 4; nb <- 2000; nc <- 4
+ni <- 9000; nt <- 4; nb <- 1000; nc <- 4
 stanfit_i <- mod$sample(data = sdata,
                         seed = rand_seed, chains = nc,
                         parallel_chains = nc, iter_warmup = nb,
-                        iter_sampling = ni - nb, refresh = 80)
+                        iter_sampling = ni - nb, refresh = 100)
 # 6000 iterations 3.6 h
 # #  save csv files rather than the model object to use less RAM
 stanfit_i$save_output_files(
   dir = "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/",
-  basename = "fit_riffle_baci_a", timestamp = FALSE, random = FALSE)
+  basename = "fit_riffle_baci_mt", timestamp = FALSE, random = FALSE)
 stanfit_i$sampler_diagnostics()
-saveRDS(stanfit_i, file = "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/fit_riffle_baci_a.rds")
+saveRDS(stanfit_i, file = "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/fit_riffle_baci_mt.rds")
 stanfit_i$diagnostic_summary()
 # EBFMI 0.273, 0.289, 0.290, 0.309, zero divergences, zero max treedepth reached.
 # # The above three steps required < 500 Mb RAM

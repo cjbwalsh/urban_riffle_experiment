@@ -22,6 +22,8 @@ We drew inference from 5,500 posterior samples taken from 4 unthinned chains, di
 
 The multi-taxon model `nbinom_me_rand_sa_si_t_fixedmatrix-baci.stan` is reproduced below, with annotations defining variables and parameters, and explaining model components. Below that is the code used to load the data, run, check and evaluate the model, and produce output objects used to produce figures in the manuscript. Note that the multi-taxon model took 3.4 h to run on a 2.6GHz system on 4 parallel cores, and compilation of the parameter draws required \~50 Gb RAM.
 
+<!--# Some final, time consuming, tweaking of the model priors.  sd_lam N(0,1), phi N(0,1) ran ok, but produced BFMI 0.273, 0.289, 0.290, 0.309 with min bulk_ess just over 400 with 2000 + 6000 iters.  sd_lam N(0.5,1), phi N(1,1), saved as fit_riffle_baci_a, was only marginally better: BFMI 0.32,0.28,0.31,0.29. with min bulk_ess 393 with 2000 + 6000 iters; sd_lam N(1,1), phi N(1,1), saved as fit_riffle_baci_b, better, I think, allowing for fewer iterations: BFMI 0.32, 0.29, 0.37, 0.24, min bulk_ess 62 with 2000 + 1000 iters; phi N(1,1), and with eps term removed completely, saved as fit_riffle_baci_c was ~2/3 quicker, but substantially worse: BFMI 0.15, 0.16, 0.14, 0.21; min bulk_ESS 48 with 2000 + 1000 iters, So decided on original eps model, with sd_lam N(1,1), phi N(1,1), 3500 burn-in, 6500 samples ...but no such luck BFMI 0.29,0.30,0.32, 0.28, and min ess_bulk 345, , saved as fit_riffle_baci_d, min ess_tail 360 - the difficult parameter is sigma_t mean 0.6 (0.4-0.79)...so, sigma_t exp(2.5)...which didn't help at all...Also tried sigma_t exp(0.2), with very little change.  So, I tried sd_lam N(1,1), phi N(1,1) sigma_t exp(1) with 2500 + 6500 with random seed 9430569 (all of the above were with 9430570), BFMI 0.314, 0.300, 0.265, 0.297, but only min bulk ESS 328. -->
+
 #### The multi-taxon model: Stan code
 
 ```{r}
@@ -225,25 +227,28 @@ sdata <- list(n_obs = nrow(biota_ct),
 # Check model is up-to-date: if not, compile.
 mod <- cmdstan_model("nbinom_me_rand_sa_si_t_fixedmatrix_baci.stan", pedantic = TRUE) 
 
-ni <- 5500; nt <- 4; nb <- 1500; nc <- 4
+ni <- 9000; nt <- 4; nb <- 1000; nc <- 4
 stanfit_i <- mod$sample(data = sdata,
                         seed = rand_seed, chains = nc,
                         parallel_chains = nc, iter_warmup = nb,
-                        iter_sampling = ni - nb, refresh = 110)
-# 5000 iterations 3.8 h
+                        iter_sampling = ni - nb, refresh = 100)
+# 6000 iterations 3.6 h
 # #  save csv files rather than the model object to use less RAM
 stanfit_i$save_output_files(
   dir = "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/",
-  basename = "fit_riffle_baci", timestamp = FALSE, random = FALSE)
+  basename = "fit_riffle_baci_mt", timestamp = FALSE, random = FALSE)
 stanfit_i$sampler_diagnostics()
-saveRDS(stanfit_i, file = "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/fit_riffle_baci.rds")
+saveRDS(stanfit_i, file = "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/fit_riffle_baci_mt.rds")
 stanfit_i$diagnostic_summary()
+# EBFMI 0.283, 0.281, 0.304, 0.291 zero divergences, zero max treedepth reached.
 # # The above three steps required < 500 Mb RAM
-summ <- stanfit_i$summary() # This took ~1h and needed >40 Gb RAM
-min(summ$ess_bulk,na.rm=TRUE) # 400
-min(summ$ess_tail,na.rm=TRUE) # 411
-max(summ$rhat,na.rm=TRUE)  # 1.02
-# # all diagnostic_summary statistics were fine.
+summ <- stanfit_i$summary() # This took ~2h and needed >40 Gb RAM
+min(summ$ess_bulk,na.rm=TRUE) # 471
+min(summ$ess_tail,na.rm=TRUE) # 499
+max(summ$rhat,na.rm=TRUE)  # 1.008
+# # all diagnostic_summary statistics were fine 
+# # (slightly low BFMI due to sigma_t being difficult to fit. All other parameters sampled well)
+
 mod_draws <- as.data.frame(stanfit_i$draws(format = "df", variables = c("a_si","a_sa","a_t","gamma","phi")))
 save(mod_draws, file = "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/fit_riffle_baci_draws.rda")
 ```
@@ -277,7 +282,7 @@ for(i in 1:sdata$n_taxa){
        drawsi[,paste0("gamma[10,",i,"]")] %*% t(predx$ba1.ci.i) +
        drawsi[,paste0("gamma[11,",i,"]")] %*% t(predx$ba2.ci.i) 
 }
-})  # ~50 s
+})  # 1 min
 names(predy_draws) <- colnames(sdata$c)
 save(predy_draws, file = "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/fit_riffle_baci_predy_draws.rda")
 ```
@@ -491,7 +496,8 @@ n_obs_samps <- 1000
 sample_T_given_c_s <- function(n, c, s){
 sample(0:1e6, n, replace = TRUE, prob = dbinom(c,0:1e6,s))
 }
-  ss <- sdata$s
+n_obs_samps <- 1000
+ss <- sdata$s
 obs <- list()
 system.time({
 for(i in 1:sdata$n_taxa){
