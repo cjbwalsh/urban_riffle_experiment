@@ -42,6 +42,7 @@ samples_mdb <- db$`HE sample list`
 substrates_mdb <- db$`HE samples: substrates`
 biota_mdb <- db$`HE data entry`
 wq_mdb <- db$`HE Water Quality data`
+om_mdb <- db$`HE samples: org matter DWs`
 ```
 
 There was no reliable spatial data for the 9 sites, so I manually plotted the 9 points, snapping to the mwstr network [@kunapo_etal_2020]. Here I add additional information from the mwstr and mwbugs [@walsh_etal_2020] databases.
@@ -58,9 +59,9 @@ sites$str_nm[match(site_order, sites$sitecode)] <-
     "Scotchmans Creek (Trib of Gardiners")
 sites$location[match(site_order, sites$sitecode)] <-
   c("100 m downstream of Timothy Drive, Wantirna South",
-    "Downstream of Juniper Road, Wantirna",
+    "100 m downstream of Juniper Road, Wantirna",
     "Imm. downstream of Brushy Creek Trail footbridge, Esther Park, Mooroolbark",
-    " ~ 200 m upstream of Coldstream West Road, Coldstream",
+    "~50 m upstream of Coldstream West Road, Coldstream",
     "rear Knox Park (Rushdale St)- Knoxfield",
     "Behind Italian Club, Karoo Road, Rowville",
     "Off Hallam Valley Trail, just downstream of Kensington Court, Hampton Park",
@@ -78,6 +79,23 @@ sites$ai <- imp_subcs$c_ai[match(sites$site, imp_subcs$site)]
 sites$mgae <- sf::st_coordinates(sites)[,1]
 sites$mgan <- sf::st_coordinates(sites)[,2]
 
+# Correct locations from table prepared during the study
+old_sitetable <- as.data.frame(readxl::read_excel("~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/site_information_additional.xlsx"), stringsAsFactors = FALSE)
+elevs <- sqlQuery(paste0("SELECT reach, elev_m FROM sc_env WHERE reach IN ('",
+         paste(substr(sites$sitecode,1,nchar(sites$sitecode)-1), collapse = "','"),
+         "');"),"mwstr")
+sites$elev_m <- round(elevs$elev_m[match(substr(sites$sitecode,1,nchar(sites$sitecode)-1),elevs$reach)])
+careas<- sqlQuery(paste0("SELECT reach, carea_km2 FROM subcs WHERE reach IN ('",
+         paste(substr(sites$sitecode,1,nchar(sites$sitecode)-1), collapse = "','"),
+         "');"),"mwstr")
+sites$carea_km2 <- round(careas$carea_km2[match(substr(sites$sitecode,1,nchar(sites$sitecode)-1),careas$reach)])
+sites$floodplain_ht_m <- old_sitetable$`Floodplain height`[match(sites$he_sitecode,old_sitetable$he_sitecode)]
+sites$baseflow_channel_width_m <- old_sitetable$`Baseflow channel width`[match(sites$he_sitecode,old_sitetable$he_sitecode)]
+sites$reach_slope <- old_sitetable$`reach slope…`[match(sites$he_sitecode,old_sitetable$he_sitecode)]
+sites$incip_diam_cm <- old_sitetable$`estimated tractive force (kg/m) = incipient diameter (cm)`[match(sites$he_sitecode,old_sitetable$he_sitecode)]
+
+#Note ht, widths and incip_diam incomplete at time of entry. Still need to find old records.
+
 # Make non-spatial for saving in excel
 sf::st_geometry(sites) <- NULL
 
@@ -91,7 +109,13 @@ metadata1 <- data.frame(table_name = "sites", field = names(sites),
               "site code from mwstr database",
       "Attenuated (effective) imperviousness Dec 2004, from mwstr database",
                "Easting: Map Grid of Australia 1994 Zone 55 (crs = 28355)",
-               "Northing: Map Grid of Australia 1994 Zone 55 (crs = 28355)"))
+               "Northing: Map Grid of Australia 1994 Zone 55 (crs = 28355)",
+              "Elevation above sea level (m) from mwstr database",
+               "Catchment area in sq. km from mwstr database",
+               "Floodplain height (m) from pre-riffle survey (incomplete data)",
+               "Baseflow channel width (m) from pre-riffle survey (incomplete data)",
+               "Proportional reach slope from pre-riffle survey",
+               "Estimated ractive force in kg/m, = incipient diameter (cm)"))
 ```
 
 Prepare samples table.
@@ -152,13 +176,23 @@ for(i in 1:length(sample_groups)){
 # samples[samples$subsample_perc %% 1 > 0,]
 # are ok.  They were cases of one subsample taken in the 100-cell subsampler, 
 # and the residue subsequentlyl spread across 100 cells and further subsampled.
+
+# Add organic matter dry weights to samples table
+samples$fpom_g <- samples$cpom_g <- samples$wood_g <- 
+  samples$macrophyte_g <- samples$algae_g <- 0
+om_types <- data.frame(type = c("FPOM", "CPOM","Wood","Macrophyte","Algae"),
+            field = c("fpom_g", "cpom_g", "wood_g", "macrophyte_g", "algae_g"))
+for(i in 1:nrow(om_mdb)){
+  samples[samples$old_samplecode == om_mdb$Sample.code[i],
+          om_types$field[om_types$type == om_mdb$OM.type[i]]] <- om_mdb$DW[i]
+}
+# Correction to a record, checked on paper records
+samples$algae_g[samples$old_samplecode == "2HM3"] <- 0
+# organic matter only collected in trips 1-4
+samples[samples$date > as.Date("1997-06-30"),om_types$field] <- NA
 ```
 
-Finally, I compiled the depth and velocity data for the experiment to send to Angus for a revision of an earlier draft. The following is the explanation of the data that I sent Angus.
-
-1.  The three sections, L, M, and U, really only applied for trips 1-4, where I sampled from below and above the riffle (or where it would go) (U and L), and in the riffle (or where it would be if there was one) (M). I believe we have ended up discarding all my hard work in the Us and Ls in these analyses (because I only sampled M sections in trips 5 and 6). (It's all there, bug and physical data) if you can think of a use for it).
-
-2.  In each section (L, M or U) in each stream I took four randomly placed replicate samples with the suction sampler (sampling essentially a quadrat with its four corners set at random angles). After I finished collecting the bugs, I measured the near-bed velocity and depth (using one of those old propellor jobs, so near-bed means \~1-4 cm above the bed...I can find the exact depth range if you like), at the four corners of the sampled area and one in the middle of the sampled area. Each velocity measurement was a count of 10 s. I figure you could use the variance of these five measures to get an estimate of small-scale variability in flow and depth, and the variance of the means of the four replicate samples in each section as a measure of large-scale variability in the section.
+Velocity/depth data
 
 ```{r}
 depth_vel <- as.data.frame(readxl::read_excel("~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/data_sources/HE all depth and velocity measurements.xls"))
@@ -166,6 +200,25 @@ depth_vel$Comments[1] <- NA
 names(depth_vel) <- c("old_samplecode","depth_m","vel_counts_per_10s","comment","vel_m_s","trip","site","section")
 depth_vel <- data.frame(smpcode =samples$smpcode[match(depth_vel$old_samplecode,samples$old_samplecode)],
                         depth_vel)
+vel_m_s_char <- depth_vel$vel_m_s
+# Assume NA velocities where note identifies macrophytes as being in the way = below detection
+#   depth_vel$comment %in% c("P crispus in way","Potamogeton","Elodea")
+# unique(gsub("<","",vel_m_s_char[is.na(depth_vel$vel_m_s)])) # all 0.0162, which is the detection limit.  The next smallest velocity is 0.0772. It makes the velocities in the log-domain a bit lumpy, but they are already lumpy at the high end. (see hist command below)
+depth_vel$vel_m_s <- as.numeric(gsub("<","",vel_m_s_char))
+depth_vel$vel_m_s[unique(gsub("<","",vel_m_s_char[is.na(depth_vel$vel_m_s)])) == "0.0162"]  <- 0.0162
+# hist(log(depth_vel$vel_m_s))
+mean_depth_vel <- aggregate(depth_vel[c("depth_m","vel_m_s")], 
+                            by = list(old_samplecode = depth_vel$old_samplecode), FUN = mean, na.rm = TRUE)
+var_depth_vel <- aggregate(depth_vel[c("depth_m","vel_m_s")], 
+                            by = list(old_samplecode = depth_vel$old_samplecode), FUN = var, na.rm = TRUE)
+# hist(log(var_depth_vel$depth_m + 5e-06))
+# hist(log(var_depth_vel$vel_m_s))
+# hist(log(mean_depth_vel$depth_m))
+samples$depth_m_mean <- mean_depth_vel$depth_m[match(samples$old_samplecode,mean_depth_vel$old_samplecode)]
+samples$depth_m_var <- var_depth_vel$depth_m[match(samples$old_samplecode,var_depth_vel$old_samplecode)]
+samples$vel_m_s_mean <- mean_depth_vel$vel_m_s[match(samples$old_samplecode,mean_depth_vel$old_samplecode)]
+samples$vel_m_s_var <- var_depth_vel$vel_m_s[match(samples$old_samplecode,var_depth_vel$old_samplecode)]
+
 metadata2 <- data.frame(table_name = "depth_vel",
                         field = names(depth_vel),
                         definition = c("Sample code as in samples table",
@@ -177,6 +230,104 @@ metadata2 <- data.frame(table_name = "depth_vel",
                                        "Sampling trip (1 of 6) in experiment", 
                                        "Site (Old sitecode)",
                                        "Section L, below the putatitive (or real) riffle, M in the riffle, or U upstream of the riffle"))
+```
+
+Substrate data
+
+```{r}
+# The following is adapted from data_sources/substrateEtcCompilation.Rmd on uomShare
+substrate_data_xls <- "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/data_sources/VDSUBS.XLS"
+substrates <- as.data.frame(readxl::read_excel(substrate_data_xls, sheet = 2), stringsAsFactors = FALSE)
+names(substrates) <- c("old_samplecode","substrate_code","abundance_class","comment")
+substrate_codes <- as.data.frame(readxl::read_excel(substrate_data_xls, sheet = 3), stringsAsFactors = FALSE)[,1:5]
+names(substrate_codes) <- c("substrate_code","phi","substrate","erosion_vel_m_s","max_diam_mm")
+abundance_classes <- as.data.frame(readxl::read_excel(substrate_data_xls, sheet = 4), stringsAsFactors = FALSE)
+names(abundance_classes) <- c("abundance_class","percentage_range","min_percentage","max_percentage")
+
+# what were called boulders in subst were really large cobbles
+substrates$substrate_code[substrates$substrate_code == "b"] <- "lc"
+
+substrates_working <- substrates
+substrates_working$phi <- substrate_codes$phi[match(substrates_working$substrate_code, substrate_codes$substrate_code)]
+samp_subs <- aggregate(substrates_working$phi, 
+                       by = list(old_samplecode = substrates_working$old_samplecode),
+                       FUN = min)
+names(samp_subs)[2] <- "min_phi"
+temp <- aggregate(substrates_working$phi, 
+                       by = list(old_samplecode = substrates_working$old_samplecode),
+                       FUN = max)
+samp_subs$max_phi <- temp$x[match(samp_subs$old_samplecode, temp$old_samplecode)]
+samp_subs$med_phi <- NA
+
+med_phi <- function(x)
+{
+x <- x[order(x$phi),]
+x$max_percentage <- 
+  abundance_classes$max_percentage[match(x$abundance_class, 
+                                         abundance_classes$abundance_class)]
+x$min_percentage <- 
+  abundance_classes$min_percentage[match(x$abundance_class, 
+                                         abundance_classes$abundance_class)]
+x$mean_percentage <- apply(x[c("min_percentage","max_percentage")],1,FUN=mean)
+cumulative_perc_cover <- cumsum(x$mean_percentage/sum(x$mean_percentage))
+# finds phi value at 50% cover
+x$phi[findInterval(0.5,cumulative_perc_cover)+1]
+}
+for(i in 1:nrow(samp_subs)){
+  ssi <- substrates_working[substrates_working$old_samplecode == samp_subs$old_samplecode[i],]
+  samp_subs$med_phi[i] <- med_phi(ssi)
+}
+samples$min_phi <- samp_subs$min_phi[match(samples$old_samplecode, samp_subs$old_samplecode)]
+samples$max_phi <- samp_subs$max_phi[match(samples$old_samplecode, samp_subs$old_samplecode)]
+samples$med_phi <- samp_subs$med_phi[match(samples$old_samplecode, samp_subs$old_samplecode)]
+
+#Now subst only included an odd subset of samples: 
+#  was able to find info on other samples in this file, but if I want the rest, I think I will need to go back to the original field notes. (For this additional data, I manually went through in the spreadsheet and extracted med, min and max Phi estimates)
+substrate_data_xls_1 <- "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/data_sources/DVELTMP.XLS"
+substrates_1 <- as.data.frame(readxl::read_excel(substrate_data_xls_1, sheet = 2), stringsAsFactors = FALSE)
+substrates_1 <- substrates_1[substrates_1$Section == "M",]
+substrates_1 <- data.frame(old_samplecode = substrates_1$`Sample code`,
+                     min_phi = substrates_1$minPhi,
+                     max_phi = substrates_1$maxPhi,
+                     med_phi = substrates_1$medPhi,
+                     trip = substrates_1$`HE trip`,
+                     site = substrates_1$sitec,
+                     section = substrates_1$Section)
+substrates_1 <- substrates_1[!substrates_1$old_samplecode %in% samp_subs$old_samplecode,]
+for(i in 1:nrow(substrates_1)){
+  samples[samples$old_samplecode == substrates_1$old_samplecode[i],
+          c("min_phi","max_phi","med_phi")] <- 
+    substrates_1[i,c("min_phi","max_phi","med_phi")]
+}
+# missing
+# unique(substr(samples$old_samplecode,1,nchar(samples$old_samplecode)-2)[is.na(samples$med_phi)])
+# "1E"  "1F"  "1M"  "2F"  "2M"  "3Bl" "3Br" "3D"  "3E"  "3F"  "3H"  "3M"  "3S"  "4Bl" "4Br" "4D"  "4F"  "4H"  "4M"  "4S"  "5Bl" "5Br"...need to find field sheets.
+# "5D"  "5E"  "5F"  "5H"  "5M"  "5O"  "5S"  "6Bl" "6Br" "6D"  "6E"  "6F"  "6H"  "6M"  "6O"  "6S" 
+
+metadata_substrate <- rbind(data.frame(table_name = "substrates", 
+                                 field = names(substrates),
+                                 definition = c("Sample code, matching old_samplecode in samples table",
+                                                "Substrate code, links to table substrate_codes",
+                                                "Categorical abundance, links to table abundance_classes",
+                                                "Clarifying comment")),
+                            data.frame(table_name = "substrate_codes", 
+                                       field = names(substrate_codes),
+                                       definition = 
+                            c("Substrate code, links to table substrates",
+                              "Phi (log2 smallest diameter) from Allan (1995) Stream Ecology Table 3.3",
+                              "Substrate descriptor (l = large, m = medium, s = small, c = coarse, f = fine, vf = very fine)",
+                              "Erosion velocity of largest particle in range (m/s?)",
+                              "Maximum particle diameter (mm), adapted from Allan (1995 Table 3.3)")),
+                            data.frame(table_name = "abundance_classes",
+                                       field = names(abundance_classes),
+                                       definition = c("Abundance class, links to table substrates",
+                                    "Range of percentage cover for each abundance class (a text string)",
+                                    "Minimum percentage cover in the range",
+                                    "Maximum percentage cover in the range")))
+
+# 1 error in substrate_codes
+substrates$substrate_code[substrates$substrate_code == "lg"] <- "cg"
+substrates$phi <- substrate_codes$phi[match(substrates$substrate_code, substrate_codes$substrate_code)]
 ```
 
 Now to prepare other tables for consistency
@@ -330,11 +481,30 @@ taxon_tab <- codeTaxonomy(unique(biota$taxoncode))
 
 metadata <- rbind(metadata1, metadata_db[metadata_db$table_name %in% c("samples","biota","taxon_all"),],
                   metadata2)
+metadata <- rbind(metadata, data.frame(table_name = "samples",
+                                      field = c(om_types$type,
+                                                "depth_m_mean","depth_m_var",
+                                                "vel_m_s_mean","vel_m_s_var",
+                                                "min_phi","max_phi","med_phi"),
+    definition = c("Dry weight of fine particulate organic matter collected in sample (g)",
+                    "Dry weight of coarse particulate organic matter collected in sample (g)",
+                    "Dry weight of wood collected in sample (g)",
+                    "Dry weight of macrophyte leaves collected in sample (g)",
+                    "Dry weight of algae collected in sample (g)",
+                    "Mean water depth (m) of 5 points in sample unit (calculated from table depth_vel)",
+                    "Variance of water depth (m) of 5 points in sample unit (calculated from table depth_vel)",
+                    "Mean water velocity (m/s) of 5 points in sample unit (calculated from table depth_vel)",
+                    "Variance water velocity (m/s) of 5 points in sample unit (calculated from table depth_vel)",
+                    "minimum Phi of sediments in sample unit (calculated from tables substrates, substrate_codes, abundance_codes)","maximum Phi of sediments in sample unit (calculated from tables substrates, substrate_codes, abundance_codes)","median Phi of sediments in sample unit (calculated from tables substrates, substrate_codes, abundance_codes)")))
+
+metadata <- metadata[order(metadata$table_name),]
 
 # Save data in its original form before adjusting for the multi-taxon model.
 WriteXLS::WriteXLS(list(sites = sites, samples = samples, biota = biota,
                         taxon_all = taxon_all, taxonomy = taxon_tab, 
-                        depth_vel = depth_vel,
+                        depth_vel = depth_vel, substrates = substrates, 
+                        substrate_codes = substrate_codes,  # key for substrates table
+                        abundance_classes = abundance_classes, # key for substrates table
                         metadata = metadata),
    "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/urban_riffle_experiment_data.xlsx")
 
@@ -500,6 +670,11 @@ metadata <- rbind(metadata,
 
 WriteXLS::WriteXLS(list(sites = sites, samples = samples, biota = biota, taxon_all = taxon_all, taxa = taxa, higher_taxa = higher_taxa, metadata = metadata),
                    "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/data_for_model.xlsx")
+
+# Used in calculating assemblage stats
+biotic_indices<- sqlQuery("SELECT * FROM biotic_indices;", "mwbugs")
+write.csv(biotic_indices, "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/biotic_indices.csv",
+          row.names = FALSE)
 ```
 
 ### Text from HE prelim findings.doc
