@@ -19,33 +19,21 @@ parameters {
   matrix[n_site,n_taxa] a_si;         // coefficient of random site effect
   matrix[n_sample,n_taxa] a_sa;       // coefficient of random sample effect
   matrix[n_t,n_taxa] a_t;             // Coefficient of time effect 
-  matrix[n_obs,n_taxa] eps_raw;
-  // raw s-u variability (see reparameterization below)   
   real<lower=0> sigma_si;      //sd of hyperdistribution of a_sis among taxa
   real<lower=0> sigma_sa;      //sd of hyperdistribution of a_sas among taxa
   real<lower=0> sigma_t;       //sd of hyperdistribution of a_ts among taxa
-  vector<lower=0>[n_taxa] sigma_eps; // sd of random s-u error for each taxon
   vector<lower=0>[n_taxa] phi;       // dispersion parameter for neg-binomial distribution
   corr_matrix[n_pred] Omega;         // Hyperprior correlation matrix among taxa
   vector<lower=0>[n_pred] tau;       // Scale for correlation matrix
 }
 transformed parameters {
-  matrix[n_obs,n_taxa] eps;         // Abundance noise
   matrix[n_obs,n_taxa] log_lambda;  // Log total count
 
-//  for(i in 1:n_obs){
-    for(j in 1:n_taxa){
-      eps[,j] =  sigma_eps[j] * eps_raw[,j];  
-   // with eps_raw ~ std_normal(), this implies eps ~ normal(0, sigma_eps)
-   // See https://mc-stan.org/docs/stan-users-guide/reparameterization.html
- }
-//  }
-  
   for(i in 1:n_obs){
      for(j in 1:n_taxa){
        //The linear model
       log_lambda[i,j] = a_si[site_no[i],j] +  a_sa[samp_no[i],j] +  
-                        a_t[t_no[i],j] +  u[i,] * gamma[,j] + eps[i,j]; 
+                        a_t[t_no[i],j] +  u[i,] * gamma[,j]; 
       }
       }
 }
@@ -56,11 +44,9 @@ model {
    to_vector(a_si) ~ normal(0,sigma_si);
    to_vector(a_sa) ~ normal(0,sigma_sa);
    to_vector(a_t) ~ normal(0,sigma_t);
-   to_vector(eps_raw) ~ std_normal();
    sigma_si ~ normal(0,2);
    sigma_sa ~ normal(0,2);
    sigma_t ~ exponential(1);  // sampled poorly if normal(0,2)
-   sigma_eps ~ normal(1,1); // sampled poorly if normal(0,1)
    phi ~ normal(1,1);
    tau ~ exponential(1);
    Omega ~ lkj_corr( 2 );  

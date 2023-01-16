@@ -21,9 +21,6 @@ parameters {
   matrix[n_t,n_taxa] a_t;             // Coefficient of time effect 
   matrix[n_obs,n_taxa] eps_raw;
   // raw s-u variability (see reparameterization below)   
-  real<lower=0> sigma_si;      //sd of hyperdistribution of a_sis among taxa
-  real<lower=0> sigma_sa;      //sd of hyperdistribution of a_sas among taxa
-  real<lower=0> sigma_t;       //sd of hyperdistribution of a_ts among taxa
   vector<lower=0>[n_taxa] sigma_eps; // sd of random s-u error for each taxon
   vector<lower=0>[n_taxa] phi;       // dispersion parameter for neg-binomial distribution
   corr_matrix[n_pred] Omega;         // Hyperprior correlation matrix among taxa
@@ -53,13 +50,10 @@ transformed parameters {
 model {
   // Priors
    mu_gamma ~ normal(0,5);
-   to_vector(a_si) ~ normal(0,sigma_si);
-   to_vector(a_sa) ~ normal(0,sigma_sa);
-   to_vector(a_t) ~ normal(0,sigma_t);
+   to_vector(a_si) ~ normal(0,1);
+   to_vector(a_sa) ~ normal(0,1);
+   to_vector(a_t) ~ normal(0,1);
    to_vector(eps_raw) ~ std_normal();
-   sigma_si ~ normal(0,2);
-   sigma_sa ~ normal(0,2);
-   sigma_t ~ exponential(1);  // sampled poorly if normal(0,2)
    sigma_eps ~ normal(1,1); // sampled poorly if normal(0,1)
    phi ~ normal(1,1);
    tau ~ exponential(1);

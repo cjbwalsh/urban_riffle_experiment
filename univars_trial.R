@@ -62,6 +62,7 @@ ys <- list(depth_m_var = log(samples$depth_m_var + 1.75e-04),
            vel_m_s_mean = log(samples$vel_m_s_mean), 
            cpom_g = log(samples$cpom_g + 0.001),
            # min(samples$cpom_g[!is.na(samples$cpom_g) & samples$cpom_g > 0]) # 0.001
+           cpomw_g = log(samples$cpom_g + samples$wood_g + 0.001),
            fpom_g = log(samples$fpom_g  + 0.0094382),
            # min(samples$fpom_g[!is.na(samples$fpom_g) & samples$fpom_g > 0]) # 0.0094382
            algae_g = log(samples$algae_g + 0.001), 
@@ -87,9 +88,18 @@ gofs <-data.frame(model = NA, oe_r_squ = NA, oe_slope = NA, pred_95 = NA)[0,]
 param_summary <- list()
 cfs <- list()
 
-for(i in 1:12){
+for(i in 1:13){
 # remove NAs, and check if data covers trips 5 and 6
 samplesi <- samples[!is.na(samples[names(ys)[i]]),]
+aggregate(site_ts["t"], by = list(sitecode = site_ts$sitecode), FUN = length)
+aggregate(site_ts["sitecode"], by = list(t = site_ts$t), FUN = length)
+i <- i + 1
+
+env_var_summ <- data.frame(var = names(ys), 
+                           dates = c("1,2,3,5,6", "1,2,3,5,6","1,2,3,5,6","1,2,3,5,6",
+                           ), 
+                           sites = c("all","all","all","all")
+
 if(length(unique(samplesi$sitecode)) != nrow(sites)) stop()
 # no om data for EUM...need to check this...for now...
 if(i %in% 5:8){
@@ -119,11 +129,14 @@ sdata <- list(n_obs = nrow(samplesi),
               y = ys[[i]][match(samplesi$smpcode,samples$smpcode)]
 )
 
-ni <- 2000; nt <- 4; nb <- 1000; nc <- 4
+ni <- ifelse(i %in% c(3,5,6), 9000, 3500); nt <- 4; 
+nb <- ifelse(i %in% c(3,5,6), 3000, 1500); nc <- 4
 stanfit_i <- mod$sample(data = sdata,
                         seed = rand_seed, chains = nc,
                         parallel_chains = nc, iter_warmup = nb,
-                        #adapt_delta = 0.99, max_treedepth = 12,
+                        adapt_delta = ifelse(i %in% c(5,8,9,11),0.95,
+                                             ifelse(i == 1, 0.85,0.8)),  
+                        max_treedepth = ifelse(i %in% c(2,6),15,10),
                         iter_sampling = ni - nb, refresh = 100)
 # #  save csv files rather than the model object to use less RAM
 stanfit_i$save_output_files(
@@ -261,7 +274,7 @@ names(cfs)[i] <- names(ys)[i]
 # For inspecting parameter spreads across zero
 # tidyr::as_tibble(param_summary[[12]])
 
-ylabs = c("Variance of depth (m)", "Mean depth (m)","Variance of velcoity (m/s)", 
+ylabs = c("Variance of depth (m)", "Mean depth (m)","Variance of velocity (m/s)", 
           "Mean velocity (m/s)", "CPOM (g)", "FPOM (g)",
           "Algae (g)", "Macrophyte (g)", "Minimum Phi","Maximum Phi",
           "Median Phi","Range Phi")

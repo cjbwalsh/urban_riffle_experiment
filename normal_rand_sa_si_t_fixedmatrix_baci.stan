@@ -15,16 +15,16 @@ parameters {
   vector[n_site] a_si;         // coefficient of random site effect
   vector[n_sample] a_sa;       // coefficient of random sample effect
   vector[n_t] a_t;             // Coefficient of time effect 
-//  real<lower=0> sigma_si;      //sd of hyperdistribution of a_sis among taxa
-//  real<lower=0> sigma_sa;      //sd of hyperdistribution of a_sas among taxa
+  real<lower=0> sigma_si;      //sd of hyperdistribution of a_sis among taxa
+  real<lower=0> sigma_sa;      //sd of hyperdistribution of a_sas among taxa
 //  real<lower=0> sigma_t;       //sd of hyperdistribution of a_ts among taxa
 
   real<lower=0> sigma;         //sd of mu
 }
 transformed parameters {
   vector[n_obs] mu;  // Log total count
-
-  for(i in 1:n_obs){
+ 
+   for(i in 1:n_obs){
        //The linear model
   mu[i] = a_si[site_no[i]] +  a_sa[samp_no[i]] + a_t[t_no[i]] +  u[i,] * gamma; 
       }
@@ -32,13 +32,14 @@ transformed parameters {
 
 model {
   // Priors
-   a_si ~ normal(0,1); // sigma_si);
-   a_sa ~ normal(0,1); // sigma_sa);
-   a_t ~ normal(0,1);  // sigma_t);
+   a_si ~ normal(0, sigma_si);
+   a_sa ~ normal(0, sigma_sa);
+   a_t ~ normal(0, 1); //sigma_t);  
    to_vector(gamma) ~ normal(0,5);
-//   sigma_si ~ exponential(0.1);  #hyper-priors for sds caused lots of divergences, and low BFMI.
-//   sigma_sa~ exponential(0.1);
- //  sigma_t ~ exponential(0.1);  
+   sigma_si ~ normal(0,1); 
+   sigma_sa~ normal(0,1); 
+//   sigma_t ~ normal(0,1);  
+   sigma ~ normal(0,1);
 
  // Likelihood
   for (i in 1 : n_obs) {
