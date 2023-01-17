@@ -227,26 +227,28 @@ sdata <- list(n_obs = nrow(biota_ct),
 # Check model is up-to-date: if not, compile.
 mod <- cmdstan_model("nbinom_me_rand_sa_si_t_fixedmatrix_baci.stan", pedantic = TRUE) 
 
-ni <- 9000; nt <- 4; nb <- 1000; nc <- 4
+ni <- 8500; nt <- 4; nb <- 2000; nc <- 4
 stanfit_i <- mod$sample(data = sdata,
                         seed = rand_seed, chains = nc,
                         parallel_chains = nc, iter_warmup = nb,
-                        iter_sampling = ni - nb, refresh = 100)
-# 6000 iterations 3.6 h
+                        adapt_delta = 0.9,  #default of 0.8 resulted in BFMI slightly low
+                        iter_sampling = ni - nb, refresh = 85)
+# 9000 iterations 3.6 h
 # #  save csv files rather than the model object to use less RAM
 stanfit_i$save_output_files(
   dir = "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/",
-  basename = "fit_riffle_baci_mt", timestamp = FALSE, random = FALSE)
+  basename = "fit_riffle_baci_mt_ad", timestamp = FALSE, random = FALSE)
 stanfit_i$sampler_diagnostics()
-saveRDS(stanfit_i, file = "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/fit_riffle_baci_mt.rds")
+saveRDS(stanfit_i, file = "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/fit_riffle_baci_mt_ad.rds")
 stanfit_i$diagnostic_summary()
-# EBFMI 0.283, 0.281, 0.304, 0.291 zero divergences, zero max treedepth reached.
+# EBFMI 0.31, 0.27, 0.31, 0.30, zero divergences, zero max treedepth reached.
 # # The above three steps required < 500 Mb RAM
 summ <- stanfit_i$summary() # This took ~2h and needed >40 Gb RAM
-min(summ$ess_bulk,na.rm=TRUE) # 471
-min(summ$ess_tail,na.rm=TRUE) # 499
-max(summ$rhat,na.rm=TRUE)  # 1.008
+min(summ$ess_bulk,na.rm=TRUE) # 513 from 6500...rerun this with 5500 tonight!
+min(summ$ess_tail,na.rm=TRUE) # 784
+max(summ$rhat,na.rm=TRUE)  # 1.007
 # # all diagnostic_summary statistics were fine 
+# (confirmed with stanfit_i$cmdstan_diagnose() that EBFMI is below nominal threshold of 0.3)
 # # (slightly low BFMI due to sigma_t being difficult to fit. All other parameters sampled well)
 
 mod_draws <- as.data.frame(stanfit_i$draws(format = "df", variables = c("a_si","a_sa","a_t","gamma","phi")))
@@ -317,7 +319,7 @@ for(i in 1:sdata$n_taxa){
        drawsi[,paste0("gamma[11,",i,"]")] %*% t(predx_cf$ba2.ci.i) 
 }
 })  # 5 s
-names(predy_cf) <- names(biota_ct)
+snames(predy_cf) <- names(biota_ct)
 save(predy_cf, file = "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/fit_riffle_baci_predy_cf_draws.rda")
 ```
 
@@ -610,7 +612,7 @@ ntoplot <- length(taxa_to_plot) #59
 
 bgs <- rep(NA, ncol(cors))
 bgs[names(biota_ct) %in% ba1cii_pos_taxa] <- "red"
-bgs[names(biota_ct) %in% ba0cii_neg_taxa] <- "green"
+bgs[names(biota_ct) %in% unique(c(ba2ci_neg_taxa,ba0cii_neg_taxa))] <- "green"
 cols <- bgs; cols[is.na(cols)] <- "black"
 layout(matrix(c(1,2,3,3),2,2,byrow=TRUE), widths = c(12,12), heights = c(12,1))
 par(mar = c(2,4,1,1))
@@ -682,7 +684,7 @@ obs_per_sample <- matrix(ncol = sdata$n_sample, nrow = sdata$n_taxa)
 for(t in 1:sdata$n_taxa){
     obs_per_sample[t,] <- aggregate(biota_ct[,t], 
                                      list(sample_no = samples$sample_no), 
-                                     FUN = function(y) {sum(y > 0) > 0})$x
+                                     FUN = function(y) {as.numeric(sum(y > 0) > 0)})$x
   }
 
 library("PresenceAbsence")

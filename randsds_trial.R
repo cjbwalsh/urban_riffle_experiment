@@ -94,7 +94,7 @@ stanfit_i <- mod$sample(data = sdata,
                         seed = rand_seed, chains = nc,
                         parallel_chains = nc, iter_warmup = nb,
                         iter_sampling = ni - nb, refresh = 100)
-# 6000 iterations 3.6 h
+# 9000 iterations 3.6 h
 # #  save csv files rather than the model object to use less RAM
 stanfit_i$save_output_files(
   dir = "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/",
@@ -102,9 +102,9 @@ stanfit_i$save_output_files(
 stanfit_i$sampler_diagnostics()
 saveRDS(stanfit_i, file = "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/fit_riffle_baci_mt.rds")
 stanfit_i$diagnostic_summary()
-# EBFMI 0.273, 0.289, 0.290, 0.309, zero divergences, zero max treedepth reached.
+# EBFMI 0.31, 0.27, 0.31, 0.30, zero divergences, zero max treedepth reached.
 # # The above three steps required < 500 Mb RAM
 summ <- stanfit_i$summary() # This took ~2h and needed >40 Gb RAM
-min(summ$ess_bulk,na.rm=TRUE) # 657 from 6500...rerun this with 5500 tonight!
-min(summ$ess_tail,na.rm=TRUE) # 1333
-max(summ$rhat,na.rm=TRUE)  # 1.005
+min(summ$ess_bulk,na.rm=TRUE) # 513 from 6500...rerun this with 5500 tonight!
+min(summ$ess_tail,na.rm=TRUE) # 784
+max(summ$rhat,na.rm=TRUE)  # 1.007
