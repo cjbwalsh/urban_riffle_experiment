@@ -90,16 +90,8 @@ cfs <- list()
 
 for(i in 1:13){
 # remove NAs, and check if data covers trips 5 and 6
-samplesi <- samples[!is.na(samples[names(ys)[i]]),]
-aggregate(site_ts["t"], by = list(sitecode = site_ts$sitecode), FUN = length)
-aggregate(site_ts["sitecode"], by = list(t = site_ts$t), FUN = length)
-i <- i + 1
-
-env_var_summ <- data.frame(var = names(ys), 
-                           dates = c("1,2,3,5,6", "1,2,3,5,6","1,2,3,5,6","1,2,3,5,6",
-                           ), 
-                           sites = c("all","all","all","all")
-
+  yi <- names(ys)[i]
+samplesi <- samples[!is.na(samples[ifelse(yi == "cpomw_g","cpom_g",yi)]),]
 if(length(unique(samplesi$sitecode)) != nrow(sites)) stop()
 # no om data for EUM...need to check this...for now...
 if(i %in% 5:8){
