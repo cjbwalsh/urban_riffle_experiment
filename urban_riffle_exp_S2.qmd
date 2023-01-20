@@ -1,0 +1,54 @@
+---
+title: "Appendix S2: Notes on data preparation"
+format: html
+editor: visual
+bibliography: references.bib
+---
+
+This document provides further detail on the assembly of environmental and biological data used in the study. It also includes explanatory notes for non-standard taxonomic names used.
+
+## Environmental data
+
+## Biological data
+
+### Taxonomic identification
+
+Macroinvertebrate specimens were identified to the lowest taxonomic level possible using available keys and expertise. The final dataset contains a number of non-standard taxonomic names:
+
+Microturbellaria CRC sp. 1, 2, and 3. (**Need to find correspondence on this**).
+
+Tubificinae Group A, comprising *Limnodrilus*, *Antipodrilus* (in part), *Telmatodrilus*, *Borthioneurum vejdovskyanum*, *Rhyacodrilus bifidus*, *Rhizodrilus athingtonae*, *Phyacodrilus fultoni*, and *Ainudrilus billabongus* [@pinder_1994].
+
+Tubificinae Group B, comprising *Tubifex tubifex*, *Antipodrilus* (in part), *Potamothrix bavaricus*, and *Rhyacodrilus* (in part) [@pinder_1994].
+
+Phreodrilidae Group E, comprising *Insulodrilus* sp. 1, *I. nudus*, *Astacopsidrilus*, sp 1, *Antarctodrilus niger*, *Phreodrilus mauienensis,* *Phreodrilus* sp. 1, *Phreodrilus* sp. 2, *Phreodriloides notabilis*, *I. lacustris*, *I. campbellianus*, and *Phreodriloides* sp. 1 [@pinder_1994]
+
+Leptophlebiidae Genus Z sp. AV1 from @dean_1999.
+
+*Offadens* spG2MV1, from @webb_suter_2011.
+
+### Taxonomic level for statistical modelling
+
+We made decisions on the level to which groups were identified to balance the dual aims of maximizing taxonomic resolution and accuracy of specimen counts in samples.
+
+<!--# the following extracted from comments in urban_riffle_exp_data_compilation.qmd -->
+
+For samples in which a relatively small number of Gastropoda were unidentified compared to the numerous specimens identified as *Potamopyrgus antipodarum*, *Physa acuta*, or Lymnaeidae, and those unidentified specimens were identified as unidentifiable because they were immature or damaged (rather than an unknown new species), the count of unidentified specimens was distributed and added pro-rata to the identified taxa in the sample. The same approach was taken for unidentified Elmidae and Tanypodinae.
+
+Specimens identified as Chironomidae, Chironimini, Orthocladiinae, Baetidae, Leptophlebiidae, Odonata constituted a very small proportion of specimens identified to lower taxonomic levels in their respective groups. These unidentified specimens were excluded from the model data set.
+
+Taxonomic groups for which unidentified specimens outnumbered identified specimens in at least some samples were combined to a higher level. Thus the following taxa were lumped to the taxonomic level indicated:
+
+-   Simuliidae: most records were identified as *Austrosimulium furiosum* or *Simulium ornatipes*, but several samples had unidentified Simuliidae recorded.
+
+-   Ceratopogonidae: 13 records comprising 4 species (Two morphospecies) and 3 records of unidentified Ceratopogonidae in the dataset.
+
+-   Empididae: 13 records comprising 3 morphospecies.
+
+-   Plecoptera: 4 records comprising 2 species and 1 unidentified specimen.
+
+-   Hydropsychidae: 36 records identified as *Cheumatopsyche* or *Asmicridea*, but five samples containing only unidentified Hydropsychidae
+
+-   Hydroptilidae: 19 records identified as Hellyethira or Hydroptila, but three samples containing only unidentified Hydroptilidae.
+
+-   Leptoceridae: 8 records identified as *Triplectides*, *Notalina* or *Lectrides*, but four samples containing only unidentified Leptoceridae

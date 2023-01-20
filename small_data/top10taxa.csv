@@ -1,0 +1,20 @@
+"taxoncode","Taxon","High.I_Control_B","High.I_Control_A1","High.I_Control_A2","High.I_Impact_B","High.I_Impact_A1","High.I_Impact_A2","Low.I_Control_B","Low.I_Control_A1","Low.I_Control_A2","Low.I_Impact_B","Low.I_Impact_A1","Low.I_Impact_A2"
+"LO0499A2","Tubificidae Group B",1797,1524,4035,277,270,724,40,32,72,555,105,15
+"LO0499A1","Tubificidae Group A",1578,1238,3903,306,342,417,10,7,20,142,35,3
+"QDAF15","Cricotopus",348,253,1228,109,337,682,6,4,19,176,15,43
+"QDAI04","Chironomus",250,202,2518,26,69,607,1,1,12,34,3,4
+"LO060101","Lumbriculus variegatus",238,180,275,55,60,47,3,2,3,31,15,1
+"II","Nematoda",217,178,924,38,41,270,14,11,48,158,26,20
+"OJ3","Cyclopoida",134,127,490,19,36,147,3,3,9,22,8,4
+"KG080101","Physa acuta",74,66,132,24,47,132,1,1,2,7,6,5
+"LO050702","Chaetogaster diaphanus",65,56,181,12,11,27,0,0,1,2,1,0
+"KG020601","Potamopyrgus antipodarum",23,22,54,3,1,19,19,16,35,14,4,22
+"LO08","Enchytraeidae",21,16,99,5,12,2,1,0,2,4,0,0
+"IF610101","Cura pinguis",22,20,31,5,8,118,2,2,3,26,37,8
+"QD10","Simuliidae",1,1,4,0,1,44,3,2,13,59,14,183
+"LO0501","Nais",12,10,27,3,4,8,4,4,9,25,7,4
+"QDAH9978","Paratanytarsus/Rheotanytarsus",0,0,1,0,0,0,2,1,4,14,2,1
+"LO0505","Pristina",3,3,36,0,0,8,1,1,6,2,0,2
+"QT06","Hydropsychidae",0,0,0,0,0,0,2,1,1,1,1,13
+"LH01","Glossiphoniidae",5,4,11,2,4,21,1,1,2,7,3,6
+NA,"% of all taxa",95,95,94,96,95,94,73,75,79,87,88,81

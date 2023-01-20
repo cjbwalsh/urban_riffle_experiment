@@ -20,8 +20,7 @@ sites <- data.frame(readxl::read_excel(dat_file, sheet = "sites"),
                     stringsAsFactors = FALSE)
 ```
 
-::: {#fig-site_photos layout-ncol="3"}
-![Blind Creek](images/BLI_2492g_experimental_riffle_19960606.JPG){#fig-bli}
+::: {#fig-site_photos layout-ncol="3"} ![Blind Creek](images/BLI_2492g_experimental_riffle_19960606.JPG){#fig-bli}
 
 ![Brushy Creek](images/BRS_1572d_experimental_riffle_19960604.JPG){#fig-brs}
 

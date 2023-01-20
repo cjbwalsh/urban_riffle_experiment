@@ -25,6 +25,7 @@ if (length(gpkg_files) > 0) {
   osf_download(spatial_files[spatial_files$name %in% gpkg_files,], path = "data")
 }
 
+# Load observed data as in S3
 dat_file <- 
 "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/data_for_model.xlsx"
 sites <- data.frame(readxl::read_excel(dat_file, sheet = "sites"), 
@@ -100,12 +101,10 @@ sdata <- list(n_obs = nrow(biota_ct),
               s = as.matrix(ss_ct)
 )
 
-# from urban_riffle_exp_S3.qmd, chunk calc_abundance_fits
+# load object oe_stats from urban_riffle_exp_S3.qmd, chunk calc_abundance_fits
 load("~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/riffle_baci_oe_stats.rda")
-# from urban_riffle_exp_S3.qmd, chunk fig-nbinom_pa_stats
+# load object pa_stats from urban_riffle_exp_S3.qmd, chunk fig-nbinom_pa_stats
 load("~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/riffle_baci_pa_stats.rda")
-
-
 ```
 
 ## Abstract
@@ -279,17 +278,15 @@ The models satisfied tests for convergence, and effective sample size. The Bayes
 
 <!--# Not true for vel_var, cpom and fpom, which all had low BFMI...need to revisit this -->
 
-<!--# Need to edit the following taken from White and Walsh 2020.  -->
-
 We quantified model accuracy by correlation coefficients (R) between observed and predicted abundances of each taxon in each sample (log-transformed, averaged for sample units comprising each sample). To assess potential bias in model predictions, we calculated the slope of a regression of predicted abundance as a function of observed abundance. We also assessed the accuracy of predictions of taxon occurrence by the area under the operator curve (AUC) of logistic regressions of predicted probability of occurrence as a function of observed presence or absence each taxon in each sample (see below). Finally we assessed the accuracy of model predictions of number of taxa in each sample (total and number of Ephemeroptera, Plecoptera and Trichoptera taxa), assessing the *R^2^* of regressions between predicted and observed, accounting for subsample proportion.
 
 The model predicted abundances of all taxa at each site well (mean R for all taxa `r round(mean(oe_stats$adj_r_squ),2)` (range `r round(min(oe_stats$adj_r_squ),2)`--`r round(max(oe_stats$adj_r_squ),2)`), without bias for the `r sum(oe_stats$slope > 0.8)` taxa (mean slope `r round(mean(oe_stats$slope[oe_stats$slope > 0.8]),2)`, range `r round(min(oe_stats$slope[oe_stats$slope > 0.8]),2)`--`r round(max(oe_stats$slope[oe_stats$slope > 0.8]),2)`). Abundances of `r sum(oe_stats$slope <= 0.8)` taxa with lower prevalence and abundance tended to be underestimated (mean slope `r round(mean(oe_stats$slope[oe_stats$slope <= 0.8]),2)`). However, the occurrences of all taxa were well predicted by the model (AUC \> `r round(min(pa_stats$AUC, na.rm = TRUE),2)`), and the sums of predicted probabilities of occurrence predicted numbers of taxa per sample well. The regression of predicted as a function of observed *R^2^* = 0.63, with predicted taxon numbers being larger than observed for samples with few taxa. However, this was likely because most such samples had smaller subsample fractions than more taxa-rixh samples. The regression of predicted as a function of observed + subsample proportion had a higher *R^2^* (0.73). Numbers of EPT taxa were well predicted by the model (*R^2^* = 0.92), with a smaller effect of subsample size. See Appendix S3 for more detail. The good fit of the model predictions to the data provides confidence in inferences of the *BA*, *CI* and *I* effects, which are the focus of this study.
 
 ### Model interpretation
 
-To interpret interactions between the effects of riffle construction and degree of catchment urbanization, we derived posterior predicted distributions of abundances of taxa for which the interactions of interest were non-zero with at least 90% confidence for 12 scenarios. The scenarios comprised four site types (control and impact sites with high and low effective imperviousness (x% and y% EI, the maximum and mimimum EI values in the study sites, respectively), in the three states of the BA effect (ba0, before; ba1, in the first year after riffle construction; and ba2, 5-6 years after).
+To interpret interactions between the effects of riffle construction and degree of catchment urbanization, we derived posterior predicted distributions of abundances of taxa for which the interactions of interest were non-zero with at least 90% confidence for 12 scenarios. The scenarios comprised four site types (control and impact sites with high and low effective imperviousness (4% and 32% EI, the maximum and mimimum EI values in the study sites, respectively), in the three states of the BA effect (*B*, before; *A1*, in the first year after riffle construction; and *A2*, 5-6 years after).
 
-We focused first on taxa for which the *baci* or *bacii* effects were non-zero with at least 90% confidence to understand which taxa drove assemblage-level differences. We derived predictions of responses of assemblage-level metrics from the model. Responses of diversity measures such as richness and evenness are of intrinsic community ecological interest, but they and biotic metrics focussing on taxa of differing sensitivity to human disturbance are used by stream managers as measures of ecological condition and targets for responses to management actions (e.g. EPA SEPP guidelines?). We used predicted abundancs and occurrences for each scenario to calculate posterior distributions of:
+We focused first on taxa for which the *baci* or *bacii* effects were non-zero with at least 90% confidence to understand which taxa drove assemblage-level differences. We also derived predictions of responses of assemblage-level metrics from the model for each of the 12 scenarios. Responses of diversity measures such as richness are of intrinsic community ecological interest, but they and biotic metrics focussing on taxa of differing sensitivity to human disturbance are used by stream managers as measures of ecological condition and targets for responses to management actions (e.g. EPA SEPP guidelines?). We used predicted abundances and occurrences for each scenario to calculate posterior distributions of:
 
 -   Total macroinvertebrate abundance, of Ephemeroptera, Plecoptera and Trichoptera taxa (EPT; insect orders dominated by taxa sensitive to human disturbance, REF), and of Diptera and Oligochaeta (QDLO, groups dominated by taxa tolerant to human disturbance, REF).
 
@@ -299,21 +296,25 @@ We focused first on taxa for which the *baci* or *bacii* effects were non-zero w
 
 -   SIGNAL, a biotic index which averages grades of sensitivity to human disturbance (between 1 and 10) of families present in a sample [@chessman_1995].
 
-Abundance measures by adding predicted abundances of the relevant taxa. Richness measures by first calculating probability of occurrence in each sample as...(from S3).
-
-For either level of EI, we inferred an effect of riffle construction on *X*, the abundance of a taxon or an assemblage-level metric, if the posterior distribution of
+Abundance measures were calculated by adding predicted mean abundances per sample unit of the relevant taxa. Richness measures were by first calculating probability of occurrence in each sample awhere predicted probability of occurrence in a sample,
 
 $$
-(X_{control,ba0} - X_{control, ba1}) - (X_{impact,ba0} - X_{impact, ba1})
-$$
+p\_s = 1 - \Pi(1 - p\_{su}_i)
+$$ {#eq-predict_pa}
 
-for an effect in the first year, or
+where $p\_su_i$ is the probability of occurrence in the *i*th sample unit comprising the sample, calculated as 1 - negative-binomial probabliity of zero, given predicted $\mu$ and $\phi$. Number of taxa in each sample was calculated as the sum of probabilities of occurrence (see Appendix S3 for more detail).
 
-$$
-(X_{control,ba0} - X_{control, ba2}) - (X_{impact,ba0} - X_{impact, ba2})
-$$
+To assess the probability of an effect of riffle construction on assemblage metrics and taxon abundances, we calculated the following four differences between the posterior distributions of metrics and abundances given the 12 scenarios:
 
-for an effect 5-6 years later was non-zero with at least 90% confidence.
+-   $\Delta A1 \, (\textrm{4%} \, EI)$, (control minus impact before, *B*) - (control minus impact in first year after, *A1*) for low *I*
+
+-   $\Delta A2 \, (\textrm{4%} \, EI)$, (control minus impact before, *B*) - (control minus impact 5-6 y after, *A2*) for low *I*
+
+-   $\Delta A1 \, (\textrm{32%} \, EI)$, (control minus impact before, *B*) - (control minus impact in first year after, *A1*) for high *I*
+
+-   $\Delta A2 \, (\textrm{32%} \, EI)$, (control minus impact before, *B*) - (control minus impact 5-6 y after, *A2*) for high *I*
+
+We inferred a likely effect of riffle construction on each measure if \>90% of the posterior distribution of any one of the differences was greater than (indicating that the measure in control and impact sites became more different following riffle construction) or less than (indicating they became more similar).
 
 ## Results
 
@@ -321,25 +322,33 @@ for an effect 5-6 years later was non-zero with at least 90% confidence.
 
 ### Responses of macroinvertebrate taxa
 
-23 of the 113 taxa responded to riffle construction (non-zero baci differences with 90% confidence; 18 with 95% confidence: @fig-coeff_plot_alt). Only two of those species were negatively associated with EI (i.e. sensitive to human disturbance). One of those, Hydropsychidae, filter-feeding caddis flies which attach to rocks increased in abundance after riffle construction, and only in sites with low EI. The other, a chironomid, *Thiennemaniella*, decreased in abundance, also only in sites with low EI.
+```{r}
+#| echo: false
+#| label: tbl-top10taxa
+#| tbl-cap: "Mean abundance (N per 0.04 m2 sample unit) under the 12 scenarios of the 19 taxa that were among the 10 most abundant taxa in at least one scenario, and the percentage of the total count of all taxa in each scenario that the 19 taxa constitute.  Low and High I, 4% and 32% effective imperviousness, respectively; B, Before; A1, in the first year after; A2, 5-6 years after riffle construction. See Appendix S2 for explanation of Tubificinae taxa."
 
-Most taxa that were positively associated with EI (i.e. tolerant of human disturbance) decreased in abundance after riffle construction. Nematoda, and oligochaetes *Nais*, *Chaetogaster diaphanus*, Megadrili, Tubificinae gps A and B, *Lumbriculus*, and chironomids *Paratanytarsus/Rheotanytarsus*, *Procladius*, *Parakiefferiella*, *Polypedilum*, and *Cryptochironomus*---most of which inhabit soft sediments---decreased in abundance in low EI sites, but not high EI sites. Only Enchytraidae decreased in both low and high EI sites.
+top10taxa <- read.csv("small_data/top10taxa.csv")
+ft <- flextable::flextable(top10taxa[,-1]) 
+ft <- ftExtra::span_header(ft, sep = "_")
+ft <- flextable::align(ft, align = "center", part = "header")
+ft <- flextable::italic(ft, i = which(top10taxa$taxoncode %in% taxa$taxoncode[taxa$italic == 1]), j = 1)
+ft <- flextable::bold(ft, i = nrow(top10taxa))
+ft <- flextable::hline(ft, i = nrow(top10taxa)-1)
+ft
+```
 
-Simuliidae, with similar habitat requirements to Hydropsychidae, but more tolerant of human impacts, increased in abundance in high EI sites but not low EI sites, as did Ceratopogonidae, Glossiphonidae and *Pisidium*.
+The macroinvertebrate assemblages of all sites were numerically dominated by cosmopolitan taxa, tolerant of human disturbance, although the most abundant taxa tended to be less abundant, and constituted a lower proportion of the assemblage, in sites with lower EI (@tbl-top10taxa). *Potamopyrgus antipodarum*, *Physa acuta*, *Lumbriculus variegatus*, and likely members of other taxa, are invasive species. Thus, despite the sites spanning a gradient of EI from 4-32%, the biota of all sites were dominated by taxa typical of degraded urban streams, and this general state was consistent across before and after states, although @tbl-top10taxa suggests some reduction in the dominance of some cosmopolitan taxa after riffle construction in low EI impact sites. 
 
-*Cura pinguis*, *Branchiura sowerbyi*, Cyclopoida, *Cricotopus*, and *Chironomus* increased in abundance in high EI sties, and decreased in low EI sites.
-
-While Hydropsychidae was the only EPT taxon that increased in abundance after riffle construction, EPT richness and abundance increased (only in low EI sites). The predominant decline in abundance of oligochaete and chironomid taxa in low EI sites led to a decrease in QDLO richness and abundance in low EI sites, while responses of *B. sowerbyi*, *Cricotopus*, and *Chironomus* led to an increase in QDLO richness and abundance in high EI sites. The responses of these abundant taxa also explain the complementary trends in evenness (decline in high EI sites, increase in low EI sites).
-
-The observed changes in taxon abundances and richness in response to riffle construction were insufficient to elicit changes in SIGNAL scores. We found no evidence of colonization of new taxa in response to riffle construction (f*ind which taxa only occurred after in impact and control sites).*
 
 ```{r}
 #| echo: false
 #| warning: false
 #| message: false
 
+# Load posterior draws for model parameters and calculate summary statistics for each parameter
 mod_draws <- get(load("~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/fit_riffle_baci_draws.rda"))
 params <- c("b_ba1", "b_ba2", "b_ci","b_i","b_spring","b_ba1ci","b_ba2ci","b_ba0cii","b_ba1cii", "b_ba2cii")
+
 df_empty <- data.frame(shortcode = NA, mean = NA, lo95 = NA, lo90 = NA, median = NA, hi90 = NA, hi95 = NA)[0,]
 param_summs <- list()
 for(i in 1:length(params)){
@@ -354,36 +363,59 @@ for(i in 1:length(params)){
                                  qlsi)
 }
 names(param_summs) <- params
-  
-ba1ci_pos_taxa <- param_summs$b_ba1ci$shortcode[param_summs$b_ba1ci$lo90 > 0] #0
-ba1ci_neg_taxa <- param_summs$b_ba1ci$shortcode[param_summs$b_ba1ci$hi90 < 0] #0
-ba2ci_pos_taxa <- param_summs$b_ba2ci$shortcode[param_summs$b_ba2ci$lo90 > 0] #0
-ba2ci_neg_taxa <- param_summs$b_ba2ci$shortcode[param_summs$b_ba2ci$hi90 < 0] #0
-ba0cii_pos_taxa <- param_summs$b_ba0cii$shortcode[param_summs$b_ba0cii$lo90 > 0] #19
-ba0cii_neg_taxa <- param_summs$b_ba0cii$shortcode[param_summs$b_ba0cii$hi90 < 0] #7
-ba1cii_pos_taxa <- param_summs$b_ba1cii$shortcode[param_summs$b_ba1cii$lo90 > 0] #19
-ba1cii_neg_taxa <- param_summs$b_ba1cii$shortcode[param_summs$b_ba1cii$hi90 < 0] #0
-ba2cii_pos_taxa <- param_summs$b_ba2cii$shortcode[param_summs$b_ba2cii$lo90 > 0] #4
-ba2cii_neg_taxa <- param_summs$b_ba2cii$shortcode[param_summs$b_ba2cii$hi90 < 0] #0
-taxa_to_plot <- unique(c(ba0cii_pos_taxa,ba0cii_neg_taxa,
-                         ba1ci_pos_taxa,ba1ci_neg_taxa,ba1cii_pos_taxa,ba1cii_neg_taxa,
-                         ba2ci_pos_taxa,ba2ci_neg_taxa,ba2cii_pos_taxa,ba2cii_neg_taxa,
-                         param_summs$b_ba$shortcode[param_summs$b_ba$lo90 > 0],
-                         param_summs$b_ba$shortcode[param_summs$b_ba$hi90 < 0],
-                         param_summs$b_ci$shortcode[param_summs$b_ci$lo90 > 0],
-                         param_summs$b_ci$shortcode[param_summs$b_ci$hi90 < 0],
+
+# load predictions to counterfactual dataset of 60 combinations of predictors (see S3 for derivation)
+load("~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/fit_riffle_baci_predy_cf_draws.rda")
+# loads objects: 1) a list predy_cf; and 2) a list of lists delta_post, containing lists
+# delta_baci1_low, delta_baci2_low, delta_baci1_hi, delta_baci1_hi - see S3 chunk pred_cf
+diff_summs <- list()
+for(i in 1:length(delta_posts)){
+  qlsi <- as.data.frame(do.call(rbind,lapply(delta_posts[[i]],FUN = quantile, 
+                                probs = c(0.025,0.05,0.125,0.5,0.875,0.95,0.975))))
+  names(qlsi) = c("lo95","lo90","lo75","median","hi75","hi90","hi95")
+  meani <- unlist(lapply(delta_posts[[i]],FUN = mean))
+  diff_summs[[i]] <- data.frame(shortcode = names(biota_ct), 
+                                 mean = meani,
+                                 qlsi)
+}
+names(diff_summs) <- names(delta_posts)
+
+# Identify those taxa for which a difference resulting from riffle construction can be inferred
+# (with 90% and 95% confidence)
+more_diff_90 <- more_diff_95 <- more_sim_90 <- more_sim_95 <- vector()
+for(i in 1:length(delta_posts)){
+more_diff_90 <- unique(c(more_diff_90,diff_summs[[i]]$shortcode[diff_summs[[i]]$lo90 > 0]))
+more_diff_95 <- unique(c(more_diff_95,diff_summs[[i]]$shortcode[diff_summs[[i]]$lo95 > 0]))
+more_sim_90 <- unique(c(more_sim_90,diff_summs[[i]]$shortcode[diff_summs[[i]]$hi90 < 0]))
+more_sim_95 <- unique(c(more_sim_95,diff_summs[[i]]$shortcode[diff_summs[[i]]$hi95 < 0]))
+}
+
+# Collect taxa of interest (effected by riffles or by EI) 
+taxa_to_plot <- unique(c(more_diff_90,more_sim_90,
                          param_summs$b_i$shortcode[param_summs$b_i$lo90 > 0],
-                         param_summs$b_i$shortcode[param_summs$b_i$hi90 < 0],
-                         param_summs$b_spring$shortcode[param_summs$b_spring$lo90 > 0],
-                         param_summs$b_spring$shortcode[param_summs$b_spring$hi90 < 0]))
+                         param_summs$b_i$shortcode[param_summs$b_i$hi90 < 0]))
+# Prepare taxon text for figures
 higher_taxa_in_plot <- higher_taxa[higher_taxa$higher_taxon %in% 
                                      unique(taxa$higher_taxon[taxa$taxoncode %in% taxa_to_plot]),]
-
 # R results for inclusion in figure caption:
 ht_string <- paste(paste0(higher_taxa_in_plot$taxon, " (", higher_taxa_in_plot$higher_taxon, ")"), collapse = "; ")
 # Annelida (A); Pelecypoda (B); Coleoptera (C); Diptera (D); Ephemeroptera (E); Turbellaria (F); Gastropoda (G); Lepidoptera (L); Acarina (M); Odonata (O); Plecoptera (P); Trichoptera (T); Crustacea (Z); Cnidaria (I); Nematoda (J)
-ntoplot <- length(taxa_to_plot) #59
+# length(taxa_to_plot) # 41 taxa to plot in @fig-coeff_plot_alt
 ```
+
+23 of the 113 taxa responded to riffle construction (non-zero *BA-CI* differences with 90% confidence; 18 with 95% confidence: @fig-coeff_plot_alt). Only two of those species were negatively associated with EI (i.e. sensitive to human disturbance). One of those, Hydropsychidae, filter-feeding caddis flies which attach to rocks increased in abundance after riffle construction, and only in sites with low EI. The other, a chironomid, *Thiennemaniella*, decreased in abundance, only in sites with low EI.
+
+Most taxa that were positively associated with EI (i.e. tolerant of human disturbance) decreased in abundance after riffle construction. Nematoda, and oligochaetes *Nais*, *Chaetogaster diaphanus*, Megadrili, Tubificinae groups A and B, *Lumbriculus variegatus*, Enchytraeidae , and chironomids *Paratanytarsus/Rheotanytarsus*, *Procladius*, *Parakiefferiella*, *Polypedilum*, and *Cryptochironomus*---most of which inhabit soft sediments---decreased in abundance in low EI sites, but not high EI sites. 
+
+Simuliidae, with similar habitat requirements to Hydropsychidae, but more tolerant of human impacts, increased in abundance in high EI sites but not low EI sites, as did Ceratopogonidae, Glossiphonidae and *Pisidium*.
+
+*Cura pinguis*, Cyclopoida, *Cricotopus*, and *Chironomus* increased in abundance in high EI sites, and decreased in low EI sites.
+
+While Hydropsychidae was the only EPT taxon that increased in abundance after riffle construction, EPT richness and abundance increased (only in low EI sites). The predominant decline in abundance of oligochaete and chironomid taxa in low EI sites led to a decrease in QDLO richness and abundance in low EI sites, while responses of *Cricotopus*, and *Chironomus* led to an increase in QDLO richness and abundance in high EI sites. The responses of these abundant taxa also explain the complementary trends in evenness (decline in high EI sites, increase in low EI sites). (\*Not true any more?\*\*)
+
+The observed changes in taxon abundances and richness in response to riffle construction were insufficient to elicit changes in SIGNAL scores. We found no evidence of colonization of new taxa in response to riffle construction (f*ind which taxa only occurred after in impact and control sites).*
+
+
 
 ```{r}
 #| label: fig-coeff_plot_alt
@@ -391,14 +423,9 @@ ntoplot <- length(taxa_to_plot) #59
 #| warning: false
 #| message: false
 #| fig-width: 7
-#| fig-height: 9
-#| fig-cap: "Posterior distributions of the effect (b_I) of imperviousness (EI), and of differences in abundance for the four contrasts illustrating the effect of riffle construction. Each contrast estimates the change in difference between control and reference sites from before riffle construction to one of two periods after construction.  The four contrasts are: baci1_low, before to the first year after for sites with 4% EI; baci2_low, before to the 5th/6th year after in sites for sites with 4% EI; bac1_hi, before to the first year after for sites with 32% EI; baci2_hi, before to the 5th/6th year after in sites for sites with 32% EI. For each contrast a positive trend indicates that the control and reference sites became more different, and a negative trend indicates they became more similar. For each distribution, 95th, 90th, and 75th percentiles are indicated by increasingly thick bars. Coefficients with >90% less than zero are red, and >90% greater than zero blue. Taxa are ordered by mean of b_I. Only the 41 taxa  with at least one of the five distributions greater than or less than zero with >90% confidence are shown. Taxonomic affiliations are indicated parenthetically: Annelida (A); Pelecypoda (B); Coleoptera (C); Diptera (D); Ephemeroptera (E); Turbellaria (F); Gastropoda (G); Lepidoptera (L); Acarina (M); Odonata (O); Plecoptera (P); Trichoptera (T); Crustacea (Z); Cnidaria (I); Nematoda (J)."
+#| fig-height: 5
+#| fig-cap: "Posterior distributions of the effect (b_I) of imperviousness (EI), and of differences in abundance for the four contrasts illustrating the effect of riffle construction. Each contrast estimates the change in difference between control and reference sites from before riffle construction to one of two periods after construction.  The four contrasts are:$\\Delta$A1 4%, before to the first year after for sites with 4% EI; $\\Delta$A2 4%, before to the 5th/6th year after in sites for sites with 4% EI; $\\Delta$A1 32%, before to the first year after for sites with 32% EI; $\\Delta$A2 32%, before to the 5th/6th year after in sites for sites with 32% EI. For each contrast a positive trend indicates that the control and reference sites became more different, and a negative trend indicates they became more similar. For each distribution, 95th, 90th, and 75th percentiles are indicated by increasingly thick bars. Coefficients with >90% less than zero are red, and >90% greater than zero blue. Taxa are ordered by mean of b_I. Only the 41 taxa  with at least one of the five distributions greater than or less than zero with >90% confidence are shown. Taxonomic affiliations are indicated parenthetically: Annelida (A); Pelecypoda (B); Coleoptera (C); Diptera (D); Ephemeroptera (E); Turbellaria (F); Gastropoda (G); Lepidoptera (L); Acarina (M); Plecoptera (P); Trichoptera (T); Crustacea (Z); Nematoda (J)."
 
-taxa_to_plot <- unique(c(param_summs$b_i$shortcode[param_summs$b_i$lo90 > 0],
-                         param_summs$b_i$shortcode[param_summs$b_i$hi90 < 0],
-                         more_similar,less_similar))
-higher_taxa_in_plot <- higher_taxa[higher_taxa$higher_taxon %in% 
-                                     unique(taxa$higher_taxon[taxa$taxoncode %in% taxa_to_plot]),]
 lo <- layout(matrix(c(1:5,0,rep(6,6)),2,5,byrow = TRUE),widths = c(25,rep(10,4)),heights = c(60,2))
 taxa$labs <- paste0(taxa$taxon," (", taxa$higher_taxon,")")
 taxa_to_plot_df <- taxa[taxa$taxoncode %in% taxa_to_plot,]
@@ -407,7 +434,7 @@ taxa_in_order <- taxa_in_order[taxa_in_order %in% taxa_to_plot]
 taxa_to_plot_df <- taxa_to_plot_df[match(taxa_in_order, taxa_to_plot_df$taxoncode),]
 miny <- 1; maxy <- length(taxa_to_plot)
 
-  nms <- c("b_i", names(diff_summs))
+  nms <- c("b_i", bquote(Delta~"A1 4%EI"), bquote(Delta~"A2 4%EI"), bquote(Delta~"A1 32%EI"), bquote(Delta~"A2 4%EI"))
 for(p in 1:5){
   if(p == 1){
   summp <- param_summs[["b_i"]]
@@ -450,21 +477,14 @@ title(xlab = "Coefficient", line=-1, cex.lab = 1.25)
 #| warning: false
 #| message: false
 #| fig-width: 7
-#| fig-height: 6
-#| fig-cap: "Trends in abundance of the 8 taxa for which the interaction between the before-after, control-impact and effective imperviousness effects were negative with >90% confidence. The four lines in each plot connect mean (± 95% confidence intervals) metric values  before and at two times after construction of the experimental riffles for control sites (Ctl) and impact (i.e. site in which riffles were placed, Imp) with low and high effective imperviousness (EI)."
+#| fig-height: 3
+#| fig-cap: "Trends in abundance of 8 taxa as examples of the main trend patterns observed in taxa for which an effect of riffle was inffered with >90% confidence. The four lines in each plot connect mean (± 95% confidence intervals) metric values  before (B) and at two times after (A1, in the first year, and A2, 5-6 years later) construction of the experimental riffles for control sites (Ctl) and impact (i.e. site in which riffles were placed, Imp) with 4% and 32% effective imperviousness (EI)."
 
-# (Plot examples: Hydropsychidae, Thienemanniella, One examples from second group (Lumbriculus?), Enchytraeidae, Simulidae, Ceratopogonidae, [Cura pinguis; Branchia sowerbyi - from last group..different lag?])
-
-taxa_baci <- data.frame(class = c("ba2ci_pos",
-                                  rep("ba2ci_neg not ba0cii_neg",sum(!ba2ci_neg_taxa %in% ba0cii_neg_taxa)),
-                                  rep("ba2ci_neg and ba0cii_neg", sum(ba2ci_neg_taxa %in% ba0cii_neg_taxa)),
-                                  rep("ba0cii_neg not ba2ci_neg",
-                                      sum(!ba0cii_neg_taxa %in% c(ba2ci_neg_taxa,ba2ci_pos_taxa)))),
-                        taxoncode = c(ba2ci_pos_taxa, 
-                                      ba2ci_neg_taxa[!ba2ci_neg_taxa %in% ba0cii_neg_taxa],
-                                      ba2ci_neg_taxa[ba2ci_neg_taxa %in% ba0cii_neg_taxa],
-                                      ba0cii_neg_taxa[!ba0cii_neg_taxa %in% c(ba2ci_neg_taxa,ba2ci_pos_taxa)])
-                        )
+# (Plot examples: 
+example_taxa <- c("QT06","QDAF07","LO060101","QDAI08","QD10","IF610101","QDAF15")
+# 7 examples referred to in text: Hydropsychidae, Thienemanniella, Oligochaete 
+# and chironomid examples from second group (Lumbriculus and Polypedilum),  
+# Simulidae, Cura pinguis; Cricotopus - from last group..different lag])
 
 predx_cf <- expand.grid(intercept = 1, ba = factor(c(0,1,2)), ci = c(0,1), 
                         i = seq(min(u[,5]),max(u[,5]),length=10), spring = 0)
@@ -472,77 +492,80 @@ predx_cf <- data.frame(model.matrix(~ ba + ci + ba:ci + i + ba:ci:i + spring,
                                     data = predx_cf))
 predx_cf$ai <- 10^(predx_cf$i * attr(i_scaled, 'scaled:scale') + 
                 attr(i_scaled, 'scaled:center')) - 0.1
-load("~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/fit_riffle_baci_predy_cf_draws.rda")
+
+# The 12 scenarios for calculating differences  
+combos <- list(control_hii = which(predx_cf$ci == 0 & predx_cf$i == max(predx_cf$i)),
+               impact_hii = which(predx_cf$ci == 1 & predx_cf$i == max(predx_cf$i)),
+               control_lowi = which(predx_cf$ci == 0 & predx_cf$i == min(predx_cf$i)),
+               impact_lowi = which(predx_cf$ci == 1 & predx_cf$i == min(predx_cf$i)))
+
 # cols <- ggsci::pal_jco(palette = c("default"), alpha = 1)(4)
 # spell them out so that they are displayed in Rstudio
-cols <- c("#0073C2FF", "#EFC000FF", "#868686FF", "#CD534CFF")
-# order bacii_pos_taxa in same order as they appear in fig-coeff_plot
-ba0cii_neg_taxa <- ba0cii_neg_taxa[order(param_summs$b_i$mean[match(ba0cii_neg_taxa,
-                                                                  param_summs$b_i$shortcode)])]
+cols <- c( "#CD534CFF","#EFC000FF","#868686FF","#0073C2FF")
+taxa_baci <- unique(c(more_diff_90,more_sim_90))
+taxa_set <- taxa_baci[1:8]# non_taxa_baci # 1:8
 
-taxa_set <- taxa_baci$taxoncode[9:16]# non_taxa_baci # 1:8
 lo <- layout(matrix(c(9,1:4,9,5:8,0,rep(10,4)),3,5,byrow = TRUE),
-       widths = c(1,12,10,10,10),heights = c(10,12,1))
+widths = c(1,12,10,10,10),heights = c(10,12,1))
 for(i in 1:8){  #Just first 12 out of 19 to start with
- par(mar = c(ifelse(i %in% 5:8, 4,1), ifelse(i %in% c(1,5),5,1),1,1))
+par(mar = c(ifelse(i %in% 5:8, 4,1), ifelse(i %in% c(1,5),5,1),1,1))
 predy_cf_i <- predy_cf[[taxa_set[i]]]  #$taxoncode
 mean_cf_i <- apply(predy_cf_i,2,FUN = mean)
 cls_cf_i <- apply(predy_cf_i,2,FUN = quantile, probs = c(0.025,0.975))
 cfi <- data.frame(predx_cf, pred = mean_cf_i, lo = cls_cf_i[1,],hi = cls_cf_i[2,])
 x_adjs <- c(-0.03,-0.01,0.01,0.03)
 
-with(cfi[combos$control_lowi,], 
-     plot((0:2) + x_adjs[1], pred, type = 'b',
-          col = cols[1], pch = 16, axes = FALSE,ylim = c(min(cfi$lo),max(cfi$hi)), # ylim = c(-14,5), #
-          xlab = "", ylab = ""))
+with(cfi[combos$control_hii,],
+plot((0:2) + x_adjs[1], pred, type = 'b',
+col = cols[1], pch = 16, axes = FALSE,ylim = c(min(cfi$lo),max(cfi$hi)), # ylim = c(-14,5), #
+xlab = "", ylab = ""))
 with(cfi[combos[[2]],], lines((0:2) + x_adjs[2], pred,
-                              col = cols[2], pch = 16, type = 'b'))
+                    col = cols[2], pch = 16, type = 'b'))
 with(cfi[combos[[3]],], lines((0:2) + x_adjs[3], pred,
-                              col = cols[3], pch = 16, type = 'b'))
+                    col = cols[3], pch = 16, type = 'b'))
 with(cfi[combos[[4]],], lines((0:2) + x_adjs[4], pred,
-                              col = cols[4], pch = 16, type = 'b'))
+                    col = cols[4], pch = 16, type = 'b'))
 for(k in 1:3){
-  for(j in 1:4){
-    cfij <- cfi[combos[[j]],]
-    lines(rep(k-1,2) + x_adjs[j], c(cfij$lo[k],cfij$hi[k]), col = cols[j])
-  }
+for(j in 1:4){
+cfij <- cfi[combos[[j]],]
+lines(rep(k-1,2) + x_adjs[j], c(cfij$lo[k],cfij$hi[k]), col = cols[j])
+}
 }
 if(i %in% 5:8){
-            xlabs <- c("Before","2 y after","5 y after")
-                }else{ 
-            xlabs <- rep(" ",3)
-               }
+  xlabs <- c("B","A1","A2")
+      }else{
+  xlabs <- rep(" ",3)
+     }
 axis(1, at = 0:2, labels = xlabs)
 if(i %in% c(1,5,9)){
-            ylabs <- c("0.0001",0.001,0.01,0.1,1,10,100,1000)
-                }else{ 
-            ylabs <- rep(" ",8)
-               }
-axis(2, las = 1, at = log(c(0.0001,0.001,0.01,0.1,1,10,100,1000)), 
-     labels = ylabs) 
+  ylabs <- c("0.0001",0.001,0.01,0.1,1,10,100,1000)
+      }else{
+  ylabs <- rep(" ",8)
+     }
+axis(2, las = 1, at = log(c(0.0001,0.001,0.01,0.1,1,10,100,1000)),
+labels = ylabs)
 box(bty = "l")
 if(taxa$italic[taxa$taxoncode == taxa_set[i]] == 1){
 title(main = bquote(paste(.(LETTERS[i]), # taxa$taxoncode[taxa$taxoncode == ba0cii_taxa[i]],
-             ". ", italic(.(taxa$taxon[taxa$taxoncode == taxa_set[i]])))), 
-      adj = 0, cex.main = 1)
+   ". ", italic(.(taxa$taxon[taxa$taxoncode == taxa_set[i]])))),
+adj = 0, cex.main = 1)
 }else{
- title(main = bquote(paste(.(LETTERS[i]), # taxa$taxoncode[taxa$taxoncode == ba0cii_taxa[i]],
-             ". ", .(taxa$taxon[taxa$taxoncode == taxa_set[i]]))), 
-      adj = 0, cex.main = 1)
+title(main = bquote(paste(.(LETTERS[i]), # taxa$taxoncode[taxa$taxoncode == ba0cii_taxa[i]],
+   ". ", .(taxa$taxon[taxa$taxoncode == taxa_set[i]]))),
+adj = 0, cex.main = 1)
 
-  }
+}
 if(i == 8)
 legend("topleft", pch = 16, col = cols,
-        legend = c("Ctl, low EI", "Ctl high EI","Imp, low EI", "Imp high EI"),
-        cex = 0.75)
- }
+legend = c("Ctl, 32% EI", "Imp, 32% EI", "Ctl 4% EI","Imp 4% EI"),
+cex = 0.75)
+}
 par(mar = c(0,0,0,0))
 plot.new()
 title(ylab = "Abundance per sample unit", line = -1.5, cex = 1.25)
 plot.new()
 title(xlab = "Occasion", line = -1.5, cex = 1.25)
 par(mar = c(4,4,1,1))
-
 ```
 
 ```{r}
@@ -551,7 +574,7 @@ par(mar = c(4,4,1,1))
 #| warning: false
 #| message: false
 #| fig-width: 7
-#| fig-height: 4
+#| fig-height: 3
 #| fig-cap: "Trends in assemblage metrics (A. total richness, B. evenness, C. EPT richness D. SIGNAL core in a sample of 4 sample units) before and at two times after construction of the experimental riffles.  The four lines in each plot connect mean (± 95% confidence intervals) metric values over the three times for control sites (Ctl) and impact (i.e. site in which riffles were placed, Imp) with low and high effective imperviousness (EI)"
 
 load("small_data/assemb_stats.rda")
@@ -604,5 +627,45 @@ title(main = paste0(LETTERS[i],"."), adj = 0)
 ```
 
 ## Discussion
+
+### Text from HE prelim findings.doc
+
+Some notes on preliminary results of habitat experiment
+
+1\. Physical effects of riffle structures.
+
+In all streams, the smallest rocks (a few cm larger than the minimum size calculated by the method of Newbury and Gaboury) in each structure remained in place over one year. None of the structures have been outflanked. In all cases, the structures have resulted in a deeper pool upstream, and increased hydraulic diversity among the emplaced rocks. Some changes in sedimentation patterns have been evident in most cases, with increased loads of fine sediment upstream in all cases, and in some cases, downstream of and within the riffle also (see below).
+
+2\. Differences between treatments
+
+I think there will be little or no difference evident between the large-rock and graded-rock treatments. This may be a result of the actual differences in rock size between the two treatments not being as great as originally envisioned. Also, although it was intended that the large rock treatment would not alter the slope, some damming behind the structure was inevitable. Hydraulic changes due to each treatment type were therefore quite similar.
+
+3\. Direct effects of rock emplacement
+
+The fauna colonising the emplaced rocks were, in all cases, different from the fauna of the channel prior to placement. Tubificid and lumbriculid worms tended to dominate the pre-treatment substrata. Chironomid larvae (mainly Cricotopus and Chironomus) were more abundant among the emplaced rocks in Blind Creek. Simuliid larvae (mainly Simulium ornatipes) were more abundant on the emplaced rocks in the faster flowing (and better WQ) Olinda Creek. Differences among the emplaced rocks were less pronounced in Scotchmans Creek, probably as a result of sedimentation.
+
+Although the assemblage structure changed with the addition of rocks, species richness in the section to which rocks were added tended to be lower after the rock emplacement than before.
+
+4\. Wider reach effects of riffle structures
+
+The following conclusions require confirmation with the full dataset (it is really too early to be publishing this).
+
+Algal biomass increased (not necessarily just in the riffle itself) after emplacement.
+
+Fauna typical of slower flowing waters tended to occur more commonly.
+
+Although the overall species richness of each reach tended not to change, in at least one creek (Scotchmans) some species that were rare prior to emplacement were more common after, thus increasing per sample richness. No such change was evident in Blind Creek, where it is assumed poor WQ remains the limiting factor.
+
+Taxa indicative of good water quality were absent or rare both before and after emplacement.
+
+Temporal trends differed between streams. In Scotchmans, overall species richness declined in the November after emplacement, but rose to pre-emplacement levels by January (Colonization effect?) (Total abundances were higher on both after occasions than before). In Olinda, total abundance and species richness increased in the November after emplacement, but declined dramatically by January, presumably due to high levels of siltation.
+
+5\. Conclusions.
+
+The effects of riffle emplacement in urban streams on community structure tend to be small and variable. Smallest effects were obtained in streams with the poorest WQ.
+
+The likely efficacy of habitat restoration measures can probably be assessed by an a priori assessment of water quality of the stream in question. This study will hopefully be able to provide an guide as to the likely changes to community structure, based on existing community structure.
+
+Deleterious effects are possible if the stream carries high silt loads and the structure acts as a silt trap.
 
 ## References

@@ -588,7 +588,7 @@ biota$naive <- biota$count/biota$s
 
 # Adjustments for multi-taxon model
 # Gastropoda (Unident.) -seems to be solely a trip 5/6 phenomenon. No explanatory notes on any records. 
-# 5BlM2 47 unidentified gastropods - no Physa identified. In the other reps from this sample, Physa was the dominant gastropod.  Change these 47 to Physa?
+# 5BlM2 47 unidentified gastropods - no Physa identified. In the other reps from this sample, Physa was the dominant gastropod.  Change these 47 to Physa.
 # Given the bias of this id to the last two trips, 5BrM4, 5DM3, 6DM1, 5EM2, 5HM1, 5MM1, 6OM1, 5SM1: distribute pro-rata unidentified gastropods among the larger numbers of Physa and Potamopyrgus that have been identified???
 gast_unid <- which(biota$taxoncode == "KG999999")
 for(i in gast_unid){
@@ -621,7 +621,7 @@ biota$shortcode[biota$taxoncode == "QDAE9999" & biota$smpcode == "73-EUM_5211f-3
 biota$taxoncode[biota$taxoncode == "QDAE9999" & biota$smpcode == "73-EUM_5211f-3-LH"] <- "QD080000"
 biota <- biota[biota$taxoncode != "QDAE9999",]
 
-# Simulidae (Unident) QD109999: two species of Simulid identified, rarely occuring together. 
+# Simuliidae (Unident) QD109999: two species of Simulid identified, rarely occuring together. 
 # 5 records (of multiple specimens, two where unident greatly outnumbers identified specimens) of Simulidae (Unident).  Combine.
 biota$shortcode[substr(biota$taxoncode,1,4) == "QD10"] <- "QD10"
 biota$taxoncode[substr(biota$taxoncode,1,4) == "QD10"] <- "QD100000"
@@ -709,7 +709,13 @@ taxa$higher_taxon[substr(taxa$taxoncode,1,1) == "O"] <- "Z"
 taxa$italic <- 0
 taxa$italic[taxa$taxon %in% 
               taxon_all$taxon[taxon_all$table %in% c("taxon_spp", "taxon_gen")]] <- 1
+taxa$italic[taxa$taxon == "Paratanytarsus/Rheotanytarsus"] <- 1
+# taxonomic revision 
+taxa$taxon <- gsub("Tubificid","Tubificin",taxa$taxon)
 taxa <- taxa[-(1:2),]
+taxa$taxon[taxa$taxon == "'MO5'"] <- "Echinocladius"
+taxa$taxon[taxa$taxon == "Antiporus EPA sp.L1"] <- "Antiporus"
+taxa$taxon[taxa$taxon == "Talitridae EPA sp.L1"] <- "Talitridae"
 
 subcs <- sqlQuery(paste0("SELECT site, reach FROM subcs WHERE reach IN ('",
                          paste(substr(sites$sitecode,1,nchar(sites$sitecode) -1),
@@ -730,45 +736,3 @@ biotic_indices<- sqlQuery("SELECT * FROM biotic_indices;", "mwbugs")
 write.csv(biotic_indices, "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/biotic_indices.csv",
           row.names = FALSE)
 ```
-
-### Text from HE prelim findings.doc
-
-Some notes on preliminary results of habitat experiment
-
-1\. Physical effects of riffle structures.
-
-In all streams, the smallest rocks (a few cm larger than the minimum size calculated by the method of Newbury and Gaboury) in each structure remained in place over one year. None of the structures have been outflanked. In all cases, the structures have resulted in a deeper pool upstream, and increased hydraulic diversity among the emplaced rocks. Some changes in sedimentation patterns have been evident in most cases, with increased loads of fine sediment upstream in all cases, and in some cases, downstream of and within the riffle also (see below).
-
-2\. Differences between treatments
-
-I think there will be little or no difference evident between the large-rock and graded-rock treatments. This may be a result of the actual differences in rock size between the two treatments not being as great as originally envisioned. Also, although it was intended that the large rock treatment would not alter the slope, some damming behind the structure was inevitable. Hydraulic changes due to each treatment type were therefore quite similar.
-
-3\. Direct effects of rock emplacement
-
-The fauna colonising the emplaced rocks were, in all cases, different from the fauna of the channel prior to placement. Tubificid and lumbriculid worms tended to dominate the pre-treatment substrata. Chironomid larvae (mainly Cricotopus and Chironomus) were more abundant among the emplaced rocks in Blind Creek. Simuliid larvae (mainly Simulium ornatipes) were more abundant on the emplaced rocks in the faster flowing (and better WQ) Olinda Creek. Differences among the emplaced rocks were less pronounced in Scotchmans Creek, probably as a result of sedimentation.
-
-Although the assemblage structure changed with the addition of rocks, species richness in the section to which rocks were added tended to be lower after the rock emplacement than before.
-
-4\. Wider reach effects of riffle structures
-
-The following conclusions require confirmation with the full dataset (it is really too early to be publishing this).
-
-Algal biomass increased (not necessarily just in the riffle itself) after emplacement.
-
-Fauna typical of slower flowing waters tended to occur more commonly.
-
-Although the overall species richness of each reach tended not to change, in at least one creek (Scotchmans) some species that were rare prior to emplacement were more common after, thus increasing per sample richness. No such change was evident in Blind Creek, where it is assumed poor WQ remains the limiting factor.
-
-Taxa indicative of good water quality were absent or rare both before and after emplacement.
-
-Temporal trends differed between streams. In Scotchmans, overall species richness declined in the November after emplacement, but rose to pre-emplacement levels by January (Colonization effect?) (Total abundances were higher on both after occasions than before). In Olinda, total abundance and species richness increased in the November after emplacement, but declined dramatically by January, presumably due to high levels of siltation.
-
-5\. Conclusions.
-
-The effects of riffle emplacement in urban streams on community structure tend to be small and variable. Smallest effects were obtained in streams with the poorest WQ.
-
-The likely efficacy of habitat restoration measures can probably be assessed by an a priori assessment of water quality of the stream in question. This study will hopefully be able to provide an guide as to the likely changes to community structure, based on existing community structure.
-
-Deleterious effects are possible if the stream carries high silt loads and the structure acts as a silt trap.
-
-### Text from riffle specifications

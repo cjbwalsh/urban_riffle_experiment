@@ -1,5 +1,5 @@
 ---
-title: "Appendix S2. Methods and code for fitting and assessing the models"
+title: "Appendix S3. Methods and code for fitting and assessing the models"
 author: "Christopher J Walsh, J. Angus Webb, et al."
 format: docx
 editor: visual
@@ -18,7 +18,7 @@ $\beta$ parameters (of fixed effects) were formulated as random effects drawn fr
 
 For the multi-taxon model, we drew inference from 9,000 posterior samples taken from 4 unthinned chains, discarding the first 1,000 samples of each chain. This number of samples was sufficient to ensure bulk and tail effective sample sizes of at least 100 per chain for all parameters. We diagnosed convergence by visually inspecting the MCMC chains for adequate mixing and stationarity, and ensured that the diagnostic tests for zero-divergent transitions, Gelman-Rubin statistic ($\hat{R}$) \< 1.1, and zero cases of saturated tree-depth were satisfied. The Bayesian Fraction of Missing Information (mean 0.299) was marginally lower than the nominal threshold of 0.3,
 
-The multi-taxon model `nbinom_me_rand_sa_si_t_fixedmatrix-baci.stan` is reproduced below, with annotations defining variables and parameters, and explaining model components. Below that is the code used to load the data, run, check and evaluate the model, and produce output objects used to produce figures in the manuscript. Note that the multi-taxon model took 3.6 h to run on a 2.6GHz system on 4 parallel cores, and compilation of the parameter draws required \~50 Gb RAM.
+The multi-taxon model `nbinom_me_rand_sa_si_t_fixedmatrix-baci.stan` is reproduced below, with annotations defining variables and parameters, and explaining model components. Below that is the code used to load the data, run, check and evaluate the model, and produce output objects used to produce figures in the manuscript. Note that the multi-taxon model took 3.6 h to run on a 2.6-GHz system on 4 parallel cores, and compilation of the parameter draws required \~50 Gb RAM.
 
 <!--# Some final, time consuming, tweaking of the model priors.  sd_lam N(0,1), phi N(0,1) ran ok, but produced BFMI 0.273, 0.289, 0.290, 0.309 with min bulk_ess just over 400 with 2000 + 6000 iters.  sd_lam N(0.5,1), phi N(1,1), saved as fit_riffle_baci_a, was only marginally better: BFMI 0.32,0.28,0.31,0.29. with min bulk_ess 393 with 2000 + 6000 iters; sd_lam N(1,1), phi N(1,1), saved as fit_riffle_baci_b, better, I think, allowing for fewer iterations: BFMI 0.32, 0.29, 0.37, 0.24, min bulk_ess 62 with 2000 + 1000 iters; phi N(1,1), and with eps term removed completely, saved as fit_riffle_baci_c was ~2/3 quicker, but substantially worse: BFMI 0.15, 0.16, 0.14, 0.21; min bulk_ESS 48 with 2000 + 1000 iters, So decided on original eps model, with sd_lam N(1,1), phi N(1,1), 3500 burn-in, 6500 samples ...but no such luck BFMI 0.29,0.30,0.32, 0.28, and min ess_bulk 345, , saved as fit_riffle_baci_d, min ess_tail 360 - the difficult parameter is sigma_t mean 0.6 (0.4-0.79)...so, sigma_t exp(2.5)...which didn't help at all...Also tried sigma_t exp(0.2), with very little change.  So, I tried sd_lam N(1,1), phi N(1,1) sigma_t exp(1) with 2500 + 6500 with random seed 9430569 (all of the above were with 9430570), BFMI 0.314, 0.300, 0.265, 0.297, but only min bulk ESS 328. I also tried the sd_lam N(1,1), phi N(1,1) version with adapt_delta 0.9 and 0.95 - neither made any difference to the BFMI being just too low...-->
 
@@ -265,6 +265,14 @@ Extract prediction of mean abundance for each taxon in each sample (for assessme
 #| echo: true
 #| eval: false
 
+# predx is the unique set of predictors to permit prediction the mean abundance
+#  of each taxa in each of the samples of the study (for assessing model fit):
+#  a data.frame with 14 predictors (columns) and 53 combinations of predictor 
+#  values equivalent to the dataset used to derive the model (rows).
+# predy_draws is a list of 113 elements (one for each taxon; name of each element a taxoncode)
+# each element is a data.frame with 53 columns (mathching predx rows) and 32000
+# rows: the posterior distribution of the predicted mean abundance for each predx value.
+
 predx <- unique(data.frame(site_no = samples$site_no,
                            sample_no = samples$sample_no,
                            t = samples$t,u))
@@ -295,29 +303,42 @@ save(predy_draws, file = "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_expe
 
 Extract posterior distribution of mean abundance for each taxon in samples across the gradient of imperviousness for all combinations of *ba* = 0, 1 or 2; *ci* = 0 or 1; *I* = minimum and maximum values in dataset (=4% and 32% EI); spring = 0 (i.e. autumn), omitting random sample, site and t errors (For counterfactual plot demonstrating effect of riffle emplacement under different levels of urban impact), and the primary differences of interest in the BACI design:
 
-1.  (control minus impact before \[ba0\]) - (control minus impact in first year after \[ba1\]) for low (minimum) *I*
+1.  (control minus impact before \[B\]) - (control minus impact in first year after \[A1\]) for low (minimum) *I*
 
-2.  (control minus impact before \[ba0\]) - (control minus impact 5-6 y after \[ba2\]) for low *I*
+2.  (control minus impact before \[B\]) - (control minus impact 5-6 y after \[A2\]) for low *I*
 
-3.  (control minus impact before \[ba0\]) - (control minus impact in first year after \[ba1\]) for high *I*
+3.  (control minus impact before \[B\]) - (control minus impact in first year after \[A1\]) for high *I*
 
-4.  (control minus impact before \[ba0\]) - (control minus impact 5-6 y after \[ba2\]) for high *I*
+4.  (control minus impact before \[B\]) - (control minus impact 5-6 y after \[A2\]) for high *I*
 
 ```{r}
+#| label: pred_cf
 #| echo: true
 #| eval: false
 
+# load draws of parameters from model (object mod_draws calculated above)
+load("~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/fit_riffle_baci_draws.rda")
+
+# predx_cf is the table of scenario predictor variables for counterfactual plots/analysis
+# predy_cf is a list with 113 elements, one for each taxon (each element has a taxoncode as a name)
+# each element is a table of posterior distributions (32000 draws in rows) for the 60 scenarios (in columns)
 predx_cf <- expand.grid(intercept = 1, ba = factor(c(0,1,2)), ci = c(0,1), 
                         i = seq(min(u[,5]),max(u[,5]),length=10), spring = 0)
 predx_cf <- data.frame(model.matrix(~ ba + ci + ba:ci + i + ba:ci:i + spring, 
                                     data = predx_cf))
 predx_cf$ai <- 10^(predx_cf$i * attr(i_scaled, 'scaled:scale') + 
                 attr(i_scaled, 'scaled:center')) - 0.1
-combos <- list(control_lowi = which(predx_cf$ci == 0 & cfi$i == min(predx_cf$i)),
-               control_hii = which(predx_cf$ci == 0 & cfi$i == max(predx_cf$i)),
-               impact_lowi = which(predx_cf$ci == 1 & cfi$i == min(predx_cf$i)),
-               impact_hii = which(predx_cf$ci == 1 & cfi$i == max(predx_cf$i)))
 predy_cf <- delta_baci1_low <- delta_baci2_low <- delta_baci1_hi <- delta_baci2_hi <- list()
+
+# delta_posts takes 12 of the scenarios and calculates four differences used as evidence of riffle effect.
+# it is a list of four lists (one for each difference). Each difference has 113 elements (taxa, as above)
+# and each element is a vector length 32000 of the posterior distribution of the diffence for each taxon.
+  
+# The 12 scenarios for calculating differences  
+combos <- list(control_hii = which(predx_cf$ci == 0 & predx_cf$i == max(predx_cf$i)),
+               impact_hii = which(predx_cf$ci == 1 & predx_cf$i == max(predx_cf$i)),
+               control_lowi = which(predx_cf$ci == 0 & predx_cf$i == min(predx_cf$i)),
+               impact_lowi = which(predx_cf$ci == 1 & predx_cf$i == min(predx_cf$i)))
 
 system.time({
 for(i in 1:sdata$n_taxa){
@@ -334,6 +355,10 @@ for(i in 1:sdata$n_taxa){
        drawsi[,paste0("gamma[9,",i,"]")] %*% t(predx_cf$ba0.ci.i) + 
        drawsi[,paste0("gamma[10,",i,"]")] %*% t(predx_cf$ba1.ci.i) +
        drawsi[,paste0("gamma[11,",i,"]")] %*% t(predx_cf$ba2.ci.i) 
+}
+names(predy_cf) <- names(biota_ct)
+ 
+for(i in 1:sdata$n_taxa){
 delta_baci1_low[[i]] <- predy_cf[[i]][,combos$control_lowi[1]] - predy_cf[[i]][,combos$impact_lowi[1]] -
                     (predy_cf[[i]][,combos$control_lowi[2]] - predy_cf[[i]][,combos$impact_lowi[2]])
 delta_baci2_low[[i]] <- predy_cf[[i]][,combos$control_lowi[1]] - predy_cf[[i]][,combos$impact_lowi[1]] -
@@ -344,51 +369,14 @@ delta_baci2_hi[[i]] <- predy_cf[[i]][,combos$control_hii[1]] - predy_cf[[i]][,co
                     (predy_cf[[i]][,combos$control_hii[3]] - predy_cf[[i]][,combos$impact_hii[3]])
 }
 })  # 5 s
-names(predy_cf) <- names(biota_ct)
-save(predy_cf, delta_baci1_low, delta_baci2_low, delta_baci1_hi, delta_baci1_hi, 
+
+delta_posts <- list(delta_a1_4ei = delta_baci1_low, 
+                    delta_a2_4ei = delta_baci2_low, 
+                    delta_a1_32ei = delta_baci1_hi, 
+                    delta_a2_32ei = delta_baci2_hi)
+
+save(predy_cf, delta_posts, 
      file = "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/fit_riffle_baci_predy_cf_draws.rda")
-
-delta_posts <- list(delta_baci1_low = delta_baci1_low, 
-                    delta_baci2_low = delta_baci2_low,
-                    delta_baci1_hi = delta_baci1_hi, 
-                    delta_baci2_hi = delta_baci2_hi)
-diff_summs <- list()
-for(i in 1:length(delta_posts)){
-  qlsi <- as.data.frame(do.call(rbind,lapply(delta_posts[[i]],FUN = quantile, 
-                                probs = c(0.025,0.05,0.125,0.5,0.875,0.95,0.975))))
-  names(qlsi) = c("lo95","lo90","lo75","median","hi75","hi90","hi95")
-  meani <- unlist(lapply(delta_posts[[i]],FUN = mean))
-  diff_summs[[i]] <- data.frame(shortcode = names(biota_ct), 
-                                 mean = meani,
-                                 qlsi)
-}
-names(diff_summs) <- names(delta_posts)
-### For 'r on
-x1 <- t(data.frame(lapply(delta_baci1_low, quantile, probs = c(0.05,0.95))))
-row.names(x1) <- colnames(sdata$c)
-x2 <- t(data.frame(lapply(delta_baci2_low, quantile, probs = c(0.05,0.95))))
-row.names(x2) <- colnames(sdata$c)
-x3 <- t(data.frame(lapply(delta_baci1_hi, quantile, probs = c(0.05,0.95))))
-row.names(x3) <- colnames(sdata$c)
-x4 <- t(data.frame(lapply(delta_baci2_hi, quantile, probs = c(0.05,0.95))))
-row.names(x4) <- colnames(sdata$c)
-
-x1 <- t(data.frame(lapply(delta_baci1_low, quantile, probs = c(0.025,0.975))))
-row.names(x1) <- colnames(sdata$c)
-x2 <- t(data.frame(lapply(delta_baci2_low, quantile, probs = c(0.025,0.975))))
-row.names(x2) <- colnames(sdata$c)
-x3 <- t(data.frame(lapply(delta_baci1_hi, quantile, probs = c(0.025,0.975))))
-row.names(x3) <- colnames(sdata$c)
-x4 <- t(data.frame(lapply(delta_baci2_hi, quantile, probs = c(0.025,0.975))))
-row.names(x4) <- colnames(sdata$c)
-
-more_similar <- unique(c(row.names(x1)[x1[,2] < 0],row.names(x2)[x2[,2] < 0],
-                         row.names(x3)[x3[,2] < 0],row.names(x4)[x4[,2] < 0]))
-less_similar <- unique(c(row.names(x1)[x1[,1] > 0],row.names(x2)[x2[,1] > 0],
-                         row.names(x3)[x3[,1] > 0],row.names(x4)[x4[,1] > 0]))
-# 
-# non_taxa_baci <- unique(c(more_similar,less_similar))[!unique(c(more_similar,less_similar)) %in% taxa_baci$taxoncode]
-
 ```
 
 ```{r}
@@ -396,9 +384,17 @@ less_similar <- unique(c(row.names(x1)[x1[,1] > 0],row.names(x2)[x2[,1] > 0],
 #| echo: false
 #| eval: false
 
+# load draws of parameters from model (calculated above)
+load("~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/fit_riffle_baci_draws.rda")
+
 phi_draws <- mod_draws[,grep("phi",names(mod_draws))]
 p_cf_mat <- list()
 n_cf_mat <- list()
+
+# load taxon abundance predictions for 60 counter-factual scenarios from above
+load("~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/fit_riffle_baci_predy_cf_draws.rda")
+# And use them to calculate assemblage statistics
+
 # system.time({
 for(t in 1:ncol(biota_ct)){
 p_cf_mat[[t]] <- predy_cf[[t]]
@@ -425,16 +421,11 @@ do_n_cf_mat <- Reduce('+', n_cf_mat[substr(names(p_cf_mat),1,2) %in% c("QD","LO"
 library(vegan)
 
 # Shannon's H' requires proportional abundances
-relab_cf_mat <- predy_cf
-
-for(i in 1:length(p_cf_mat)){
-relab_cf_mat[[i]] <- exp(p_cf_mat[[i]])
-}
-tot_abund_cf_mat <- Reduce('+', relab_cf_mat)
-for(i in 1:length(p_cf_mat)){
+relab_cf_mat <- n_cf_mat
+tot_abund_cf_mat <- Reduce('+', n_cf_mat)
+for(i in 1:length(n_cf_mat)){
 relab_cf_mat[[i]] <- relab_cf_mat[[i]] / tot_abund_cf_mat
 }
-
 
 H_mat <- relab_cf_mat[[1]]
 for(i in 1:nrow(H_mat)){
@@ -553,6 +544,36 @@ assemb_stats <- list(tot_rich =
                                           probs = c(0.025, 0.975))))
                      )
 save(assemb_stats, file = "small_data/assemb_stats.rda")
+
+# Extract mean abundances in the 12 main scenarios for the top 10 taxa in each scenario
+# (For table 1 in the manuscript)
+relabunds <- data.frame(scenario = names(unlist(combos)),
+                        matrix(nrow = length(unlist(combos)),
+                               ncol = length(relab_cf_mat)))
+names(relabunds)[-1] <- colnames(sdata$c)
+for(i in 1:length(relab_cf_mat)){
+  relabunds[,i + 1] <- apply(relab_cf_mat[[i]][,unlist(combos)],2,FUN = mean)
+}
+top10_propns <- data.frame(scenario = relabunds$scenario, propn = NA)
+top10s <- list()
+for(i in 1:nrow(relabunds)){
+  rai <- t(relabunds[i,-1])
+  top10s[[i]] <- row.names(rai)[order(rai, decreasing =  TRUE)[1:10]]
+  top10_propns[i,2] <- sum(rai[order(rai, decreasing =  TRUE)[1:10]])
+}
+tops <- data.frame(taxoncode = c(unique(unlist(top10s[])),NA),
+                   Taxon = c(taxa$taxon[match(unique(unlist(top10s[])), 
+                                                       taxa$taxoncode)],"% of all taxa"),
+                   High.I_Control_B = NA, High.I_Control_A1 = NA, High.I_Control_A2 = NA, 
+                   High.I_Impact_B = NA, High.I_Impact_A1 = NA, High.I_Impact_A2 = NA, 
+                   Low.I_Control_B = NA, Low.I_Control_A1 = NA, Low.I_Control_A2 = NA, 
+                   Low.I_Impact_B = NA, Low.I_Impact_A1 = NA, Low.I_Impact_A2 = NA)
+for(i in 1:(nrow(tops)-1)){
+  tops[i,-(1:2)] <- round(apply(n_cf_mat[[which(colnames(sdata$c) == tops$taxoncode[i])]][,unlist(combos)],
+                          2,FUN = mean))
+}
+tops[nrow(tops),-(1:2)] <- round(top10_propns$propn*100)
+write.csv(tops,"small_data/top10taxa.csv",row.names = FALSE)
 ```
 
 ### 2. Assessment of model fit
@@ -561,7 +582,7 @@ We assessed the predictive performance of our model by comparing model predictio
 
 #### Methods
 
-We quantified model accuracy and bias first by calculating the *R^2^* and slope of the linear regression between predicted and observed log-mean abundance \[log(x + 1)\] of each taxon in each sample. We assessed prediction at the level of sample rather than at the sample-unit level because the model allows prediction at that level, and our primary interest is to predict mean response to riffle construction at the site level.
+We quantified model accuracy and bias first by calculating the *R^2^* and slope of the linear regression between predicted and observed log-mean abundance \[log(x + 1)\] of each taxon in each sample (count in each sample unit estimated as count/subsample fraction). We assessed prediction at the level of sample rather than at the sample-unit level because the model allows prediction at that level, and our primary interest is to predict mean response to riffle construction at the site level.
 
 We also assessed accuracy of model predictions for occurrence of each taxon (rather than abundance) by assessing the area under the operator curve (AUC) for logistic regressions between predicted probability of occurrence and observed presence or absence in each sample, where predicted probability of occurrence in a sample,
 
@@ -573,57 +594,27 @@ where $p\_su_i$ is the probability of occurrence in the *i*th sample unit compri
 
 Finally, we assessed the accuracy of the multi-taxon model's estimates of assemblage level metrics, by calculating the *R^2^* and slope of the linear regression between predicted and observed number of taxa in each sample, both total number of taxa, and the number of Ephemeropotera, Plecoptera and Trichoptera taxa (three groups of sensitive species commonly used as a stream health metric). Predicted number of taxa was estimated as the sum of probabilities of occurrence for all taxa. Because observed taxon richness is likely to be affected by subsample size, we interpreted the relationship between predicted and observed numbers of taxa accounting for mean subsample proportion in the subsample units making up each sample. We also calculated *R^2^* of the predicted number of taxa as a function of observed number of taxa + mean subsample proportion.
 
-```{r}
-#| echo: false
+### Results
 
-predy_draws <- get(load("~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/fit_riffle_baci_predy_draws.rda"))
+The abundances of all taxa (estimated as the number counted divided by the subsample fraction) were well predicted by the model. The observed and predicted abundances of all taxa were correlated with R \> 0.75 (@fig-nbinom_me_fit_by_taxon A). Abundance predictions of 42 prevalent and abundant taxa, including all but one of those for which an effect of the experimental riffles was inferred, showed little bias (regression slopes between 0.8 and 1.1), while abundance predictions for taxa with low prevalence tended to be underestimated (slopes \< 0.8, @fig-nbinom_me_fit_by_taxon B). Such underestimation is to be expected for taxa with many zero or low abundances.
 
-# a_si_means <-  apply(mod_draws[,grep("a_si",names(mod_draws))], 2, FUN = mean)
-# phi_means <- apply(mod_draws[,grep("phi",names(mod_draws))], 2, FUN = mean)
-# b_means <- apply(mod_draws[substr(names(mod_draws),1,5) %in% c("gamma")], 2, FUN = mean)
-prevalence <- apply(biota_ct, 2, FUN = function(x){sum(x > 0)})
-prevalence_by_sample <- data.frame(shortcode = colnames(biota_ct), prev = NA)
-for(i in 1:ncol(biota_ct)){
-  prevalence_by_sample$prev[i] <- 
-    sum(aggregate(biota_ct[,i], by = list(sample_no = samples$sample_no), 
-            FUN = function(x) as.numeric(sum(x) > 0))$x)
-}
-n_obs_samps <- 1000
-```
+The model also predicted occurrence of all taxa with high certainty (all AUC values of the 111 taxa absent from at least one sample \> 0.9, @fig-nbinom_pa_stats). The probabilities of occurrence of all taxa summed to accurate estimates of taxon richness in the 56 samples (@fig-richness_op). The raw correlation between predicted and observed numbers of all taxa was reduced by the effect of subsampling (@fig-richness_op A). The predicted number of taxa was higher than the observed for samples with lower numbers of taxa because more of them had small subsample fractions compared to more taxa-rich samples. The regression of predicted \~ observed + subsample fraction had a higher *R^2^* (0.73). The model predicted EPT richness with high accuracy (*R^2^* 0.92), with a similar albeit smaller effect of subsample fraction (@fig-richness_op B).
+
+The accurate prediction of the data by the model provide confidence in inferences of the experimental effects of interest.
 
 ```{r}
-#| label: calc_abundance_fits
+#| label: fig-nbinom_me_fit_by_taxon
 #| echo: false
-#| eval: false
+#| warning: false
+#| message: false
+#| fig-width: 7
+#| fig-height: 3.5
+#| fig-cap: "a) Correlation coefficients for each taxon of between observed (count in each subsample divided by subsample fraction, log(x + 1)-transformed and averaged for all sample units in each sample) and predicted (P) abundances (mean estimate of log-mean abundances of each taxon in the sample from each site), and b) Slopes of the regression of predicted as a function of observed, both plotted against prevalence of each taxon. Green points indicate taxa for which a non-zero effect of riffle construction was inferred at the 90% confidence level."
 
-# Create a matrix of (estimated) observed total counts, given c and s
-# This function takes a sample of size n (with replacement) of all integers 
-# between 0 and 1 million, with each integer having the probability of T 
-# (a total count) given c and s.
-sample_T_given_c_s <- function(n, c, s){
-sample(0:1e6, n, replace = TRUE, prob = dbinom(c,0:1e6,s))
-}
-n_obs_samps <- 1000
-ss <- sdata$s
-obs <- list()
-system.time({
-for(i in 1:sdata$n_taxa){
-  obs[[i]] <- matrix(data = NA, nrow = n_obs_samps, ncol = nrow(samples))
-  for(j in 1:nrow(samples)){
-    if(ss[j,i] == 1) {
-    obs[[i]][,j] <- sdata$c[j,i]
-           }else{
-    obs[[i]][,j] <- sample_T_given_c_s(n_obs_samps, sdata$c[j,i], ss[j,i])
-    }
-    names(obs)[i] <- colnames(sdata$c)[i]
-  }
-}
-}) #38 min
-save(obs, file = "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/riffle_baci_obs_totcount_estimates.rda")
+# load object predy_draws, calculated above 
+load("~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/fit_riffle_baci_predy_draws.rda")
 
-load("~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/riffle_baci_obs_totcount_estimates.rda") #list object called obs
-
-# prepare output matrices for estimates of T (obs), and correlations and slopes betwen O and P
+# Calculate Observed (mean log-transformed counts per sample) to Expected (predicted mean abundance per sample)
 oe_stats <- data.frame(taxoncode = colnames(sdata$c), 
                        cor = NA, slope = NA, adj_r_sq = NA)
 for(i in 1:sdata$n_taxa){
@@ -637,80 +628,41 @@ for(i in 1:sdata$n_taxa){
   oe_stats$adj_r_squ[i] <- summary(lmi)$adj.r.squared
   oe_stats$slope[i] <- coefficients(lmi)[2]
   }
-save(oe_stats, file = "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/riffle_baci_oe_stats.rda")
 
-```
+# Calculate prevalence of each taxon by sample
+prevalence <- apply(biota_ct, 2, FUN = function(x){sum(x > 0)})
+prevalence_by_sample <- data.frame(shortcode = colnames(biota_ct), prev = NA)
+for(i in 1:ncol(biota_ct)){
+  prevalence_by_sample$prev[i] <- 
+    sum(aggregate(biota_ct[,i], by = list(sample_no = samples$sample_no), 
+            FUN = function(x) as.numeric(sum(x) > 0))$x)
+}
 
-#### Results
+# Find those taxa for which a riffle effect is inferred in the paper and highlight on plot
+# (vectors of taxacodes, more_diff_90 and more_sim_90, also used in main paper)
+# load objects: (a list predy_cf; and ) a list of lists delta_post, containing lists
+# delta_baci1_low, delta_baci2_low, delta_baci1_hi, delta_baci1_hi - see S3 chunk pred_cf
+load("~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/fit_riffle_baci_predy_cf_draws.rda")
 
-The abundances of all taxa (estimated as the number counted divided by the subsample fraction) were well predicted by the model. The observed and predicted abundances of all taxa were correlated with R \> 0.75 (@fig-nbinom_me_fit_by_taxon A). Abundance predictions of 42 prevalent and abundant taxa, including all those for which an effect of the experimental riffles was inferred, showed little bias (regression slopes between 0.8 and 1.1), while abundance predictions for taxa with low prevalence tended to be underestimated (slopes \< 0.8, @fig-nbinom_me_fit_by_taxon B). Such underestimation is to be expected for taxa with many zero or low abundances.
-
-The model also predicted occurrence of all taxa with high certainty (all AUC values of the 111 taxa absent from at least one sample \> 0.9, @fig-nbinom_pa_stats). The probabilities of occurrence of all taxa summed to accurate estimates of taxon richness in the 56 samples (@fig-richness_op). The raw correlation between predicted and observed numbers of all taxa was reduced by the effect of subsampling (@fig-richness_op A). The predicted number of taxa was higher than the observed for samples with lower numbers of taxa because more of them had small subsample fractions compared to more taxa-rich samples. The regression of predicted \~ observed + subsample fraction had a higher *R^2^* (0.73). The model predicted EPT richness with high accuracy (*R^2^* 0.92), with a similar albeit smaller effect of subsample fraction (@fig-richness_op B).
-
-The accurate prediction of the data by the model provide confidence in inferences of the experimental effects of interest.
-
-```{r}
-#| label: fig-nbinom_me_fit_by_taxon
-#| echo: false
-#| warning: false
-#| message: false
-#| fig-width: 7
-#| fig-height: 3.5
-#| fig-cap: "a) Correlation coefficients for each taxon of between observed (count in each subsample divided by subsample fraction, log(x + 1)-transformed and averaged for all sample units in each sample) and predicted (P) abundances (mean estimate of log-mean abundances of each taxon in the sample from each site), and b) Slopes of the regression of predicted as a function of observed, both plotted against prevalence of each taxon. Green points indicate taxa for which there was non-zero b_bacii or b_baci effect at the 90% confidence level."
-
-load("~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/riffle_baci_oe_stats.rda")
-
-#### Duplicated in methods/results...Not necessary, if managed differently?
-mod_draws <- get(load("~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/fit_riffle_baci_draws.rda"))
-params <- c("b_ba1", "b_ba2", "b_ci","b_i","b_spring","b_ba1ci","b_ba2ci","b_ba0cii","b_ba1cii", "b_ba2cii")
-df_empty <- data.frame(shortcode = NA, mean = NA, lo95 = NA, lo90 = NA, median = NA, hi90 = NA, hi95 = NA)[0,]
-param_summs <- list()
-for(i in 1:length(params)){
-  drawsi <- mod_draws[substr(names(mod_draws),1,ifelse(i < 9, 7, 8)) == paste0("gamma[", i + 1) & 
-                          grepl("gamma", names(mod_draws))]
-  qlsi <- as.data.frame(t(apply(drawsi,2, FUN = quantile, 
+diff_summs <- list()
+for(i in 1:length(delta_posts)){
+  qlsi <- as.data.frame(do.call(rbind,lapply(delta_posts[[i]],FUN = quantile, 
                                 probs = c(0.025,0.05,0.125,0.5,0.875,0.95,0.975))))
   names(qlsi) = c("lo95","lo90","lo75","median","hi75","hi90","hi95")
-  meani <- apply(drawsi,2, FUN = mean)
-  param_summs[[i]] <- data.frame(shortcode = names(biota_ct), 
+  meani <- unlist(lapply(delta_posts[[i]],FUN = mean))
+  diff_summs[[i]] <- data.frame(shortcode = names(biota_ct), 
                                  mean = meani,
                                  qlsi)
 }
-names(param_summs) <- params
-  
-ba1ci_pos_taxa <- param_summs$b_ba1ci$shortcode[param_summs$b_ba1ci$lo90 > 0] #0
-ba1ci_neg_taxa <- param_summs$b_ba1ci$shortcode[param_summs$b_ba1ci$hi90 < 0] #0
-ba2ci_pos_taxa <- param_summs$b_ba2ci$shortcode[param_summs$b_ba2ci$lo90 > 0] #0
-ba2ci_neg_taxa <- param_summs$b_ba2ci$shortcode[param_summs$b_ba2ci$hi90 < 0] #0
-ba0cii_pos_taxa <- param_summs$b_ba0cii$shortcode[param_summs$b_ba0cii$lo90 > 0] #19
-ba0cii_neg_taxa <- param_summs$b_ba0cii$shortcode[param_summs$b_ba0cii$hi90 < 0] #7
-ba1cii_pos_taxa <- param_summs$b_ba1cii$shortcode[param_summs$b_ba1cii$lo90 > 0] #19
-ba1cii_neg_taxa <- param_summs$b_ba1cii$shortcode[param_summs$b_ba1cii$hi90 < 0] #0
-ba2cii_pos_taxa <- param_summs$b_ba2cii$shortcode[param_summs$b_ba2cii$lo90 > 0] #4
-ba2cii_neg_taxa <- param_summs$b_ba2cii$shortcode[param_summs$b_ba2cii$hi90 < 0] #0
-taxa_to_plot <- unique(c(ba0cii_pos_taxa,ba0cii_neg_taxa,
-                         ba1ci_pos_taxa,ba1ci_neg_taxa,ba1cii_pos_taxa,ba1cii_neg_taxa,
-                         ba2ci_pos_taxa,ba2ci_neg_taxa,ba2cii_pos_taxa,ba2cii_neg_taxa,
-                         param_summs$b_ba$shortcode[param_summs$b_ba$lo90 > 0],
-                         param_summs$b_ba$shortcode[param_summs$b_ba$hi90 < 0],
-                         param_summs$b_ci$shortcode[param_summs$b_ci$lo90 > 0],
-                         param_summs$b_ci$shortcode[param_summs$b_ci$hi90 < 0],
-                         param_summs$b_i$shortcode[param_summs$b_i$lo90 > 0],
-                         param_summs$b_i$shortcode[param_summs$b_i$hi90 < 0],
-                         param_summs$b_spring$shortcode[param_summs$b_spring$lo90 > 0],
-                         param_summs$b_spring$shortcode[param_summs$b_spring$hi90 < 0]))
-higher_taxa_in_plot <- higher_taxa[higher_taxa$higher_taxon %in% 
-                                     unique(taxa$higher_taxon[taxa$taxoncode %in% taxa_to_plot]),]
-
-# R results for inclusion in figure caption:
-ht_string <- paste(paste0(higher_taxa_in_plot$taxon, " (", higher_taxa_in_plot$higher_taxon, ")"), collapse = "; ")
-# Annelida (A); Pelecypoda (B); Coleoptera (C); Diptera (D); Ephemeroptera (E); Turbellaria (F); Gastropoda (G); Lepidoptera (L); Acarina (M); Odonata (O); Plecoptera (P); Trichoptera (T); Crustacea (Z); Cnidaria (I); Nematoda (J)
-ntoplot <- length(taxa_to_plot) #59
-####
+names(diff_summs) <- names(delta_posts)
+more_diff_90 <- more_diff_95 <- more_sim_90 <- more_sim_95 <- vector()
+for(i in 1:length(delta_posts)){
+more_diff_90 <- unique(c(more_diff_90,diff_summs[[i]]$shortcode[diff_summs[[i]]$lo90 > 0]))
+more_sim_90 <- unique(c(more_sim_90,diff_summs[[i]]$shortcode[diff_summs[[i]]$hi90 < 0]))
+}
 
 bgs <- rep(NA, sdata$n_taxa)
-bgs[names(biota_ct) %in% ba1cii_pos_taxa] <- "red"
-bgs[names(biota_ct) %in% ba0cii_neg_taxa] <- "green"
+bgs[names(biota_ct) %in% unique(c(more_diff_90,more_sim_90))] <- "green"
 cols <- bgs; cols[is.na(cols)] <- "black"
 layout(matrix(c(1,2,3,3),2,2,byrow=TRUE), widths = c(12,12), heights = c(12,1))
 par(mar = c(2,4,1,1))
@@ -730,6 +682,8 @@ title("B.", adj = 0)
 par(mar = c(0,0,0,0))
 plot.new()
 title(xlab = "Prevalence (number of samples with abundance > 0)", line = -1.5)
+
+save(oe_stats, file = "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/riffle_baci_oe_stats.rda")
 ```
 
 ```{r}
@@ -740,6 +694,9 @@ title(xlab = "Prevalence (number of samples with abundance > 0)", line = -1.5)
 #| fig-width: 4
 #| fig-height: 4
 #| fig-cap: "a) Area under the receiver operator characteristic curve (AUC) of predictions of presence-absence from the negative-binomial model for 111 taxa as a function of their prevalence in the 53 samples. AUC could not be calculated for the two taxa that occurred in all samples (Nematoda and Enchytraiedae)."
+
+# load draws of parameters from model (object mod_draws calculated above)
+load("~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/fit_riffle_baci_draws.rda")
 
 phi_draws <- mod_draws[,grep("phi",names(mod_draws))]
 p_mat <- list()
@@ -757,11 +714,7 @@ for(t in 1:sdata$n_taxa){
 }
 
 # Function for calculating probability of occurrence in n sample units, given a vector of probabilities, x, of length n
-p_per_n <- function(x) {  # x a vector of probabilities, length n
-#  aggregate(x, by = list(pair = rep(1:(length(x)/n), each = n)), 
-#            FUN = function(y) {
-  1 - prod(1 - x)  # })
-}
+p_per_n <- function(x) {1 - prod(1 - x)} # x, a vector of probabilities
 
 p_mean_per_sample <- matrix(ncol = sdata$n_sample, nrow = sdata$n_taxa)
 for(t in 1:sdata$n_taxa){
