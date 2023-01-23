@@ -54,25 +54,57 @@ samples$ai <- sites$ai[match(samples$sitecode, sites$sitecode)]
 i_scaled <- scale(log10(samples$ai*100 + 0.1))
 samples$i <- as.vector(i_scaled)
 samples$range_phi <- samples$max_phi - samples$min_phi
-ys <- list(depth_m_var = log(samples$depth_m_var + 1.75e-04),
+
+unscale <- function(y_scaled_transformed, x, scaled = TRUE, log = TRUE, log_add = 0){  
+  #y_scaled_transformed is modelled output of variable x calculated on scaled 
+  # (if scale = TRUE), and logged (if log = TRUE) data, x
+  #x is the original vector of raw modelled data before transformation (if log = TRUE) and scaling
+  # log_add is the amount added before logging to avoid log(0)
+  if(log){
+  x_transformed <- log(x + log_add)
+  }else{
+      x_transformed <- x
+  }
+  if(scaled){
+  scale_x <- scale(x_transformed) 
+  y_transformed <- y_scaled_transformed * attr(scale_x, 'scaled:scale') + 
+                                  attr(scale_x, 'scaled:center')
+  }else{
+    y_transformed <- y_scaled_transformed
+  }
+  if(log){
+    y <- exp(y_transformed) - log_add
+  }else{
+    y <- y_transformed
+  }
+  list(y_transformed = y_transformed, 
+       y = y)
+}
+
+ys <- list(depth_m_var = as.vector(scale(log(samples$depth_m_var + 1.75e-04))),
            # min(samples$depth_m_var[!is.na(samples$depth_m_var) & samples$depth_m_var > 0]) # 0.0007442
            depth_m_mean = log(samples$depth_m_mean),
-           vel_m_s_var = log(samples$vel_m_s_var + 0.0007442),
+           vel_m_s_var = as.vector(scale(log(samples$vel_m_s_var + 0.0007442))),
            # min(samples$vel_m_s_var[!is.na(samples$vel_m_s_var) & samples$vel_m_s_var > 0]) # 0.0007442
-           vel_m_s_mean = log(samples$vel_m_s_mean), 
-           cpom_g = log(samples$cpom_g + 0.001),
+           vel_m_s_mean = as.vector(scale(log(samples$vel_m_s_mean))), 
+           cpom_g = as.vector(scale(log(samples$cpom_g + 0.001))),
            # min(samples$cpom_g[!is.na(samples$cpom_g) & samples$cpom_g > 0]) # 0.001
-           cpomw_g = log(samples$cpom_g + samples$wood_g + 0.001),
-           fpom_g = log(samples$fpom_g  + 0.0094382),
+           cpomw_g = as.vector(scale(log(samples$cpom_g + samples$wood_g + 0.001))),
+           fpom_g = as.vector(scale(log(samples$fpom_g  + 0.0094382))),
            # min(samples$fpom_g[!is.na(samples$fpom_g) & samples$fpom_g > 0]) # 0.0094382
-           algae_g = log(samples$algae_g + 0.001), 
+           algae_g = as.vector(scale(log(samples$algae_g + 0.001))), 
            # min(samples$algae_g[!is.na(samples$algae_g) & samples$algae_g > 0]) # 0.001
-           macrophyte_g = log(samples$macrophyte_g + 5e-04),
+           macrophyte_g = as.vector(scale(log(samples$macrophyte_g + 5e-04))),
            # min(samples$macrophyte_g[!is.na(samples$macrophyte_g) & samples$macrophyte_g > 0]) # 5e-04
-           min_phi = samples$min_phi,
-           max_phi = samples$max_phi,
-           med_phi = samples$med_phi,
-           range_phi = samples$range_phi)
+           min_phi = as.vector(scale(samples$min_phi)),
+           max_phi = as.vector(scale(samples$max_phi)),
+           med_phi = as.vector(scale(samples$med_phi)))
+
+y_transform_pars <- data.frame(stat = names(ys)[1:12],
+                               scaled = c(TRUE,FALSE,rep(TRUE,10)), 
+                               log = c(rep(TRUE,9),rep(FALSE,3)), 
+                               log_add = c(1.75e-04,0,0.0007442,0,0.001,
+                                           0.001,0.0094382,0.001,5e-04,0,0,0))
 
 mod <- cmdstan_model("normal_rand_sa_si_t_fixedmatrix_baci.stan", pedantic = TRUE) 
 
@@ -88,20 +120,17 @@ gofs <-data.frame(model = NA, oe_r_squ = NA, oe_slope = NA, pred_95 = NA)[0,]
 param_summary <- list()
 cfs <- list()
 
-for(i in 1:13){
+for(i in 1:12){
 # remove NAs, and check if data covers trips 5 and 6
   yi <- names(ys)[i]
 samplesi <- samples[!is.na(samples[ifelse(yi == "cpomw_g","cpom_g",yi)]),]
 if(length(unique(samplesi$sitecode)) != nrow(sites)) stop()
-# no om data for EUM...need to check this...for now...
-if(i %in% 5:8){
-samplesi <- samplesi[-grep("EUM",samples$sitecode),]
-sitesi <- sites[-grep("EUM",sites$sitecode),]
-sitesi$site_no <- 1:nrow(sitesi)
-samplesi$site_no <- sitesi$site_no[match(samplesi$sitecode, sitesi$sitecode)]
-}
 # recode ba for cases where there are no data for ba 2 (trips 5 and 6)
 samplesi$ba <- factor(samplesi$ba)
+# OM data for trips 5-6 unreliable
+if(grepl("_g",yi)){
+  samplesi <- samplesi[samplesi$t < 5,]
+}
 u <- model.matrix(~ ba + ci + ba:ci + i + ba:ci:i, data = samplesi)
 # and for sample no (as there a variable missing samples)
 sample_nos <- data.frame(sample = unique(samplesi$sample))
@@ -121,15 +150,21 @@ sdata <- list(n_obs = nrow(samplesi),
               y = ys[[i]][match(samplesi$smpcode,samples$smpcode)]
 )
 
-ni <- ifelse(i %in% c(3,5,6), 9000, 3500); nt <- 4; 
-nb <- ifelse(i %in% c(3,5,6), 3000, 1500); nc <- 4
+nt <- 4; nc <- 4
+ni <- c(6000,2000,6000,6000,6000,3000,3000,3000,3000,4000,4000,4000)
+nb <- c(3000,1000,3000,3000,3000,2000,2000,2000,2000,2500,2500,2500)
+# even with standardized y, 6000 iters, vel_m_s_var has low BFMI (0.035-0.076) and 0% divergences    
+# sigma_sa/a_sa, seemingly the main problem: even if prior for sigma_sa is set to exponential(3) (as it seems to sit near 0)
+# bfmi remains low.  All main effects are well sampled
+# similar story for vel_m_s_mean
+
+ad <- c(0.9,0.8,0.99,0.95,0.95,0.99,0.99,0.95,0.98,0.85,0.95,0.95)
 stanfit_i <- mod$sample(data = sdata,
                         seed = rand_seed, chains = nc,
-                        parallel_chains = nc, iter_warmup = nb,
-                        adapt_delta = ifelse(i %in% c(5,8,9,11),0.95,
-                                             ifelse(i == 1, 0.85,0.8)),  
-                        max_treedepth = ifelse(i %in% c(2,6),15,10),
-                        iter_sampling = ni - nb, refresh = 100)
+                        parallel_chains = nc, iter_warmup = nb[i],
+                        adapt_delta = ad[i],
+                        max_treedepth = ifelse(i %in% c(1,2,3,5,6,7,9,11,12),15,10),
+                        iter_sampling = (ni - nb)[i], refresh = 100)
 # #  save csv files rather than the model object to use less RAM
 stanfit_i$save_output_files(
   dir = "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/",
@@ -159,7 +194,8 @@ univar_diagnostics <- rbind(univar_diagnostics, data.frame(model = names(ys)[i],
                                  min_ess_bulk = min(summ$ess_bulk,na.rm=TRUE),
                                  min_ess_tail = min(summ$ess_tail,na.rm=TRUE)))
 
-drawsi <- as.data.frame(stanfit_i$draws(format = "df", variables = c("a_si","a_sa","a_t","gamma")))
+drawsi <- as.data.frame(stanfit_i$draws(format = "df", variables = c("a_si","a_sa","a_t","gamma",
+                                                                     "sigma_si","sigma_sa","sigma_t","sigma")))
 predx <- unique(cbind(samplesi[c("sample","site_no","sample_no","t")],u))
 temp <- aggregate(sdata$y, by = list(sample = samplesi$sample),FUN = mean)
 predx$x <- temp$x[match(predx$sample, temp$sample)]
@@ -263,45 +299,57 @@ cfs[[i]] <-
 names(cfs)[i] <- names(ys)[i]
 }
 
+save(cfs, file = "small_data/env_var_predy_cf.rda")
+save(univar_beta_summary, univar_diagnostics, file = "small_data/env_var_model_summaries.rda")
+
 # For inspecting parameter spreads across zero
 # tidyr::as_tibble(param_summary[[12]])
 
-ylabs = c("Variance of depth (m)", "Mean depth (m)","Variance of velocity (m/s)", 
-          "Mean velocity (m/s)", "CPOM (g)", "FPOM (g)",
+ylabs = c("Variance of depth (cm)", "Mean depth (cm)","Variance of velocity (m/s)", 
+          "Mean velocity (m/s)", "CPOM (g)", "CPOM with wood (g)", "FPOM (g)",
           "Algae (g)", "Macrophyte (g)", "Minimum Phi","Maximum Phi",
-          "Median Phi","Range Phi")
-cols <- c("#0073C2FF", "#EFC000FF", "#868686FF", "#CD534CFF")
+          "Median Phi")
+cols <- c( "#CD534CFF","#EFC000FF","#868686FF","#0073C2FF")
 
 par(mar = c(2,4,1,1))
 par(mfrow = c(2,4))
 for(i in 1:length(cfs)){
   cfi <- cfs[[i]]
-  combos <- list(control_lowi = which(cfi$ci == 0 & cfi$i == min(cfi$i)),
-                 control_hii = which(cfi$ci == 0 & cfi$i == max(cfi$i)),
-                 impact_lowi = which(cfi$ci == 1 & cfi$i == min(cfi$i)),
-                 impact_hii = which(cfi$ci == 1 & cfi$i == max(cfi$i)))
+  if(grepl("_g",names(cfs)[i])){
+    cfi <- cfi[cfi$ba2 == 0,]
+  }
+  combos <- list(control_hii = which(cfi$ci == 0 & cfi$i == max(cfi$i)),
+                 impact_hii = which(cfi$ci == 1 & cfi$i == max(cfi$i)),
+                 control_lowi = which(cfi$ci == 0 & cfi$i == min(cfi$i)),
+                 impact_lowi = which(cfi$ci == 1 & cfi$i == min(cfi$i)))
   x_adjs <- c(-0.03, -0.01, 0.01, 0.03)
   ylabi <- ylabs[i]
   names(cfi)[match(c("mean","X2.5.","X97.5."),names(cfi))] <- c("pred","lo","hi")
-  with(cfi[combos$control_lowi,], 
-       plot((0:ifelse(length(combos$control_lowi) == 2, 1,2)) + x_adjs[1], pred, 
-             ylim = c(min(cfi$lo),max(cfi$hi)), 
+  if(y_transform_pars$stat[i] != "cpomw_g")
+    cfi[c("pred","hi","lo")] <- unscale(cfi[c("pred","hi","lo")],
+                                        x = samples[,y_transform_pars$stat[i]],
+                                        scaled = y_transform_pars$scaled[i],
+                                        log = y_transform_pars$log[i],
+                                        log_add = y_transform_pars$log_add[i])$y_transformed
+  cfi1 <- cfi[combos$control_hii,]
+       plot(0:ifelse(grepl("_g",names(cfs)[i]), 1, 2) + x_adjs[1], 
+             cfi1$pred, ylim = c(min(cfi$lo),max(cfi$hi)), 
             type = 'b', col = cols[1], pch = 16, axes = FALSE, xlim = c(0,2),
-            xlab = "", ylab = ylabi))
-  with(cfi[combos[[2]],], lines((0:ifelse(length(combos$control_lowi) == 2, 1,2))+ x_adjs[2], pred,
-                                col = cols[2], pch = 16, type = 'b'))
-  with(cfi[combos[[3]],], lines((0:ifelse(length(combos$control_lowi) == 2, 1,2)) + x_adjs[3], pred,
-                                col = cols[3], pch = 16, type = 'b'))
-  with(cfi[combos[[4]],], lines((0:ifelse(length(combos$control_lowi) == 2, 1,2)) + x_adjs[4], pred,
-                                col = cols[4], pch = 16, type = 'b'))
-  for(k in 1:ifelse(length(combos$control_lowi) == 2, 2,3)){
+            xlab = "", ylab = ylabi)
+  lines(0:ifelse(grepl("_g",names(cfs)[i]), 1,2) + x_adjs[2], cfi$pred[combos[[2]]],
+                                col = cols[2], pch = 16, type = 'b')
+  lines(0:ifelse(grepl("_g",names(cfs)[i]), 1,2) + x_adjs[3], cfi$pred[combos[[3]]],
+                                col = cols[3], pch = 16, type = 'b')
+  lines(0:ifelse(grepl("_g",names(cfs)[i]), 1,2) + x_adjs[4], cfi$pred[combos[[4]]],
+                                col = cols[4], pch = 16, type = 'b')
+  for(k in 1:ifelse(grepl("_g",names(cfs)[i]), 2,3)){
     for(j in 1:4){
       cfij <- cfi[combos[[j]],]
       lines(rep(k-1,2) + x_adjs[j], c(cfij$lo[k],cfij$hi[k]), col = cols[j])
     }
   }
   if(i > 2){
-    axis(1, at = 0:2, labels = c("Before","2 y after","5 y after"))
+    axis(1, at = 0:2, labels = c("B","A1","A2"))
   }else{
     axis(1, at = 0:2, labels = c("","",""))
   }
@@ -310,6 +358,84 @@ for(i in 1:length(cfs)){
   title(main = paste0(LETTERS[i],"."), adj = 0)
   if(i == 2){
     legend("topright", pch = 16, col = cols,
-         legend = c("Ctl, low EI", "Ctl high EI","Imp, low EI", "Imp high EI"),
-         cex = 0.9)
+           legend = c("Control, 32% EI", "Impact, 32% EI", "Control 4% EI","Impact 4% EI"),
+           cex = 1)
+  }
 }
+
+env_diffs <- list()
+for(i in 1:12){
+stanfit_i <- readRDS(stanfit_i, file = paste0("~/uomShare/wergStaff/ChrisW/git-data/urban_",
+                                   "riffle_experiment/model_fits/fit_riffle_baci_",
+                                   names(ys)[i], ".rds"))
+drawsi <- as.data.frame(stanfit_i$draws(format = "df", variables = c("a_si","a_sa","a_t","gamma",
+                                                                     "sigma_si","sigma_sa","sigma_t","sigma")))
+cf_drawsi <- 
+  drawsi[,"gamma[1]"] %*% t(predx_cf$`(Intercept)`) +
+  drawsi[,"gamma[2]"] %*% t(predx_cf$ba1) +
+  drawsi[,"gamma[3]"] %*% t(predx_cf$ba2) +
+  drawsi[,"gamma[4]"] %*% t(predx_cf$ci) +
+  drawsi[,"gamma[5]"] %*% t(predx_cf$i) + 
+  drawsi[,"gamma[6]"] %*% t(predx_cf$`ba1:ci`) +
+  drawsi[,"gamma[7]"] %*% t(predx_cf$`ba2:ci`) +
+  drawsi[,"gamma[8]"] %*% t(predx_cf$`ba0:ci:i`) + 
+  drawsi[,"gamma[9]"] %*% t(predx_cf$`ba1:ci:i`) +
+  drawsi[,"gamma[10]"] %*% t(predx_cf$`ba2:ci:i`) 
+
+env_diffs[[i]] <- baci_diffs(cf_drawsi)
+meani = apply(env_diffs[[i]], 2, FUN = mean)
+qlsi <- as.data.frame(t(apply(env_diffs[[i]], 2, FUN = quantile, 
+      probs = c(0.025,0.05,0.125,0.5,0.875,0.95,0.975))))
+names(qlsi) = c("lo95","lo90","lo75","median","hi75","hi90","hi95")
+meani <- apply(env_diffs[[i]],2, FUN = mean)
+if(i == 1){
+  env_diff_summs <- data.frame(stat = names(cfs)[i],
+                                  diff = row.names(qlsi), mean = meani, qlsi)
+}else{
+  env_diff_summs <- rbind(env_diff_summs,
+                          data.frame(stat = names(cfs)[i],
+                                     diff = row.names(qlsi), mean = meani, qlsi))
+}
+}
+
+save(env_diff_summs, file = "small_data/env_diff_summs.rda")
+
+xlabs = c("Delta No. taxa", "Delta No. tax", "Delta No. taxa", "Delta SIGNAL",
+          "Delta N", "Delta, N", "Delta N")
+stat_names <- ylabs
+lo <- layout(matrix(c(1:8),2,4,byrow = TRUE),
+             widths = c(14,10,10,10),heights = c(10,10))
+diffs <- c("delta_baci1_hi","delta_baci2_hi","delta_baci1_low","delta_baci2_low")
+nms <- c( bquote(Delta~"A1 4% EI"), bquote(Delta~"A2 4% EI"), 
+          bquote(Delta~"A1 32% EI"), bquote(Delta~"A2 32% EI"))
+miny <- 0.5; maxy <- 4.5
+for(j in 8:12){
+  summp <- env_diff_summs[env_diff_summs$stat == names(cfs)[j],]
+  summp <- summp[match(diffs,summp$diff),]
+  par(mar = c(4,ifelse(j %in% c(1,5), 5, 1),1,0))
+  xrange <- c(min(summp$lo95),max(summp$hi95))
+  plot(xrange,c(miny,maxy),type = 'n', axes = FALSE, xlab = xlabs[j],ylab = "")
+  for(i in 1:4){
+    lines(c(summp$lo95[i],summp$hi95[i]),rep(miny+maxy-i,2),lend = 2,
+          col = ifelse(summp$hi90[i] < 0,"red",ifelse(summp$lo90[i] > 0, "blue","grey")))
+    lines(c(summp$lo90[i],summp$hi90[i]),rep(miny+maxy-i,2), lwd = 2,lend = 2,
+          col = ifelse(summp$hi90[i] < 0,"red",ifelse(summp$lo90[i] > 0, "blue","grey")))
+    lines(c(summp$lo75[i],summp$hi75[i]),rep(miny+maxy-i,2), lwd = 4,lend = 2,
+          col = ifelse(summp$hi90[i] < 0,"red",ifelse(summp$lo90[i] > 0, "blue","grey")))
+    points(summp$mean[i],miny+maxy-i,pch = 21, 
+           bg = ifelse(summp$hi90[i] < 0,"red",ifelse(summp$lo90[i] > 0, "blue","grey")))
+  }
+  axis(1); 
+  if(j %in% c(1,5)){
+    ylabs <- c("A1,32%EI","A2,32%EI","A1,4%EI","A2,4%EI")
+  }else{
+    ylabs <- rep("",length=length(nms))
+  }
+  axis(2, at = 1:4, 
+       labels = ylabs, las = 1) 
+  box(bty = 'l')
+  abline(v = 0, lty = 3)
+  title(main = paste0(LETTERS[j],". "), adj = 0)
+}
+par(mar = c(0,0,0,0))
+

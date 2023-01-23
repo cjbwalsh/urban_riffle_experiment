@@ -217,13 +217,11 @@ We processed sample units separately, and considered the set of replicates colle
 
 After each sample unit was collected, the sampler was removed from the stream bed, and water depth and velocity at the bed surface were measured at the four corners of the sampled area and the centre point. We measured velocity with a CMC 20 current meter counter, fitted with a 1-94.22 propeller, for 10 s at each point, 4 cm above the bottom (the lowest possible setting). From these five measurements, we calculated the mean and variance of velocity for each sample unit.
 
-<!--# Need to be clear here about which ones were measured in all 6 trips, and which were measured for just 1-4 -->
-
 We noted the proportions, using Braun-Blanquet classes, of sediment particle sizes classed by the Wentworth scale [@allan2021], and used these data to estimate minimum, median, and maximum $\Phi$ (-log~2~ smallest diameter) of the sediments in each sample unit.
 
-In the laboratory, after macroinvertebrates were collected from the sample, we separated the sample material into fine and coarse particulate organic matter (FPOM, and CPOM, respectively), wood, macrophyte leaves and algae. Each of these elements was dried at 60°C for 24 h and weighed. <!--# Need to dig up lab methods to make sure this is correct -->
+<!--# In the laboratory, after macroinvertebrates were collected from the sample, we separated the sample material into fine and coarse particulate organic matter (FPOM, and CPOM, respectively), wood, macrophyte leaves and algae. Each of these elements was dried at 60°C for 24 h and weighed. (I needed to dig up lab methods to make sure this is correct, but the data did not show strong trends, and I have my doubts about the realism of the OM collected as part of the macroinvertebrate sample being a reliable estimate of available resources in the sample unit. So, I have elected to omit these data.  -->
 
-We compiled these data into 9 environmental variables to assess the effect of riffles on habitat heterogeneity at the scale of sample units: mean velocity, variance of velocity, mean depth, variance of depth, median $\Phi$ (which showed similar results to minimum and maximum), dry weights of FPOM, CPOM (including wood: it made no difference if it was excluded), macrophytes, and algae. See appendix X for more detail.
+We compiled these data into 5 environmental variables to assess the effect of riffles on habitat heterogeneity at the scale of sample units: mean velocity, variance of velocity, mean depth, variance of depth, and median $\Phi$ (which showed similar results to minimum and maximum). See appendix X for more detail.
 
 ### Statistical models
 
@@ -246,7 +244,7 @@ $$
 \end{align}
 $$ {#eq-env_var_linear_model}
 
-where $\alpha_j$ is the model intercept for taxon *j*, $\beta\_ba_{j}$ is the *BA* effect (a categorical variable with values before, first year after, *a1*, and fifth/sixth year after, *a2*, noting that for XXX, measurements were not made in *a2*), $\beta\_ci_{j}$ is the *CI* effect, $\beta\_baci_{j}$ is the interaction of the *BA* and *CI* effects, and $\beta\_bacii_{j}$ is the interaction of the *BA*, *CI* and *I* effects. The $\theta$ and $\epsilon$ parameters model the error structure of the dataset. $\theta_{1(i,si)}$ models variation among samples within each site, indexed by *si*. $\theta_{2(i,sa)}$ models variation among the four sample units within each sample, indexed by *sa*. $\theta_{3(i,t)}$ models variation among samples within each sampling campaign, indexed by *t*.
+where $\alpha_j$ is the model intercept for taxon *j*, $\beta\_ba_{j}$ is the *BA* effect (a categorical variable with values before, first year after, *a1*, and fifth/sixth year after, *a2*, $\beta\_ci_{j}$ is the *CI* effect, $\beta\_baci_{j}$ is the interaction of the *BA* and *CI* effects, and $\beta\_bacii_{j}$ is the interaction of the *BA*, *CI* and *I* effects. The $\theta$ and $\epsilon$ parameters model the error structure of the dataset. $\theta_{1(i,si)}$ models variation among samples within each site, indexed by *si*. $\theta_{2(i,sa)}$ models variation among the four sample units within each sample, indexed by *sa*. $\theta_{3(i,t)}$ models variation among samples within each sampling campaign, indexed by *t*.
 
 We modeled the total count of taxon *j* in each sample unit, *i*, ($Y_{i,j}$) as a negative binomial distribution (given the highly skewed distributions of taxon counts) and the count of taxon *j*, ($c_{i,j}$), in a subsample of sample unit *i* as a binomial distribution given the subsample proportion $s_{i,j}$ and $Y_{i,j}$. Thus:
 
@@ -272,11 +270,9 @@ $$ {#eq-multi_taxon_linear_model}
 
 where $\alpha_j$, $\beta\_ba_{j}$, $\beta\_ci_{j}$, $\beta\_bacii_{j}$, and $\beta\_i_{j}$ are as described for the environmental variable model, but with a separate value for each taxon *j*. We added an effect of the the effect of season (*S*: autumn = 0, spring = 1) $\beta\_s_{j}$ to account for seasonal differences in macroinvertebrate abundances. $\theta_{1(i,si)}$, $\theta_{2(i,sa)}$ and $\theta_{3(i,t)}$ are as described for the environmental variable model. We added an additional error term,$\epsilon_{(i,j)}$, to control for overdispersion in abundance distributions.
 
-All $\beta$ parameters were formulated as random effects drawn from community-level hyper-distributions with the mean parameters specified as diffuse normal distributions (mean 0, sd 5) and the parameters for each species drawn from a multivariate normal distribution with a variance-covariance matrix that describes the residual associations among species. Prior distributions for the random effect parameters for site ($\theta_{si}$) and sample ($\theta_{sa}$) normal, with mean 0 and sds drawn from hyper-distributions among sites and samples, respectively, as was the sampling occasion parameter ($\theta_{t}$, among sampling occasions) in the multi-taxon model. For the environmental variable models, prior distribution for $\theta_{t}$ was a normal distribution with mean 0 and sd 1. Broadly, the sd of the random effect distributions were the constraining parameters for model convergence in many models, and we varied their prior distributions among models to maximise sampling convergence (see Appendix S3 for details). For the multi-taxon model, the parameter modelling error among sample units ($\epsilon$), and the dispersion parameter ($\phi$) of the negative binomial distribution for each taxon both had weakly informative normal prior distributions (mean 1, sd 1). We derived the model using the Markov chain Monte Carlo sampler of Stan [@carpenter_etal_2017].
+All $\beta$ parameters were formulated as random effects drawn from community-level hyper-distributions with the mean parameters specified as diffuse normal distributions (mean 0, sd 5) and the parameters for each species drawn from a multivariate normal distribution with a variance-covariance matrix that describes the residual associations among species. Prior distributions for the random effect parameters for site ($\theta_{si}$) and sample ($\theta_{sa}$) normal, with mean 0 and sds drawn from hyper-distributions among sites and samples, respectively, as was the sampling occasion parameter ($\theta_{t}$, among sampling occasions). Broadly, the sd of the random effect distributions were the constraining parameters for model convergence in many models, and we varied their prior distributions among models to maximise sampling convergence (see Appendix S3 for details). For the multi-taxon model, the parameter modelling error among sample units ($\epsilon$), and the dispersion parameter ($\phi$) of the negative binomial distribution for each taxon both had weakly informative normal prior distributions (mean 1, sd 1). We derived the models using the Markov chain Monte Carlo sampler of Stan [@carpenter_etal_2017].
 
-The models satisfied tests for convergence, and effective sample size. The Bayesian Fraction of Missing Information (mean 0.299) was marginally lower than the nominal threshold of 0.3 ( @stan_dev_team_2022: see Appendix S3 for more details).
-
-<!--# Not true for vel_var, cpom and fpom, which all had low BFMI...need to revisit this -->
+The multi-taxon model satisfied tests for convergence, and effective sample size. The Bayesian Fraction of Missing Information (mean 0.299) was marginally lower than the nominal threshold of 0.3 ( @stan_dev_team_2022: see Appendix S3 for more details). (*The environmental variable models were more problematic, with a small number of divergences, and low BFMI for mean depth and velocity and variance of velocity...sigma_sa (and perhaps a_sa\_ seem to be the limiting parameters. I'm not sure how to better parameterize them*...*Also, I haven't yet done the next step of assessing model accuracy for the environmental variables. I wonder if it's worth the trouble. The models sample the main fixed variables of interest well, and show the fairly obvious differences that we need to illustrate...Perhaps there is an easier way to achieve that aim?)*
 
 We quantified model accuracy by correlation coefficients (R) between observed and predicted abundances of each taxon in each sample (log-transformed, averaged for sample units comprising each sample). To assess potential bias in model predictions, we calculated the slope of a regression of predicted abundance as a function of observed abundance. We also assessed the accuracy of predictions of taxon occurrence by the area under the operator curve (AUC) of logistic regressions of predicted probability of occurrence as a function of observed presence or absence each taxon in each sample (see below). Finally we assessed the accuracy of model predictions of number of taxa in each sample (total and number of Ephemeroptera, Plecoptera and Trichoptera taxa), assessing the *R^2^* of regressions between predicted and observed, accounting for subsample proportion.
 
@@ -286,13 +282,11 @@ The model predicted abundances of all taxa at each site well (mean R for all tax
 
 To interpret interactions between the effects of riffle construction and degree of catchment urbanization, we derived posterior predicted distributions of abundances of taxa for which the interactions of interest were non-zero with at least 90% confidence for 12 scenarios. The scenarios comprised four site types (control and impact sites with high and low effective imperviousness (4% and 32% EI, the maximum and mimimum EI values in the study sites, respectively), in the three states of the BA effect (*B*, before; *A1*, in the first year after riffle construction; and *A2*, 5-6 years after).
 
-We focused first on taxa for which the *baci* or *bacii* effects were non-zero with at least 90% confidence to understand which taxa drove assemblage-level differences. We also derived predictions of responses of assemblage-level metrics from the model for each of the 12 scenarios. Responses of diversity measures such as richness are of intrinsic community ecological interest, but they and biotic metrics focussing on taxa of differing sensitivity to human disturbance are used by stream managers as measures of ecological condition and targets for responses to management actions (e.g. EPA SEPP guidelines?). We used predicted abundances and occurrences for each scenario to calculate posterior distributions of:
+We focused first on taxa for which the *BA:CI* or *BA:CI:I interactions* were non-zero with at least 90% confidence to understand which taxa drove assemblage-level differences. We also derived predictions of responses of assemblage-level metrics from the model for each of the 12 scenarios. Responses of diversity measures such as richness are of intrinsic community ecological interest, but they and biotic metrics focussing on taxa of differing sensitivity to human disturbance are used by stream managers as measures of ecological condition and targets for responses to management actions (e.g. EPA SEPP guidelines?). We used predicted abundances and occurrences for each scenario to calculate posterior distributions of:
 
 -   Total macroinvertebrate abundance, of Ephemeroptera, Plecoptera and Trichoptera taxa (EPT; insect orders dominated by taxa sensitive to human disturbance, REF), and of Diptera and Oligochaeta (QDLO, groups dominated by taxa tolerant to human disturbance, REF).
 
 -   Total taxon richness (i.e. taxon density, the number per sample comprising 4 sample units), also EPT and QDLO richness
-
--   Pielou's evenness, calculated as $H/log(S)$ where H is the Shannon-Weaver diversity index and S is total taxon richness for each sample.
 
 -   SIGNAL, a biotic index which averages grades of sensitivity to human disturbance (between 1 and 10) of families present in a sample [@chessman_1995].
 
@@ -304,7 +298,7 @@ $$ {#eq-predict_pa}
 
 where $p\_su_i$ is the probability of occurrence in the *i*th sample unit comprising the sample, calculated as 1 - negative-binomial probabliity of zero, given predicted $\mu$ and $\phi$. Number of taxa in each sample was calculated as the sum of probabilities of occurrence (see Appendix S3 for more detail).
 
-To assess the probability of an effect of riffle construction on assemblage metrics and taxon abundances, we calculated the following four differences between the posterior distributions of metrics and abundances given the 12 scenarios:
+To assess the probability of an effect of riffle construction on environmental variables, assemblage metrics and taxon abundances, we calculated the following four differences between the posterior distributions of metrics and abundances given the 12 scenarios:
 
 -   $\Delta A1 \, (\textrm{4%} \, EI)$, (control minus impact before, *B*) - (control minus impact in first year after, *A1*) for low *I*
 
@@ -320,12 +314,34 @@ We inferred a likely effect of riffle construction on each measure if \>90% of t
 
 ### Responses of environmental variables
 
+The constructed riffles altered the available substrates in the study reaches, increasing surface and hyrdaulic heterogeneity.
+
+Riffles resulted in shallower water through the reach (no change in variability in depth at the sample-unit scale), and increased mean velocity, and variance of velocity, indicating increased heterogeneity of the hydraulic environment.
+
+Median Phi before was 1-2 (median to coarse sand) in high urban sites, clay in low urban.
+
+After riffle construction, low urban median phi was 6-7 (small to large cobbles), in high urban median phi was fine to medium sand (as sand deposited among riffle rocks, so no significant change to median phi in low urban sites)
+
+Minimum Phi was more certainly -5 to -6 in both types of streams after riffle construction (large pebbles to small boulders), down from large pebbles in low urban and fine gravel in high urban (so no change to minimum phi in low urban sites: the less urban sites already had some particles of large-pebble size). A further effect of the riffles not quantified by these measurements was an increase in the availability of large emergent rocks, which are important egg-laying sites for many taxa (See photos in S1).
+
+```{r}
+#| label: fig-cf_env_vars
+#| echo: false
+#| warning: false
+#| message: false
+#| fig-width: 7
+#| fig-height: 6
+#| fig-cap: "Posterior distributions of the differences in abundance for the four contrasts illustrating the effect of riffle construction (A, C, E, G, I, K) and trends from before to after riffle construction (B, D, F, H, J, L) in 6 environmental variables. A, B. Mean water depth, C, D. Variance of water depth within each 0.04 m^2^ sample unit, E, F, Mean velocity, G, H. Variance of velocity, I, J. Minimum $\\Phi$ (the negative log of diameter of sediment particles in the sample unit). K, L. Maximum $\\Phi$. For the distribution plots, 95th, 90th, and 75th percentiles are indicated by increasingly thick bars. Coefficients with >90% less than zero are red, and >90% greater than zero blue. The four lines in each trend plot connect mean (± 95% confidence intervals) metric values  before (B) and at two times after (A1, in the first year, and A2, 5-6 years later) construction of the experimental riffles for control sites and impact (i.e. site in which riffles were placed) with 4% and 32% effective imperviousness (EI)."
+
+
+```
+
 ### Responses of macroinvertebrate taxa
 
 ```{r}
 #| echo: false
 #| label: tbl-top10taxa
-#| tbl-cap: "Mean abundance (N per 0.04 m2 sample unit) under the 12 scenarios of the 19 taxa that were among the 10 most abundant taxa in at least one scenario, and the percentage of the total count of all taxa in each scenario that the 19 taxa constitute.  Low and High I, 4% and 32% effective imperviousness, respectively; B, Before; A1, in the first year after; A2, 5-6 years after riffle construction. See Appendix S2 for explanation of Tubificinae taxa."
+#| tbl-cap: "Mean abundance (N per 0.04 m^2^ sample unit) under the 12 scenarios of the 19 taxa that were among the 10 most abundant taxa in at least one scenario, and the percentage of the total count of all taxa in each scenario that the 19 taxa constitute.  Low and High I, 4% and 32% effective imperviousness, respectively; B, Before; A1, in the first year after; A2, 5-6 years after riffle construction. See Appendix S2 for explanation of Tubificinae taxa."
 
 top10taxa <- read.csv("small_data/top10taxa.csv")
 ft <- flextable::flextable(top10taxa[,-1]) 
@@ -337,8 +353,7 @@ ft <- flextable::hline(ft, i = nrow(top10taxa)-1)
 ft
 ```
 
-The macroinvertebrate assemblages of all sites were numerically dominated by cosmopolitan taxa, tolerant of human disturbance, although the most abundant taxa tended to be less abundant, and constituted a lower proportion of the assemblage, in sites with lower EI (@tbl-top10taxa). *Potamopyrgus antipodarum*, *Physa acuta*, *Lumbriculus variegatus*, and likely members of other taxa, are invasive species. Thus, despite the sites spanning a gradient of EI from 4-32%, the biota of all sites were dominated by taxa typical of degraded urban streams, and this general state was consistent across before and after states, although @tbl-top10taxa suggests some reduction in the dominance of some cosmopolitan taxa after riffle construction in low EI impact sites. 
-
+The macroinvertebrate assemblages of all sites were numerically dominated by cosmopolitan taxa, tolerant of human disturbance, although the most abundant taxa tended to be less abundant, and constituted a lower proportion of the assemblage, in sites with lower EI (@tbl-top10taxa). *Potamopyrgus antipodarum*, *Physa acuta*, *Lumbriculus variegatus*, and likely members of other taxa, are invasive species. Thus, despite the sites spanning a gradient of EI from 4-32%, the biota of all sites were dominated by taxa typical of degraded urban streams, and this general state was consistent across before and after periods, although @tbl-top10taxa suggests some reduction in the dominance of some cosmopolitan taxa after riffle construction in low EI impact sites.
 
 ```{r}
 #| echo: false
@@ -403,19 +418,13 @@ ht_string <- paste(paste0(higher_taxa_in_plot$taxon, " (", higher_taxa_in_plot$h
 # length(taxa_to_plot) # 41 taxa to plot in @fig-coeff_plot_alt
 ```
 
-23 of the 113 taxa responded to riffle construction (non-zero *BA-CI* differences with 90% confidence; 18 with 95% confidence: @fig-coeff_plot_alt). Only two of those species were negatively associated with EI (i.e. sensitive to human disturbance). One of those, Hydropsychidae, filter-feeding caddis flies which attach to rocks increased in abundance after riffle construction, and only in sites with low EI. The other, a chironomid, *Thiennemaniella*, decreased in abundance, only in sites with low EI.
+23 of the 113 taxa responded to riffle construction (non-zero *BA-CI* differences with 90% confidence; 18 with 95% confidence: @fig-coeff_plot_alt). Only two of those species were negatively associated with EI (i.e. sensitive to human disturbance; @fig-coeff_plot_alt). One of those, Hydropsychidae (@fig-cf_taxon_abunds A), filter-feeding caddis flies which attach to rocks increased in abundance after riffle construction, and only in sites with low EI. The other, a chironomid, *Thiennemaniella* (@fig-cf_taxon_abunds B), decreased in abundance, only in sites with low EI.
 
-Most taxa that were positively associated with EI (i.e. tolerant of human disturbance) decreased in abundance after riffle construction. Nematoda, and oligochaetes *Nais*, *Chaetogaster diaphanus*, Megadrili, Tubificinae groups A and B, *Lumbriculus variegatus*, Enchytraeidae , and chironomids *Paratanytarsus/Rheotanytarsus*, *Procladius*, *Parakiefferiella*, *Polypedilum*, and *Cryptochironomus*---most of which inhabit soft sediments---decreased in abundance in low EI sites, but not high EI sites. 
+Most taxa that were positively associated with EI (i.e. tolerant of human disturbance) decreased in abundance after riffle construction (@fig-coeff_plot_alt). Nematoda, and oligochaetes *Lumbriculus variegatus* (@fig-cf_taxon_abunds C, as an example), *Nais*, *Chaetogaster diaphanus*, Megadrili, Tubificinae groups A and B, Enchytraeidae , and chironomids *Polypedilum* (@fig-cf_taxon_abunds D), as an example), *Paratanytarsus/Rheotanytarsus*, *Procladius*, *Parakiefferiella*, and *Cryptochironomus*---most of which inhabit soft sediments---decreased in abundance in low EI sites, but not high EI sites.
 
-Simuliidae, with similar habitat requirements to Hydropsychidae, but more tolerant of human impacts, increased in abundance in high EI sites but not low EI sites, as did Ceratopogonidae, Glossiphonidae and *Pisidium*.
+Simuliidae, with similar habitat requirements to Hydropsychidae, but more tolerant of human impacts, increased in abundance in high EI sites but not low EI sites (@fig-cf_taxon_abunds E), as did Ceratopogonidae, Glossiphonidae and *Pisidium* (@fig-coeff_plot_alt).
 
-*Cura pinguis*, Cyclopoida, *Cricotopus*, and *Chironomus* increased in abundance in high EI sites, and decreased in low EI sites.
-
-While Hydropsychidae was the only EPT taxon that increased in abundance after riffle construction, EPT richness and abundance increased (only in low EI sites). The predominant decline in abundance of oligochaete and chironomid taxa in low EI sites led to a decrease in QDLO richness and abundance in low EI sites, while responses of *Cricotopus*, and *Chironomus* led to an increase in QDLO richness and abundance in high EI sites. The responses of these abundant taxa also explain the complementary trends in evenness (decline in high EI sites, increase in low EI sites). (\*Not true any more?\*\*)
-
-The observed changes in taxon abundances and richness in response to riffle construction were insufficient to elicit changes in SIGNAL scores. We found no evidence of colonization of new taxa in response to riffle construction (f*ind which taxa only occurred after in impact and control sites).*
-
-
+*Cura pinguis*,*Cricotopus* (@fig-cf_taxon_abunds F, G), Cyclopoida and *Chironomus* increased in abundance in high EI sites, and decreased in low EI sites (@fig-coeff_plot_alt).
 
 ```{r}
 #| label: fig-coeff_plot_alt
@@ -434,7 +443,8 @@ taxa_in_order <- taxa_in_order[taxa_in_order %in% taxa_to_plot]
 taxa_to_plot_df <- taxa_to_plot_df[match(taxa_in_order, taxa_to_plot_df$taxoncode),]
 miny <- 1; maxy <- length(taxa_to_plot)
 
-  nms <- c("b_i", bquote(Delta~"A1 4%EI"), bquote(Delta~"A2 4%EI"), bquote(Delta~"A1 32%EI"), bquote(Delta~"A2 4%EI"))
+  nms <- c("b_i", bquote(Delta~"A1 4% EI"), bquote(Delta~"A2 4% EI"), 
+                  bquote(Delta~"A1 32% EI"), bquote(Delta~"A2 4% EI"))
 for(p in 1:5){
   if(p == 1){
   summp <- param_summs[["b_i"]]
@@ -472,13 +482,13 @@ title(xlab = "Coefficient", line=-1, cex.lab = 1.25)
 ```
 
 ```{r}
-#| label: fig-cfplots_bacii_neg
+#| label: fig-cf_taxon_abunds
 #| echo: false
 #| warning: false
 #| message: false
 #| fig-width: 7
-#| fig-height: 3
-#| fig-cap: "Trends in abundance of 8 taxa as examples of the main trend patterns observed in taxa for which an effect of riffle was inffered with >90% confidence. The four lines in each plot connect mean (± 95% confidence intervals) metric values  before (B) and at two times after (A1, in the first year, and A2, 5-6 years later) construction of the experimental riffles for control sites (Ctl) and impact (i.e. site in which riffles were placed, Imp) with 4% and 32% effective imperviousness (EI)."
+#| fig-height: 4
+#| fig-cap: "Trends in abundance of 8 taxa as examples of the main trend patterns observed in taxa for which an effect of riffle was inffered with >90% confidence. The four lines in each plot connect mean (± 95% confidence intervals) metric values  before (B) and at two times after (A1, in the first year, and A2, 5-6 years later) construction of the experimental riffles for control sites and impact (i.e. site in which riffles were placed) with 4% and 32% effective imperviousness (EI)."
 
 # (Plot examples: 
 example_taxa <- c("QT06","QDAF07","LO060101","QDAI08","QD10","IF610101","QDAF15")
@@ -503,11 +513,11 @@ combos <- list(control_hii = which(predx_cf$ci == 0 & predx_cf$i == max(predx_cf
 # spell them out so that they are displayed in Rstudio
 cols <- c( "#CD534CFF","#EFC000FF","#868686FF","#0073C2FF")
 taxa_baci <- unique(c(more_diff_90,more_sim_90))
-taxa_set <- taxa_baci[1:8]# non_taxa_baci # 1:8
+taxa_set <- example_taxa # taxa_baci[1:8]# non_taxa_baci # 1:8
 
 lo <- layout(matrix(c(9,1:4,9,5:8,0,rep(10,4)),3,5,byrow = TRUE),
 widths = c(1,12,10,10,10),heights = c(10,12,1))
-for(i in 1:8){  #Just first 12 out of 19 to start with
+for(i in 1:7){  #
 par(mar = c(ifelse(i %in% 5:8, 4,1), ifelse(i %in% c(1,5),5,1),1,1))
 predy_cf_i <- predy_cf[[taxa_set[i]]]  #$taxoncode
 mean_cf_i <- apply(predy_cf_i,2,FUN = mean)
@@ -517,7 +527,8 @@ x_adjs <- c(-0.03,-0.01,0.01,0.03)
 
 with(cfi[combos$control_hii,],
 plot((0:2) + x_adjs[1], pred, type = 'b',
-col = cols[1], pch = 16, axes = FALSE,ylim = c(min(cfi$lo),max(cfi$hi)), # ylim = c(-14,5), #
+col = cols[1], pch = 16, axes = FALSE,
+ylim = c(-12,8), # ylim = c(-14,5), #
 xlab = "", ylab = ""))
 with(cfi[combos[[2]],], lines((0:2) + x_adjs[2], pred,
                     col = cols[2], pch = 16, type = 'b'))
@@ -538,11 +549,11 @@ if(i %in% 5:8){
      }
 axis(1, at = 0:2, labels = xlabs)
 if(i %in% c(1,5,9)){
-  ylabs <- c("0.0001",0.001,0.01,0.1,1,10,100,1000)
+  ylabs <- c("","0.0001",0.001,0.01,0.1,1,10,100,1000,"10000")
       }else{
-  ylabs <- rep(" ",8)
+  ylabs <- rep(" ",10)
      }
-axis(2, las = 1, at = log(c(0.0001,0.001,0.01,0.1,1,10,100,1000)),
+axis(2, las = 1, at = log(c(0.00001,0.0001,0.001,0.01,0.1,1,10,100,1000,10000)),
 labels = ylabs)
 box(bty = "l")
 if(taxa$italic[taxa$taxoncode == taxa_set[i]] == 1){
@@ -554,13 +565,12 @@ title(main = bquote(paste(.(LETTERS[i]), # taxa$taxoncode[taxa$taxoncode == ba0c
    ". ", .(taxa$taxon[taxa$taxoncode == taxa_set[i]]))),
 adj = 0, cex.main = 1)
 
-}
-if(i == 8)
-legend("topleft", pch = 16, col = cols,
-legend = c("Ctl, 32% EI", "Imp, 32% EI", "Ctl 4% EI","Imp 4% EI"),
-cex = 0.75)
-}
+}}
 par(mar = c(0,0,0,0))
+plot.new()
+legend("center", pch = 16, col = cols,
+legend = c("Control, 32% EI", "Impact, 32% EI", "Control 4% EI","Impact 4% EI"),
+cex = 1)
 plot.new()
 title(ylab = "Abundance per sample unit", line = -1.5, cex = 1.25)
 plot.new()
@@ -568,25 +578,105 @@ title(xlab = "Occasion", line = -1.5, cex = 1.25)
 par(mar = c(4,4,1,1))
 ```
 
+*Needs revising*
+
+While Hydropsychidae was the only EPT taxon that increased in abundance after riffle construction, EPT richness and abundance increased (only in low EI sites). The predominant decline in abundance of oligochaete and chironomid taxa in low EI sites led to a decrease in QDLO richness and abundance in low EI sites, while responses of *Cricotopus*, and *Chironomus* led to an increase in QDLO richness and abundance in high EI sites. The responses of these abundant taxa also explain the complementary trends in evenness (decline in high EI sites, increase in low EI sites). (@fig-diffs_dists) (@fig-assemb_trends)
+
+The observed changes in taxon abundances and richness in response to riffle construction were insufficient to elicit changes in SIGNAL scores. We found no evidence of colonization of new taxa in response to riffle construction (f*ind which taxa only occurred after in impact and control sites).*
+
 ```{r}
-#| label: fig-assemb_data
+#| label: assemb_diffs_dists
 #| echo: false
 #| warning: false
 #| message: false
 #| fig-width: 7
-#| fig-height: 3
-#| fig-cap: "Trends in assemblage metrics (A. total richness, B. evenness, C. EPT richness D. SIGNAL core in a sample of 4 sample units) before and at two times after construction of the experimental riffles.  The four lines in each plot connect mean (± 95% confidence intervals) metric values over the three times for control sites (Ctl) and impact (i.e. site in which riffles were placed, Imp) with low and high effective imperviousness (EI)"
+#| fig-height: 4
+#| fig-cap: "Posterior distributions of the differences in abundance for the four contrasts illustrating the effect of riffle construction for seven assemblage metrics. A. Total richness, B. Ephemeroptera, Plecoptera and Trichoptera (EPT) richness C. Dipteran and Oligochaete (QDLO) richness, D. SIGNAL score, E. total abundance, F. EPT abundance G. QDLO abundance. Contrasts and other conventions are as in Figure 2."
+
+# load objsect assemb_stat_diffs (see S3 chunk calc_assemb_stats)
+load("~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/assemb_stat_diffs")
+for(i in 1:length(assemb_stat_diffs)){
+  drawsi <- assemb_stat_diffs[[i]]
+  qlsi <- as.data.frame(t(apply(drawsi,2, FUN = quantile, 
+                                probs = c(0.025,0.05,0.125,0.5,0.875,0.95,0.975))))
+  names(qlsi) = c("lo95","lo90","lo75","median","hi75","hi90","hi95")
+  meani <- apply(drawsi,2, FUN = mean)
+  if(i == 1){
+  assemb_stat_summs <- data.frame(stat = names(assemb_stat_diffs)[i],
+                                       diff = row.names(qlsi), mean = meani, qlsi)
+             }else{
+  assemb_stat_summs <- rbind(assemb_stat_summs,
+                                   data.frame(stat = names(assemb_stat_diffs)[i],
+                                               diff = row.names(qlsi), 
+                                              mean = meani, qlsi))
+                    }
+}
+# Leave out evenness and H, which do not differ with riffle construction
+assemb_stat_summs <- assemb_stat_summs[!assemb_stat_summs$stat %in% c("evenness","H"),]
+lab_names <- c("Total richness", "EPT richness", "QDLO richness", 
+               "SIGNAL score", "Total abundance", "EPT abundance", 
+               "QDLO abundance")
+stat_names <-  names(assemb_stat_diffs)[!names(assemb_stat_difs) %in% c("evenness","H")]
+xlabs = c("Delta No. taxa", "Delta No. tax", "Delta No. taxa", "Delta SIGNAL",
+          "Delta N", "Delta, N", "Delta N")
+  
+lo <- layout(matrix(c(1:8),2,4,byrow = TRUE),
+widths = c(14,10,10,10),heights = c(10,10))
+  diffs <- c("delta_baci1_hi","delta_baci2_hi","delta_baci1_low","delta_baci2_low")
+  nms <- c( bquote(Delta~"A1 4% EI"), bquote(Delta~"A2 4% EI"), 
+            bquote(Delta~"A1 32% EI"), bquote(Delta~"A2 32% EI"))
+  miny <- 0.5; maxy <- 4.5
+for(j in 1:7){
+  summp <- assemb_stat_summs[assemb_stat_summs$stat == stat_names[j],]
+  summp <- summp[match(diffs,summp$diff),]
+par(mar = c(4,ifelse(j %in% c(1,5), 5, 1),1,0))
+xrange <- c(min(summp$lo95),max(summp$hi95))
+  plot(xrange,c(miny,maxy),type = 'n', axes = FALSE, xlab = xlabs[j],ylab = "")
+for(i in 1:4){
+  lines(c(summp$lo95[i],summp$hi95[i]),rep(miny+maxy-i,2),lend = 2,
+        col = ifelse(summp$hi90[i] < 0,"red",ifelse(summp$lo90[i] > 0, "blue","grey")))
+  lines(c(summp$lo90[i],summp$hi90[i]),rep(miny+maxy-i,2), lwd = 2,lend = 2,
+        col = ifelse(summp$hi90[i] < 0,"red",ifelse(summp$lo90[i] > 0, "blue","grey")))
+  lines(c(summp$lo75[i],summp$hi75[i]),rep(miny+maxy-i,2), lwd = 4,lend = 2,
+        col = ifelse(summp$hi90[i] < 0,"red",ifelse(summp$lo90[i] > 0, "blue","grey")))
+  points(summp$mean[i],miny+maxy-i,pch = 21, 
+        bg = ifelse(summp$hi90[i] < 0,"red",ifelse(summp$lo90[i] > 0, "blue","grey")))
+}
+axis(1); 
+if(j %in% c(1,5)){
+  ylabs <- c("A1,32%EI","A2,32%EI","A1,4%EI","A2,4%EI")
+}else{
+    ylabs <- rep("",length=length(nms))
+    }
+axis(2, at = 1:4, 
+     labels = ylabs, las = 1) 
+box(bty = 'l')
+abline(v = 0, lty = 3)
+title(main = paste0(LETTERS[j],". ",lab_names[j]), adj = 0)
+  }
+par(mar = c(0,0,0,0))
+
+```
+
+```{r}
+#| label: fig-assemb_trends
+#| echo: false
+#| warning: false
+#| message: false
+#| fig-width: 7
+#| fig-height: 4
+#| fig-cap: "Trends in assemblage metrics (A. total richness, B. Ephemeroptera, Plecoptera and Trichoptera [EPT] richness C. Dipteran and Oligochaete [QDLO] richness D. SIGNAL score, E. total abundance, F. EPT abundance, G. QDLO abundance) in a sample of 4 sample units) before and at two times after construction of the experimental riffles.  The four lines in each plot connect mean (± 95% confidence intervals) metric values over the three times for control sites and impact (i.e. site in which riffles were placed) with 4% and 32% effective imperviousness (EI)"
 
 load("small_data/assemb_stats.rda")
-ylabs = c("Total richness", "Evenness","EPT richness", "DO richness",
-          "SIGNAL score", "log(total abundance)", "log(EPT abundance)","log(DO abundance)")
-
+ylabs = c("Total richness", "EPT richness", "DO richness",
+          "SIGNAL score", "log(total abundance)", "log(EPT abundance)","log(QDLO abundance)")
+plot_index <- match(c("tot_rich","ept_rich","do_rich","signal","tot_n","ept_n","do_n"),names(assemb_stats))
 par(mar = c(2,4,1,1))
 par(mfrow = c(2,4))
-for(i in 1:length(assemb_stats)){
+for(i in 1:7){
   ylabi <- ylabs[i]
-  if(i <= 5) {
-    predi <- assemb_stats[[i]]
+  if(i < 5) {
+    predi <- assemb_stats[[plot_index[i]]]
   }else{
       predi <- log(assemb_stats[[i]])
       }
@@ -594,7 +684,7 @@ cfi <- data.frame(predx_cf,
                   pred = predi[,1], 
                   lo= predi[,2],
                   hi= predi[,3])
-with(cfi[combos$control_lowi,], 
+with(cfi[combos$control_hii,], 
      plot((0:2) + x_adjs[1], pred, ylim = c(min(cfi$lo),max(cfi$hi)), 
           type = 'b', col = cols[1], pch = 16, axes = FALSE, 
           xlab = "", ylab = ylabi))
@@ -611,19 +701,19 @@ for(k in 1:3){
   }
 }
 if(i > 2){
-axis(1, at = 0:2, labels = c("Before","2 y after","5 y after"))
+axis(1, at = 0:2, labels = c("B","A1","A2"))
 }else{
  axis(1, at = 0:2, labels = c("","",""))
   }
 axis(2, las = 1); 
 box(bty = "l")
 title(main = paste0(LETTERS[i],"."), adj = 0)
-# if(i == 2){
-#   legend("topleft", pch = 16, col = cols, 
-#        legend = c("Ctl, low EI", "Ctl high EI","Imp, low EI", "Imp high EI"),
-#        cex = 0.9)
 }
-
+par(mar = c(0,0,0,0))
+plot.new()
+legend("center", pch = 16, col = cols, 
+       legend = c("Control, 32% EI", "Impact 32% EI","Control 4% EI", "Impact 4% EI"),
+       cex =1)
 ```
 
 ## Discussion

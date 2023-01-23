@@ -266,7 +266,7 @@ samp_subs <- aggregate(substrates_working$phi,
 names(samp_subs)[2] <- "min_phi"
 temp <- aggregate(substrates_working$phi, 
                        by = list(old_samplecode = substrates_working$old_samplecode),
-                       FUN = max)
+                       FUN = max, na.rm = TRUE)
 samp_subs$max_phi <- temp$x[match(samp_subs$old_samplecode, temp$old_samplecode)]
 samp_subs$med_phi <- NA
 
@@ -353,6 +353,10 @@ subs_56 <- as.data.frame(readxl::read_excel("~/uomShare/wergStaff/ChrisW/git-dat
 for(i in 1:nrow(subs_56)){
   samples$min_phi[samples$old_samplecode == subs_56$smpcode[i]] <- 
     substrate_codes$phi[substrate_codes$substrate_code == subs_56$min_code[i]]
+  samples$max_phi[samples$old_samplecode == subs_56$smpcode[i]] <- 
+    substrate_codes$phi[substrate_codes$substrate_code == subs_56$max_code[i]]
+  samples$med_phi[samples$old_samplecode == subs_56$smpcode[i]] <- 
+    substrate_codes$phi[substrate_codes$substrate_code == subs_56$max_code[i]]
 }
 
 #This exercise also made me dubious about macrophyte dw data...think about this...

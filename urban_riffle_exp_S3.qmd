@@ -482,17 +482,8 @@ assemb_stat_diffs <- list(signal = baci_diffs(signal_cf_mat),
                           tot_n = baci_diffs(tot_n_cf_mat),
                           ept_n = baci_diffs(ept_n_cf_mat),
                           do_n = baci_diffs(do_n_cf_mat))
+save(assemb_stat_diffs, file = "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/assemb_stat_diffs")
 
-pgr0 <- function(x){sum(x > 0)/length(x)}
-plt0 <- function(x){sum(x < 0)/length(x)}
-assemb_diff_probs <- data.frame(stat = names(assemb_stat_diffs)[1], 
-                                t(apply(assemb_stat_diffs[[1]], 2, FUN = pgr0)))
-for(i in 2:length(assemb_stat_diffs)){
-  assemb_diff_probs <- rbind(assemb_diff_probs, 
-                             data.frame(stat = names(assemb_stat_diffs)[i], 
-                                t(apply(assemb_stat_diffs[[i]], 2, FUN = pgr0))))
-}
-                        
 assemb_stats <- list(tot_rich = 
                        data.frame(mean =apply(tot_rich_cf_mat,2, 
                                               FUN = mean),
