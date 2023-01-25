@@ -400,8 +400,7 @@ if(i == 1){
 
 save(env_diff_summs, file = "small_data/env_diff_summs.rda")
 
-xlabs = c("Delta No. taxa", "Delta No. tax", "Delta No. taxa", "Delta SIGNAL",
-          "Delta N", "Delta, N", "Delta N")
+xlabs = names(cfs)
 stat_names <- ylabs
 lo <- layout(matrix(c(1:8),2,4,byrow = TRUE),
              widths = c(14,10,10,10),heights = c(10,10))

@@ -1,6 +1,6 @@
 ---
 title: "Appendix S1. Study site details"
-format: html
+format: docx
 editor: visual
 bibliography: references.bib
 nocite: |
@@ -18,9 +18,27 @@ dat_file <-
 "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/data_for_model.xlsx"
 sites <- data.frame(readxl::read_excel(dat_file, sheet = "sites"), 
                     stringsAsFactors = FALSE)
+sites <- sites[c("sitecode","str_nm","location","ai","elev_m","carea_km2",
+                 "floodplain_ht_m","baseflow_channel_width_m","reach_slope")]
+sites$reach_slope <- sites$reach_slope * 100
+sites$ai <- round(sites$ai*100)
+ft <- flextable::flextable(sites)
+ft <- flextable::set_header_labels(ft,
+                                   sitecode = "Site code",
+                                   str_nm = "Stream name",
+                                   location = "Location",
+                                   ai = "2004 Effective imperviousness (%)",
+                                   elev_m = "Elevation above sea level (m)",
+                                   carea_km2 = "Catchment area (sq. km)",
+                                   floodplain_ht_m = "Floodplain height (m, mean, range)",
+                                   baseflow_channel_width_m = "Baseflow wetted channel width (m)",
+                                   reach_slope = "Reach slope (%)")
+ft
 ```
 
-::: {#fig-site_photos layout-ncol="3"} ![Blind Creek](images/BLI_2492g_experimental_riffle_19960606.JPG){#fig-bli}
+::: {#fig-site_photos layout-ncol="3"} 
+
+![Blind Creek](images/BLI_2492g_experimental_riffle_19960606.JPG){#fig-bli}
 
 ![Brushy Creek](images/BRS_1572d_experimental_riffle_19960604.JPG){#fig-brs}
 
@@ -31,5 +49,8 @@ sites <- data.frame(readxl::read_excel(dat_file, sheet = "sites"),
 ![Olinda Creek](images/OLN_5632h_experimental_riffle_200102xx.JPG){#fig-oln}
 
 ![Scotchmans Creek](images/still_looking.JPG){#fig-sco}
+
+Riffles after construction in each 'impact' site.
+:::
 
 (There is a 'before' photo of Scotchmans in the survey file: must be an after photo of the riffle somewhere!)

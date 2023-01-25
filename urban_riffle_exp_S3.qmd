@@ -8,17 +8,69 @@ editor_options:
 bibliography: references.bib
 ---
 
-The first part of this document details the specifications and code used to estimate the model of taxon abundance in the main paper. The second part assesses the model fit. (***A separate similar supplementary document for assessing fit of univariate models of and of depth, velocity, organic matter and algal mass?***)
+```{r}
+#| echo: false
+#| message: false
+#| error: false
+#| include: false
+
+######### READ THIS CHUNK BEFORE PROCEEDING ########
+# If you want to run the 'eval: false' chunks in this document, you will need to 
+# adjust the following directory for keeping large files
+model_fit_dir <- 
+    "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/"
+
+## Packages required for evaluated chunks
+requiredPackages <- c("osfr","dplyr","flextable","readxl")
+lapply(requiredPackages, require, character.only = TRUE)
+## Packages required for 'eval: false' chunks: WriteXLS and cmdstanr 
+## (See chunk 'sample_model')
+
+## Check if there is a 'data' directory. If not make one
+if(!"data" %in% dir()){dir.create("data")}
+## While in review, the 3 large data files are in a private OSF repository
+## They can be downloaded to the data directory using this view-only link
+## https://osf.io/cms84/?view_only=256efadc4a124bcb96c6483226ef3a23
+## When the repository is public, the following will allow automatic download
+# ## The following checks for large data files, and if absent downloads them 
+# ## from the OSF repository to the data directory
+# if(!"wq_data_compiled.xlsx" %in% dir("data")){
+# wq_files <- osf_retrieve_node("cms84") %>% osf_ls_files()
+# osf_download(wq_files, path = "data")
+# }
+```
+
+The first part of this document details the specifications and code used to estimate the model of taxon abundance in the main paper. The second part assesses the model fit. 
 
 ### 1. Model specification
 
 We estimated the posterior distributions of parameters in the multi-taxon model of taxon abundances and the models of depth, velocity and organic matter and algal mass in the sample units using the Markov chain Monte-Carlo (MCMC) sampler of Stan [@carpenter_etal_2017], calling Stan from R using the library `cmdstanr` [@gabry_cesnovar_2022].
 
-$\beta$ parameters (of fixed effects) were formulated as random effects drawn from community-level hyper-distributions with the mean parameters specified as diffuse normal distributions (mean 0, standard deviation---sd---5) and the parameters for each species drawn from a multivariate normal distribution with a covariance matrix that describes the residual associations among species. The hyperprior correlation matrix ($\Omega$) had an LKJ prior with shape 2, and scale with an exponentially distributed prior with rate 1 [@stan_dev_team_2022] . The random-effect parameters for site ($\theta_{si}$) and sample ($\theta_{sa}$) were drawn from site-level and sample-level (respectively) normal hyper-distributions, with mean 0 and ssds with normal distributions (mean 0, sd 2 for the multi-taxon model; 1 for the environmental variable models). The random effect for sampling occasion ($\theta_{t}$) was drawn from a hyper-distribution from the 6 sampling occasions with mean 0 and an exponentially distributed (rate 1) distribution for the multi-taxon model, and normal (mean 0, sd 1) for the environmental variable models. In the multi-taxon model, the parameters modelling error in abundance of each taxon among sample units ($\epsilon$), and the dispersion parameter ($\phi$) of the negative binomial distribution for each taxon both had weakly informative normal prior distributions (mean 1, sd 1).
+$\beta$ parameters (of fixed effects) were formulated as random effects drawn from community-level hyper-distributions with the mean parameters specified as diffuse normal distributions (mean 0, standard deviation---sd---5) and, for the multi-taxon model, the parameters for each species drawn from a multivariate normal distribution with a covariance matrix that describes the residual associations among species. The hyperprior correlation matrix ($\Omega$) had an LKJ prior with shape 2, and scale with an exponentially distributed prior with rate 1 [@stan_dev_team_2022] . For the multi-taxon model, the random-effect parameters for site ($\theta_{si}$) and sample ($\theta_{sa}$) were drawn from site-level and sample-level (respectively) normal hyper-distributions, with mean 0 and sds with normal distributions (mean 0, sd 2). The random effect for sampling occasion ($\theta_{t}$) was drawn from a hyper-distribution from the 6 sampling occasions with mean 0 and an exponentially distributed (rate 1) distribution for the multi-taxon model. For the environmental variable models, all random-effect hyper-distributions were exponentially distrubted (rate 1). In the multi-taxon model, the parameters modelling error in abundance of each taxon among sample units ($\epsilon$), and the dispersion parameter ($\phi$) of the negative binomial distribution for each taxon both had weakly informative normal prior distributions (mean 1, sd 1).
 
-For the multi-taxon model, we drew inference from 9,000 posterior samples taken from 4 unthinned chains, discarding the first 1,000 samples of each chain. This number of samples was sufficient to ensure bulk and tail effective sample sizes of at least 100 per chain for all parameters. We diagnosed convergence by visually inspecting the MCMC chains for adequate mixing and stationarity, and ensured that the diagnostic tests for zero-divergent transitions, Gelman-Rubin statistic ($\hat{R}$) \< 1.1, and zero cases of saturated tree-depth were satisfied. The Bayesian Fraction of Missing Information (mean 0.299) was marginally lower than the nominal threshold of 0.3,
+For the multi-taxon model, we drew inference from 9,000 posterior samples taken from 4 unthinned chains, discarding the first 1,000 samples of each chain. This number of samples was sufficient to ensure bulk and tail effective sample sizes of at least 100 per chain for all parameters. We diagnosed convergence by visually inspecting the MCMC chains for adequate mixing and stationarity, and ensured that the diagnostic tests for zero-divergent transitions, Gelman-Rubin statistic ($\hat{R}$) \< 1.1, and zero cases of saturated tree-depth were satisfied. The Bayesian Fraction of Missing Information (mean 0.299) was marginally lower than the nominal threshold of 0.3.
+
+The environmental variable models remain a work in progress. Although the inferences made from them appear sound, the models did not, in their current parameterization, satisfy Stan's diagnostic criteria (Table 1). The velocity models in particular have low BFMI, resulting in low effective sample size. The phi models are ok, except for a small number (\<0.01%) of divergences (this is probably satisfactory). *Any suggestions?* ($\hat{R}$ and zero tree-depth criteria were met by all)
+
+```{r}
+#| echo: false
+#| label: tbl-univar_diagnostics
+#| tbl-cap: "Temporary table showing summary diagnostics for environmental variable models, pending their improvement."
+
+#load univar diagnostics table 
+load("small_data/env_var_model_summaries.rda")
+univar_diagnostics <- univar_diagnostics[univar_diagnostics$model %in% 
+                        c("depth_m_var","depth_m_mean","vel_m_s_var",
+                          "vel_m_s_mean","min_phi","med_phi"),
+                        c("model","divergences","min_bfmi","min_ess_bulk")]
+univar_diagnostics$min_bfmi <- round(univar_diagnostics$min_bfmi,3)
+univar_diagnostics$min_ess_bulk <- round(univar_diagnostics$min_ess_bulk)
+flextable::flextable(univar_diagnostics)
+```
 
 The multi-taxon model `nbinom_me_rand_sa_si_t_fixedmatrix-baci.stan` is reproduced below, with annotations defining variables and parameters, and explaining model components. Below that is the code used to load the data, run, check and evaluate the model, and produce output objects used to produce figures in the manuscript. Note that the multi-taxon model took 3.6 h to run on a 2.6-GHz system on 4 parallel cores, and compilation of the parameter draws required \~50 Gb RAM.
+
+*Similar detail for environmental variable models? (Currently residing in univars_trial.R)*
 
 <!--# Some final, time consuming, tweaking of the model priors.  sd_lam N(0,1), phi N(0,1) ran ok, but produced BFMI 0.273, 0.289, 0.290, 0.309 with min bulk_ess just over 400 with 2000 + 6000 iters.  sd_lam N(0.5,1), phi N(1,1), saved as fit_riffle_baci_a, was only marginally better: BFMI 0.32,0.28,0.31,0.29. with min bulk_ess 393 with 2000 + 6000 iters; sd_lam N(1,1), phi N(1,1), saved as fit_riffle_baci_b, better, I think, allowing for fewer iterations: BFMI 0.32, 0.29, 0.37, 0.24, min bulk_ess 62 with 2000 + 1000 iters; phi N(1,1), and with eps term removed completely, saved as fit_riffle_baci_c was ~2/3 quicker, but substantially worse: BFMI 0.15, 0.16, 0.14, 0.21; min bulk_ESS 48 with 2000 + 1000 iters, So decided on original eps model, with sd_lam N(1,1), phi N(1,1), 3500 burn-in, 6500 samples ...but no such luck BFMI 0.29,0.30,0.32, 0.28, and min ess_bulk 345, , saved as fit_riffle_baci_d, min ess_tail 360 - the difficult parameter is sigma_t mean 0.6 (0.4-0.79)...so, sigma_t exp(2.5)...which didn't help at all...Also tried sigma_t exp(0.2), with very little change.  So, I tried sd_lam N(1,1), phi N(1,1) sigma_t exp(1) with 2500 + 6500 with random seed 9430569 (all of the above were with 9430570), BFMI 0.314, 0.300, 0.265, 0.297, but only min bulk ESS 328. I also tried the sd_lam N(1,1), phi N(1,1) version with adapt_delta 0.9 and 0.95 - neither made any difference to the BFMI being just too low...-->
 
@@ -134,23 +186,8 @@ generated quantities {
 #| message: false
 #| error: false
 
-source("misc_functions.R")
-# load and check cmdstanr package
-library(cmdstanr)
-check_cmdstan_toolchain(fix = TRUE, quiet = TRUE)
-# Set random seed to ensure reproducible results
-rand_seed = 9430570 #1 #2
-
-## Load data: ultimately from OSF repository
-# library(osfr); library(dplyr)
-# if(!"data" %in% dir()){system("mkdir data")}
-# if(!"wq_data_compiled.xlsx" %in% dir("data")){
-# wq_files <- osf_retrieve_node("4ywvq") %>% osf_ls_files()
-# osf_download(wq_files[wq_files$name == "wq_data_compiled.xlsx",], path = "data")
-# }
-# data_for_model.xlsx compiled in urban_riffle_exp_data_compilation.R
-dat_file <- 
-"~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/data_for_model.xlsx"
+source("misc_functions.R") # for ct function
+dat_file <- "data/urban_riffle_experiment_data_for_model.xlsx"
 sites <- data.frame(readxl::read_excel(dat_file, sheet = "sites"), 
                     stringsAsFactors = FALSE)
 samples <- data.frame(readxl::read_excel(dat_file, sheet = "samples"), 
@@ -225,10 +262,17 @@ sdata <- list(n_obs = nrow(biota_ct),
 ```
 
 ```{r}
+#| label: sample_model
 #| echo: true
 #| message: false
 #| error: false
 #| eval: false
+
+# load and check cmdstanr package
+library(cmdstanr) # see https://mc-stan.org/cmdstanr/articles/cmdstanr.html
+check_cmdstan_toolchain(fix = TRUE, quiet = TRUE)
+# Set random seed to ensure reproducible results
+rand_seed = 9430570 
 
 # Check model is up-to-date: if not, compile.
 mod <- cmdstan_model("nbinom_me_rand_sa_si_t_fixedmatrix_baci.stan", pedantic = TRUE) 
@@ -240,11 +284,10 @@ stanfit_i <- mod$sample(data = sdata,
                         iter_sampling = ni - nb, refresh = 100)
 # 6000 iterations 3.6 h
 # #  save csv files rather than the model object to use less RAM
-stanfit_i$save_output_files(
-  dir = "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/",
-  basename = "fit_riffle_baci_mt", timestamp = FALSE, random = FALSE)
+stanfit_i$save_output_files(dir = model_fit_dir, basename = "fit_riffle_baci_mt", 
+                            timestamp = FALSE, random = FALSE)
 stanfit_i$sampler_diagnostics()
-saveRDS(stanfit_i, file = "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/fit_riffle_baci_mt.rds")
+saveRDS(stanfit_i, file = paste0(model_fit_dir,"fit_riffle_baci_mt.rds"))
 stanfit_i$diagnostic_summary()
 # EBFMI 0.31, 0.27, 0.31, 0.30 zero divergences, zero max treedepth reached.
 # # The above three steps required < 500 Mb RAM
@@ -256,12 +299,13 @@ max(summ$rhat,na.rm=TRUE)  # 1.008
 # # (slightly low BFMI due to sigma_t being difficult to fit. All other parameters sampled well)
 
 mod_draws <- as.data.frame(stanfit_i$draws(format = "df", variables = c("a_si","a_sa","a_t","gamma","phi")))
-save(mod_draws, file = "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/fit_riffle_baci_draws.rda")
+save(mod_draws, file = paste0(model_fit_dir,"fit_riffle_baci_draws.rda"))
 ```
 
 Extract prediction of mean abundance for each taxon in each sample (for assessment of model fit).
 
 ```{r}
+#| label: predy_summary
 #| echo: true
 #| eval: false
 
@@ -298,7 +342,25 @@ for(i in 1:sdata$n_taxa){
 }
 })  # 1 min
 names(predy_draws) <- colnames(sdata$c)
-save(predy_draws, file = "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/fit_riffle_baci_predy_draws.rda")
+save(predy_draws, file = paste0(model_fit_dir,"fit_riffle_baci_predy_draws.rda"))
+
+params <- c("b_ba1", "b_ba2", "b_ci","b_i","b_spring","b_ba1ci","b_ba2ci","b_ba0cii","b_ba1cii", "b_ba2cii")
+df_empty <- data.frame(shortcode = NA, mean = NA, lo95 = NA, lo90 = NA, median = NA, hi90 = NA, hi95 = NA)[0,]
+predy_draws <- get(load(paste0(model_fit_dir,"fit_riffle_baci_draws.rda")))
+param_summs <- list()
+for(i in 1:length(params)){
+  drawsi <- mod_draws[substr(names(predy_draws),1,ifelse(i < 9, 7, 8)) == paste0("gamma[", i + 1) & 
+                          grepl("gamma", names(mod_draws))]
+  qlsi <- as.data.frame(t(apply(drawsi,2, FUN = quantile, 
+                                probs = c(0.025,0.05,0.125,0.5,0.875,0.95,0.975))))
+  names(qlsi) = c("lo95","lo90","lo75","median","hi75","hi90","hi95")
+  meani <- apply(drawsi,2, FUN = mean)
+  param_summs[[i]] <- data.frame(shortcode = names(biota_ct), 
+                                 mean = meani,
+                                 qlsi)
+}
+names(param_summs) <- params
+WriteXLS::WriteXLS(param_summs, "small_data/param_summs.xlsx")
 ```
 
 Extract posterior distribution of mean abundance for each taxon in samples across the gradient of imperviousness for all combinations of *ba* = 0, 1 or 2; *ci* = 0 or 1; *I* = minimum and maximum values in dataset (=4% and 32% EI); spring = 0 (i.e. autumn), omitting random sample, site and t errors (For counterfactual plot demonstrating effect of riffle emplacement under different levels of urban impact), and the primary differences of interest in the BACI design:
@@ -317,7 +379,7 @@ Extract posterior distribution of mean abundance for each taxon in samples acros
 #| eval: false
 
 # load draws of parameters from model (object mod_draws calculated above)
-load("~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/fit_riffle_baci_draws.rda")
+load(paste0(model_fit_dir,"fit_riffle_baci_draws.rda"))
 
 # predx_cf is the table of scenario predictor variables for counterfactual plots/analysis
 # predy_cf is a list with 113 elements, one for each taxon (each element has a taxoncode as a name)
@@ -369,14 +431,44 @@ delta_baci2_hi[[i]] <- predy_cf[[i]][,combos$control_hii[1]] - predy_cf[[i]][,co
                     (predy_cf[[i]][,combos$control_hii[3]] - predy_cf[[i]][,combos$impact_hii[3]])
 }
 })  # 5 s
+save(predy_cf, delta_posts, 
+     file = paste0(model_fit_dir,"fit_riffle_baci_predy_cf_draws.rda"))
+
+# summary table of precentiles for all species for 12 scenarios used for 
+# inference of baci effect
+taxon_abun_cf_summs <- list()
+for(i in unlist(combos)){
+  list_index <- which(unlist(combos) == i)
+  tabi <- data.frame(taxoncode = names(predy_cf), 
+                     mean = NA, "lo95" = NA, "lo90"= NA, "lo75" = NA,
+                    "median" = NA,"hi75" = NA,"hi90" = NA,"hi95" = NA)
+  for(j in 1:length(predy_cf)){
+    tabi$mean[j] <- mean(predy_cf[[j]][,i])
+    tabi[j,-(1:2)] <- quantile(predy_cf[[j]][,i], 
+                             probs = c(0.025,0.05,0.125,0.5,0.875,0.95,0.975))
+  }
+  taxon_abun_cf_summs[[list_index]] <- tabi
+}
+names(taxon_abun_cf_summs) <- names(unlist(combos))
+WriteXLS::WriteXLS(taxon_abun_cf_summs, "small_data/taxon_abun_cf_summs.xlsx")
 
 delta_posts <- list(delta_a1_4ei = delta_baci1_low, 
                     delta_a2_4ei = delta_baci2_low, 
                     delta_a1_32ei = delta_baci1_hi, 
                     delta_a2_32ei = delta_baci2_hi)
 
-save(predy_cf, delta_posts, 
-     file = "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/fit_riffle_baci_predy_cf_draws.rda")
+diff_summs <- list()
+for(i in 1:length(delta_posts)){
+  qlsi <- as.data.frame(do.call(rbind,lapply(delta_posts[[i]],FUN = quantile, 
+                                probs = c(0.025,0.05,0.125,0.5,0.875,0.95,0.975))))
+  names(qlsi) = c("lo95","lo90","lo75","median","hi75","hi90","hi95")
+  meani <- unlist(lapply(delta_posts[[i]],FUN = mean))
+  diff_summs[[i]] <- data.frame(shortcode = names(biota_ct), 
+                                 mean = meani,
+                                 qlsi)
+}
+names(diff_summs) <- names(delta_posts)
+WriteXLS::WriteXLS(diff_summs, "small_data/diff_summs.xlsx")
 ```
 
 ```{r}
@@ -385,14 +477,14 @@ save(predy_cf, delta_posts,
 #| eval: false
 
 # load draws of parameters from model (calculated above)
-load("~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/fit_riffle_baci_draws.rda")
+load(paste0(model_fit_dir,"fit_riffle_baci_draws.rda"))
 
 phi_draws <- mod_draws[,grep("phi",names(mod_draws))]
 p_cf_mat <- list()
 n_cf_mat <- list()
 
 # load taxon abundance predictions for 60 counter-factual scenarios from above
-load("~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/fit_riffle_baci_predy_cf_draws.rda")
+load(paste0(model_fit_dir,"fit_riffle_baci_predy_cf_draws.rda"))
 # And use them to calculate assemblage statistics
 
 # system.time({
@@ -437,7 +529,7 @@ evenness_cf_mat <- H_mat/log(tot_rich_cf_mat)
 
 # Reduce set to family-presence absence for SIGNAL calculation
 biotic_indices<- 
-  read.csv("~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/biotic_indices.csv")
+  read.csv("small_data/biotic_indices.csv")
 signal <- biotic_indices[!is.na(biotic_indices$SIGNALWoV2003),
                          c("shortcode","taxon","SIGNALWoV2003")]
 signal <- signal[signal$shortcode %in%
@@ -473,16 +565,6 @@ baci_diffs <- function(mat){
              delta_baci2_hi = mat[,combos$control_hii[1]] - mat[,combos$impact_hii[1]] -
                     (mat[,combos$control_hii[3]] - mat[,combos$impact_hii[3]]))
 }
-assemb_stat_diffs <- list(signal = baci_diffs(signal_cf_mat),
-                          evenness = baci_diffs(evenness_cf_mat),
-                          H = baci_diffs(H_mat),
-                          tot_rich = baci_diffs(tot_rich_cf_mat),
-                          ept_rich = baci_diffs(ept_rich_cf_mat),
-                          do_rich = baci_diffs(do_rich_cf_mat),
-                          tot_n = baci_diffs(tot_n_cf_mat),
-                          ept_n = baci_diffs(ept_n_cf_mat),
-                          do_n = baci_diffs(do_n_cf_mat))
-save(assemb_stat_diffs, file = "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/assemb_stat_diffs")
 
 assemb_stats <- list(tot_rich = 
                        data.frame(mean =apply(tot_rich_cf_mat,2, 
@@ -534,7 +616,39 @@ assemb_stats <- list(tot_rich =
                                           FUN = quantile, 
                                           probs = c(0.025, 0.975))))
                      )
-save(assemb_stats, file = "small_data/assemb_stats.rda")
+WriteXLS::WriteXLS(assemb_stats, "small_data/assemb_stat_summs.xlsx")
+
+assemb_stat_diffs <- list(signal = baci_diffs(signal_cf_mat),
+                          evenness = baci_diffs(evenness_cf_mat),
+                          H = baci_diffs(H_mat),
+                          tot_rich = baci_diffs(tot_rich_cf_mat),
+                          ept_rich = baci_diffs(ept_rich_cf_mat),
+                          do_rich = baci_diffs(do_rich_cf_mat),
+                          tot_n = baci_diffs(tot_n_cf_mat),
+                          ept_n = baci_diffs(ept_n_cf_mat),
+                          do_n = baci_diffs(do_n_cf_mat))
+save(assemb_stat_diffs, file =paste0(model_fit_dir,"assemb_stat_diffs.rda"))
+
+assemb_stat_diffs <-  assemb_stat_diffs[match(c("tot_rich","ept_rich","do_rich",
+                                                "signal","tot_n","ept_n","do_n"),
+                                              names(assemb_stat_diffs))]
+for(i in 1:length(assemb_stat_diffs)){
+  drawsi <- assemb_stat_diffs[[i]]
+  qlsi <- as.data.frame(t(apply(drawsi,2, FUN = quantile, 
+                                probs = c(0.025,0.05,0.125,0.5,0.875,0.95,0.975))))
+  names(qlsi) = c("lo95","lo90","lo75","median","hi75","hi90","hi95")
+  meani <- apply(drawsi,2, FUN = mean)
+  if(i == 1){
+  assemb_stat_diff_summs <- data.frame(stat = names(assemb_stat_diffs)[i],
+                                       diff = row.names(qlsi), mean = meani, qlsi)
+             }else{
+  assemb_stat_diff_summs <- rbind(assemb_stat_diff_summs,
+                                   data.frame(stat = names(assemb_stat_diffs)[i],
+                                               diff = row.names(qlsi), 
+                                              mean = meani, qlsi))
+                    }
+}
+WriteXLS::WriteXLS(assemb_stat_diff_summs, "small_data/assemb_stat_diff_summs.xlsx")
 
 # Extract mean abundances in the 12 main scenarios for the top 10 taxa in each scenario
 # (For table 1 in the manuscript)
@@ -603,11 +717,11 @@ The accurate prediction of the data by the model provide confidence in inference
 #| fig-cap: "a) Correlation coefficients for each taxon of between observed (count in each subsample divided by subsample fraction, log(x + 1)-transformed and averaged for all sample units in each sample) and predicted (P) abundances (mean estimate of log-mean abundances of each taxon in the sample from each site), and b) Slopes of the regression of predicted as a function of observed, both plotted against prevalence of each taxon. Green points indicate taxa for which a non-zero effect of riffle construction was inferred at the 90% confidence level."
 
 # load object predy_draws, calculated above 
-load("~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/fit_riffle_baci_predy_draws.rda")
+load(paste0(model_fit_dir,"fit_riffle_baci_predy_draws.rda"))
 
 # Calculate Observed (mean log-transformed counts per sample) to Expected (predicted mean abundance per sample)
 oe_stats <- data.frame(taxoncode = colnames(sdata$c), 
-                       cor = NA, slope = NA, adj_r_sq = NA)
+                       cor = NA, slope = NA, adj_r_squ = NA)
 for(i in 1:sdata$n_taxa){
   y <- log(exp(apply(predy_draws[[colnames(sdata$c)[i]]],2,FUN = mean)) + 1)
   x <- aggregate(log(sdata$c[,i]/sdata$s[,i] + 1),
@@ -633,7 +747,7 @@ for(i in 1:ncol(biota_ct)){
 # (vectors of taxacodes, more_diff_90 and more_sim_90, also used in main paper)
 # load objects: (a list predy_cf; and ) a list of lists delta_post, containing lists
 # delta_baci1_low, delta_baci2_low, delta_baci1_hi, delta_baci1_hi - see S3 chunk pred_cf
-load("~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/fit_riffle_baci_predy_cf_draws.rda")
+load(paste0(model_fit_dir,"fit_riffle_baci_predy_cf_draws.rda"))
 
 diff_summs <- list()
 for(i in 1:length(delta_posts)){
@@ -674,7 +788,7 @@ par(mar = c(0,0,0,0))
 plot.new()
 title(xlab = "Prevalence (number of samples with abundance > 0)", line = -1.5)
 
-save(oe_stats, file = "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/riffle_baci_oe_stats.rda")
+write.csv(oe_stats, "small_data/riffle_baci_oe_stats.csv", row.names = FALSE)
 ```
 
 ```{r}
@@ -687,7 +801,7 @@ save(oe_stats, file = "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experim
 #| fig-cap: "a) Area under the receiver operator characteristic curve (AUC) of predictions of presence-absence from the negative-binomial model for 111 taxa as a function of their prevalence in the 53 samples. AUC could not be calculated for the two taxa that occurred in all samples (Nematoda and Enchytraiedae)."
 
 # load draws of parameters from model (object mod_draws calculated above)
-load("~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/fit_riffle_baci_draws.rda")
+load(paste0(model_fit_dir, "fit_riffle_baci_draws.rda"))
 
 phi_draws <- mod_draws[,grep("phi",names(mod_draws))]
 p_mat <- list()
@@ -736,7 +850,8 @@ par(mar = c(4,4,1,1),mfrow = c(1,1))
 plot(pa_stats$prevalence, pa_stats$AUC, ylim = c(0.5,1),xlab = "", ylab = "AUC")
 title(xlab = "Prevalence (number of samples with abundance > 0)",)
 
-save(pa_stats, file = "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/riffle_baci_pa_stats.rda")
+pa_stats <- pa_stats[,names(pa_stats) != "taxon"]
+write.csv(pa_stats, "small_data/riffle_baci_pa_stats.csv", row.names = FALSE)
 ```
 
 ```{r}

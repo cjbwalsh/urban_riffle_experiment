@@ -4,4 +4,8 @@
 .Ruserdata
 *.Rproj
 *.html
-urban_riffle_experiment_data_exploratory_files/
+*.docx
+*_files/
+images/
+data/
+normal_rand_sa_si_t_fixedmatrix_baci

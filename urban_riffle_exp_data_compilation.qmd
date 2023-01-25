@@ -740,3 +740,33 @@ biotic_indices<- sqlQuery("SELECT * FROM biotic_indices;", "mwbugs")
 write.csv(biotic_indices, "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/biotic_indices.csv",
           row.names = FALSE)
 ```
+
+Data for map in Figure 1.
+
+```{r}
+source("https://tools.thewerg.unimelb.edu.au/documents/mwstr/mwstr_functions.R")
+source("https://tools.thewerg.unimelb.edu.au/data/mwbugs/bugDatabaseFunctions.R")
+
+#Streams for creating a map sqlQuery is a function I wrote, stored in mwstr_functions.R, loaded above
+streams <- sqlQuery("SELECT * FROM streams WHERE sampleable = 1;", "mwstr")
+pipes <- sqlQuery("SELECT * FROM streams WHERE type = 'pipe';", "mwstr")
+sites$reach <- substr(sites$sitecode, 1, nchar(sites$sitecode) - 1)
+cats <- sqlQuery(paste0("SELECT * FROM cats WHERE reach IN ('",
+                        paste(sites$reach, collapse = "', '"), "');"), "mwstr")
+coast <- sqlQuery("SELECT * FROM coast;", "mwstr")
+# impervious coverage raster
+ia <- terra::rast("~/uomShare/wergStaff/ChrisW/git-data/mwstr/mwstr_v12_corrections/rasters_v13/r_imp_2004.tif")
+# crop to area to be plotted (placing a 10 km buffer around the cats polygons)
+ia <- terra::crop(ia, terra::ext(sf::st_buffer(cats,1e4)))
+terra::writeRaster(ia, "data/ia_5m_raster.tif")
+streams <- sf::st_crop(streams, sf::st_bbox(sf::st_buffer(cats,1e4)))
+pipes <- sf::st_crop(pipes, sf::st_bbox(sf::st_buffer(cats,1e4)))
+victoria <- sf::st_read("data/Victoria_GDA94_GCS.gpkg", quiet = TRUE)
+australia <- sf::st_read("data/Australia_GDA94_GCS.gpkg", quiet = TRUE)
+sf::st_write(streams, "data/urban_riffle_experiment_map.gpkg", layer = "streams")
+sf::st_write(pipes, "data/urban_riffle_experiment_map.gpkg", layer = "pipes", append = TRUE)
+sf::st_write(cats, "data/urban_riffle_experiment_map.gpkg", layer = "cats", append = TRUE)
+sf::st_write(coast, "data/urban_riffle_experiment_map.gpkg", layer = "coast", append = TRUE)
+sf::st_write(victoria, "data/urban_riffle_experiment_map.gpkg", layer = "victoria", append = TRUE)
+sf::st_write(australia, "data/urban_riffle_experiment_map.gpkg", layer = "australia", append = TRUE)
+```

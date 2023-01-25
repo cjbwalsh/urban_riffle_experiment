@@ -1,6 +1,6 @@
 ---
 title: "Appendix S2: Notes on data preparation"
-format: html
+format: docx
 editor: visual
 bibliography: references.bib
 ---
