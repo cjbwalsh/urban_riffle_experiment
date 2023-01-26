@@ -4,7 +4,7 @@ author: "Christopher J Walsh, J. Angus Webb, et al."
 format: docx
 editor: visual
 editor_options: 
-  chunk_output_type: console
+  chunk_output_type: inline
 bibliography: references.bib
 ---
 
@@ -20,7 +20,7 @@ source("misc_functions.R") # for ct function
 # library(osfr); library(dplyr); library(rgeos); library(sf); library(prettymapr)
 
 ## Packages required for code to run
-requiredPackages <- c("osfr","dplyr","readxl","rio","flextable","ftExtra",
+requiredPackages <- c("osfr","dplyr","readxl","rio","flextable","ftExtra","rgdal",
                       "sf","prettymapr","terra","RColorBrewer","scales","glue")
 lapply(requiredPackages, require, character.only = TRUE, quietly = TRUE)
 
@@ -132,7 +132,13 @@ pa_stats <- read.csv("small_data/riffle_baci_pa_stats.csv")
 
 ## Introduction
 
-Value of riffles as habitat. (including the importance of large emergent rocks as egg-laying sites for many taxa)
+Value of riffles as habitat. A nice summary of this from @cook2018.
+
+"Riffles---shallow sections of streams or rivers with rapid current---are important habitat units for benthic macroinvertebrate and fish assemblages (Kessler and Thorp [1993](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5945803/#CR27); Kessler et al. [1995](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5945803/#CR28); Heino et al. [2004](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5945803/#CR23)). Riffles increase water turbulence and oxygen concentration and provide important microhabitat variability in depth, velocity, and substrate for aquatic macroinvertebrates (Statzner et al. [1988](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5945803/#CR59); Merritt et al. [2008](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5945803/#CR33)). The high substrate heterogeneity typical of riffles (Gordon et al. [2004](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5945803/#CR19)) also allows multiple fish species to coexist through spatial partitioning of habitat (Kessler and Thorp [1993](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5945803/#CR27)). Likewise, riffles can support higher densities of benthic macroinvertebrates than pool habitats and are important areas of food production for insectivorous fishes (Scullion et al. [1982](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5945803/#CR55); Gordon et al. [2004](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5945803/#CR19))."
+
+Furthermore, emergent rocks, which are common features of riffles can be important sites for oviposition of many insect species with stream-dependent larvae [@lancaster2010,@lancaster2021].
+
+\
 
 Role of riffles in stream restoration practice.
 
@@ -310,7 +316,7 @@ To interpret interactions between the effects of riffle construction and degree 
 
 We focused first on taxa for which the *BA:CI* or *BA:CI:I interactions* were non-zero with at least 90% confidence to understand which taxa drove assemblage-level differences. We also derived predictions of responses of assemblage-level metrics from the model for each of the 12 scenarios. Responses of diversity measures such as richness are of intrinsic community ecological interest, but they and biotic metrics focussing on taxa of differing sensitivity to human disturbance are used by stream managers as measures of ecological condition and targets for responses to management actions (e.g. @vic_gov_2018). We used predicted abundances and occurrences for each scenario to calculate posterior distributions of:
 
--   Total macroinvertebrate abundance, of EPT taxa (insect orders dominated by taxa sensitive to human disturbance, @resh_jackson_1993), and of Diptera and Oligochaeta (QDLO, groups dominated by taxa tolerant to human disturbance, @gooderham_tsyrlin_2002).
+-   Total macroinvertebrate abundance, of EPT taxa (insect orders dominated by taxa sensitive to human disturbance, @resh_jackson_1993), and of Diptera and Oligochaeta (QDLO, groups dominated by taxa tolerant to human disturbance, @martin2008, @gooderham_tsyrlin_2002).
 
 -   Total taxon richness (i.e. taxon density, the number per sample comprising 4 sample units), also EPT and QDLO richness
 
@@ -346,7 +352,7 @@ Riffles resulted in shallower water through the reach (@fig-cf_env_vars C, D, al
 
 Before riffle construction, and in control sites throughout the study, median $\Phi$ before was 1 to 6 (sand to clay). Riffles reduced median $\Phi$ to -6 to -7 (small to large cobbles) in sites with low EI, and this change persisted for 6 years (A2, @fig-cf_env_vars L). In sites with high EI, riffles had a smaller effect on median $\Phi$, reducing in the first year to -2 (gravel), but increasing to 1 (coarse sand) after 6 years, as sand deposited among the riffles (@fig-cf_env_vars K, L).
 
-Riffles more consistently reduced minimum $\Phi$ (i.e. introduced larger particles) to -6 to -7 in all impact sites. However, the effect of riffle construction on minimum $\Phi$ was small in sites with low EI, which contained some large pebbles before riffle construction (@fig-cf_env_vars I, J). A further effect of the riffles not quantified by these measurements was an increase in the availability of large emergent rocks (See photos in S1).
+Riffles more consistently reduced minimum $\Phi$ (i.e. introduced larger particles) to -6 to -7 in all impact sites. However, the effect of riffle construction on minimum $\Phi$ was small in sites with low EI, which contained some large pebbles before riffle construction (@fig-cf_env_vars I, J). Two further effect of the riffles not quantified by these measurements were an increase in the availability of large emergent rocks (See photos in S1), and the growth of submerged macrophytes in the riffles (*Check if I have presentable evidence for this observation*).
 
 ```{r}
 #| label: fig-cf_env_vars
@@ -538,7 +544,7 @@ ht_string <- paste(paste0(higher_taxa_in_plot$taxon, " (", higher_taxa_in_plot$h
 
 Simuliidae, with similar habitat requirements to Hydropsychidae, but more tolerant of human impacts, increased in abundance in high EI sites but not low EI sites (@fig-cf_taxon_abunds C), as did Ceratopogonidae, Glossiphonidae, *Cura pinguis*, and *Pisidium* (@fig-coeff_plot_alt).
 
-Most taxa that were positively associated with EI (i.e. tolerant of human disturbance) decreased in abundance after riffle construction, with declines more common after 5--6 years than in the first year (@fig-coeff_plot_alt). Nematoda, Cyclopoida, oligochaetes *Lumbriculus variegatus* (@fig-cf_taxon_abunds D, as an example), *Nais*, *Chaetogaster diaphanus*, Megadrili, Tubificinae groups A and B, and chironomids *Polypedilum* (@fig-cf_taxon_abunds E), as an example),*Chironomus* *Paratanytarsus/Rheotanytarsus*---most of which inhabit soft sediments---decreased in abundance in low EI sites, but not high EI sites. Enchytraeidae oligochaetes decreased in both high and low EI sites.
+Most taxa that were positively associated with EI (i.e. tolerant of human disturbance) decreased in abundance after riffle construction, with declines more common after 5--6 years than in the first year (@fig-coeff_plot_alt). Nematoda, Cyclopoida, oligochaetes *Lumbriculus variegatus* (@fig-cf_taxon_abunds D, as an example), *Nais*, *Chaetogaster diaphanus*, Megadrili, Tubificinae groups A and B, and chironomids *Polypedilum* (@fig-cf_taxon_abunds E), as an example),*Chironomus*, Paratanytarsus/Rheotanytarsus decreased in abundance in low EI sites, but not high EI sites. Enchytraeidae oligochaetes decreased in both high and low EI sites.
 
 Chironomids *Parakiefferiella* (@fig-cf_taxon_abunds F), *Procladius* (@fig-cf_taxon_abunds G) , *Cricotopus*, and *Cryptochironomus* decreased in low EI sites over the 6 years, but increased in high EI sites in year 1 (@fig-coeff_plot_alt).
 
@@ -818,6 +824,24 @@ legend("center", pch = 16, col = cols,
 
 ## Discussion
 
+***Relevant biology of of collected taxa:***
+
+"Most oligochaetes are benthic deposit feeders and burrow in the sediment, ingesting large amounts of
+particles. A distinctive group of the family Tubificidae, the subfamily Naidinae, is adapted to live on the
+sediment surface or to swim among the macrovegetation where they feed on algae. Only a few freshwater oligochaetes (e.g., species of *Chaetogaster*) are predatory, but such a behaviour is rare throughout the group." [@martin2008].
+
+Rare (no?) occurrences of taxa that use emergent rocks for oviposition. (check the ept list)
+
+***Justification of claims of invasiveness:***
+
+*Potamopyrgus antipodarum*, widespread in Australia after being introduced from New Zealand in the mid-19th Centure [@ponder1988]. @schreiber2003 hypothesised "that its success as an invader may be related to an ability to quickly re-colonise denuded areas and that population abundances may respond to increased food resources. Disturbances could facilitate this invader by creating spaces for colonisation (e.g. a possible consequence of floods) or changing resource levels (e.g. increased nutrient levels in streams with intense human land use in their catchments)."
+
+*Physa acuta* [@zukowski2009] (invasive species from Europe)
+
+*Lumbriculus variegatus:* @pinder2010 notes Lumbriculidae is represented by two introduced species in Australia. Both (*L. variegatus*, the California blackworm, and *Stylodrilus heringianus*) were collected during this study. (Also @martin2008 to support claim of cosmopolitan distribution of Naididae)
+
+... and likely members of other taxa, are invasive species [e.g. Chironomids @failla2015]
+
 Proposed themes from working abstract:
 
 1.  Increased heterogeneity only favours those taxa able to tolerate larger scale environmental filters that limit assemblage composition of highly disturbed ecosystems such as streams of urban catchments. (27)
@@ -864,7 +888,7 @@ Deleterious effects are possible if the stream carries high silt loads and the s
 
 ## Acknowledgements
 
-Graham Rooney, Scott Seymour for funding the works and Neil Craigie who designed and built the riffles (memory-jog needed). 
+Graham Rooney, Scott Seymour for funding the works and Neil Craigie who designed and built the riffles (memory-jog needed).
 
 Field and lab assistants (from lab and field notes): Jim Longworth, Elaine Bayes, Jason Sonneman, Andrew Sharpe, Claire Sellens, Sue Witteveen, Melissa Aalbers, Rhys Coleman, John Gooderham, Jessica Miller, Edward Tsyrlin, Kristy ?.
 

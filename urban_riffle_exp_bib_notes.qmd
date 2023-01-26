@@ -1,0 +1,97 @@
+---
+title: "Urban riffle experiment: bibliographic notes"
+author: "Chris Walsh"
+format: html
+editor: visual
+bibliography: references.bib
+---
+
+Bibliographic notes compiled in preparation of urban riffle experiment manuscript.
+
+### @fork2022
+
+"The rate of expansion of urban lands is accelerating worldwide [@liu2020]." (@liu2020 found "global urban extent \[from 1985 to 2015\] has expanded by 9,687 km2 per year... suggesting an unprecedented rate of global urbanization... notably faster than that of population growth, indicating that the urban land area already exceeds what is needed to sustain population growth.")
+
+Their list of 'services' provided by ('on which we depend') urban streams is idiosyncratic "...drainage of stormwater, flood control, recreation, aesthetic beauty, plant and animal habitat, and sometimes even drinking water". The first two surely conflict with the rest. The streams sampled in this study do not provide safe recreation (although the floodplains of most of them are valuable parkland), my experience of sampling in them does not shout 'beauty'. Most importantly, this study demonstrates that the invertebrate fauna that they provide habitat for are not those found in stream ecosystems that can provide beauty, recreation and potable water.
+
+"Urban stream restoration offers the potential to mitigate pressures and increase the ecological function and services of urban streams." (!)
+
+"Managers have attempted to restore many urban streams, but recovery is rarely documented in the empirical literature [@rubin2017]."...See review of @rubin2017 below.
+
+"...the historic inequities in stormwater infrastructure investments in traditionally underserved communities, which contribute to disproportionate stream degradation in the neighborhoods where these communities live (SUSE5 2020, Moulds et al. 2021)." After a scan of @moulds2021, I don't think this is a realistic interpretation of their study, which was about inequity in flood management, and didn't as far as I can tell even touch on stream degradation.
+
+### @rubin2017
+
+They review two meta-analyses of in-stream restoration projects by @miller2010 and @palmer2010. They seek a richer analysis than achieved by either meta-analysis. Among the questions they ask of the projects are: 1) were potential construction impacts from the restoration project considered? 2) was habitat heterogeneity measured directly, visually, or not at all? and 3) were different habitat types assessed?
+
+> We need to address each of these questions in the paper, perhaps not directly in response to this paper, but to clarify and justify the limitations of the study.  1) The assessment of *A1* and *A2* should be sufficient to distinguish short-term impacts of riffle construction, A2 allowing time for colonization; 2) They are primarily critical of using standard (visual) rapid assessments of grain size (hear-hear). From the standards, they set, it would seem our measurements of depth and velocity variability and (visual) assessment of grain sizes within the sample units are justifiable and adequate estimates of habitat heterogeneity; 3) Our experimental riffle construction was not an integrated restoration project of a broader reach, but an experimental assessment of small-scale increase in habitat heterogeneity. Thus responses in the reach sections in which riffles were placed were of primary interest. We did collect samples from pools upstream and downstream of riffles, but elected not to analyse responses in those sections given the small changes elicited in the sections with substantial morphological change.
+
+"Although changes in biodiversity may reflect overall ecological condition at the regional or global scale, in the context of reach-scale habitat restoration, more abundance and diversity may not necessarily be better."
+
+"While all 26 studies sought to evaluate the biotic response to habitat heterogeneity enhancement projects, about half of the studies (46%) explicitly measured habitat alteration, and 31% used visual estimates of grain size or subjectively judged 'habitat quality' from protocols ill-suited for the purpose. Although the goal of all 26 projects was to increase habitat heterogeneity, 31% of the studies either sampled only riffles or did not specify the habitats sampled. One-third of the studies (35%) used reference ecosystems to define target conditions."
+
+"We also critiqued the underlying premise that macroinvertebrate diversity and richness should be universally applicable metrics of restoration success." They are critical of studies that have used indices such as IBI or EPT richness, because such taxa are 'indicators of water quality', But as they note, "An increase in pollution-sensitive taxa could indicate either an improvement in water quality (1) or a change in morphological units that benefit the sensitive taxa (2).
+
+> The multi-taxon analysis has permitted us to provide a richer assessment of assemblage response than the use of richness indicators (which we also present for comparability). While our study did not include reference sites, the identification of dominant taxa as being cosmopolitan and invasive provides a clear target of where we don't want to be. Reference sites might not be an achievable target, but the question is can we move toward them? Can we reduce the dominance of cosmopolitan and invasive taxa. Our study shows that in low EI sites, that trajectory can be aided by riffles. It shows that in in high EI sites it cannot.
+
+"Many studies suggest the need to monitor at least several years in order to allow benthos to recover and to recolonize a restored reach [@miller2010]...Seventy-eight percent of the studies that monitored for more than one year found increased diversity or richness. By contrast, 44% of the studies that sampled for only one year found increases....By contrast, 20% of studies that sampled only one habitat (riffles) found increased diversity/richness."
+
+"The use of macroinvertebrate diversity as an indicator is based on research linking species diversity to habitat heterogeneity, e.g., \[79--81\]. Increased habitat heterogeneity is assumed to provide more ecological niches for members of a community \[82\], provide refugia that stabilize predator-prey and host-pathogen dynamics, and generally support greater diversity and a more resilient ecosystem \[17,83\]." But 79-81 are all high-level theoretical texts (Simpson, McArthur and Wilson, Ricklefs et al), and 82 and 83 are specifically about habitat complexity rather than heterogeneity.
+
+They go on to caution against setting targets for increased diversity (under certain circumstances). Once again, I think we head this off with our multi-taxon analysis.
+
+Concluding remark "restoration evaluation may not be possible without a conceptual model that describes ecosystem functions and helps define target conditions."
+
+They also refer to the study by @leps2016.
+
+> We may need to consider targets in the discussion. The final section of this paper could be useful for that.
+
+### @scoggins2022
+
+### Intro material 
+
+***Value of riffles as habitat***.
+
+A nice summary of this from @cook2018. (Yet to translate the citations to this doc)
+
+"Riffles---shallow sections of streams or rivers with rapid current---are important habitat units for benthic macroinvertebrate and fish assemblages (Kessler and Thorp [1993](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5945803/#CR27); Kessler et al. [1995](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5945803/#CR28); Heino et al. [2004](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5945803/#CR23)). Riffles increase water turbulence and oxygen concentration and provide important microhabitat variability in depth, velocity, and substrate for aquatic macroinvertebrates (Statzner et al. [1988](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5945803/#CR59); Merritt et al. [2008](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5945803/#CR33)). The high substrate heterogeneity typical of riffles (Gordon et al. [2004](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5945803/#CR19)) also allows multiple fish species to coexist through spatial partitioning of habitat (Kessler and Thorp [1993](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5945803/#CR27)). Likewise, riffles can support higher densities of benthic macroinvertebrates than pool habitats and are important areas of food production for insectivorous fishes (Scullion et al. [1982](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5945803/#CR55); Gordon et al. [2004](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5945803/#CR19))."
+
+Furthermore, emergent rocks, which are common features of riffles can be important sites for oviposition of many insect species with stream-dependent larvae [@lancaster2010,@lancaster2021].
+
+### Discussion material
+
+***Relevant biology of of collected taxa:***
+
+"Most oligochaetes are benthic deposit feeders and burrow in the sediment, ingesting large amounts of
+particles. A distinctive group of the family Tubificidae, the subfamily Naidinae, is adapted to live on the
+sediment surface or to swim among the macrovegetation where they feed on algae. Only a few freshwater oligochaetes (e.g., species of *Chaetogaster*) are predatory, but such a behaviour is rare throughout the group." [@martin2008].
+
+Rare (no?) occurrences of taxa that use emergent rocks for oviposition. (check the ept list)
+
+Filter feeders:
+
+[@berg1995] Some Chironomids are filter feeders (but Berg notes there is considerable flexibility in feeding behaviour: "Although *Chironomus piumosus* is typically considered to filter food in the profundal zone of lakes, *C. anthracinus* feeds primarily on recently deposited sediments"). (Cricotopus is certainly too speciose and variable to generalize)
+
+Filter-feeding chironomids use salivary silk secretions, larvae construct conical catchnets across the lumen of their tubes or retreats. Larve that use tubes with catchnets inhabit a variety of habitats: sediments (*Chironomus*), hard substrates (*Rheotanytarsus*), vascular plant tissues (*Polypedilum*). Kiefferulus possess feeding brushes similar to simulids.
+
+Of these, *Polypedilum*, *Chironomus*, *Rheotanytarsus* (lumped with *Paratanytarsus)* decreased in abundance after riffle construction in low EI streams...
+
+Parakiefferiella responded positively to riffle construction (in low EI, negatively in high EI)
+
+				
+			
+		
+
+	
+
+***Justification of claims of invasiveness:***
+
+*Potamopyrgus antipodarum*, widespread in Australia after being introduced from New Zealand in the mid-19th Centure [@ponder1988]. @schreiber2003 hypothesised "that its success as an invader may be related to an ability to quickly re-colonise denuded areas and that population abundances may respond to increased food resources. Disturbances could facilitate this invader by creating spaces for colonisation (e.g. a possible consequence of floods) or changing resource levels (e.g. increased nutrient levels in streams with intense human land use in their catchments)."
+
+*Physa acuta* [@zukowski2009] (invasive species from Europe)
+
+*Lumbriculus variegatus:* @pinder2010 notes Lumbriculidae is represented by two introduced species in Australia. Both (*L. variegatus*, the California blackworm, and *Stylodrilus heringianus*) were collected during this study. (Also @martin2008 to support claim of cosmopolitan distribution of Naididae)
+
+... and likely members of other taxa, are invasive species [e.g. Chironomids @failla2015]
+
+### References
