@@ -102,7 +102,11 @@ sites$baseflow_channel_width_m[sites$he_sitecode == "H"] <- "2.0±0.9"
 sites$floodplain_ht_m[sites$he_sitecode == "H"] <- "2.3±0.3"
 sites$baseflow_channel_width_m[sites$he_sitecode == "H"] <- "4.5±1.1"
 # BLC: from BLIND.XLS - see workings in cols J-M
-#### Can't find Eummemmering survey data.
+#### Eummemmering survey in paper form:
+#### https://photos.app.goo.gl/n9UtYEgCCWE2WJfo7
+# From this, slope appears to be 1.7% (higher than other sites except HVD. Check these...)
+# channel width at five transects = c(4.5,2.9,2.5,2.1,2) # mean 2.8 sd 1.0
+# floodplain height = ? similar to HVD, I think...
 
 # Make non-spatial for saving in excel
 sf::st_geometry(sites) <- NULL
