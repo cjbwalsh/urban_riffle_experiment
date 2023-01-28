@@ -9,13 +9,14 @@ nocite: |
 
 This document provides further detail on the study sites (@tbl-site_details), and photos of the constructed riffles placed in the 6 impact sites (@fig-site_photos). *Further details to come on missing data*
 
+<!--# to do: check and correct slopes, find survey information for BLI -->
+
 ```{r}
 #| label: tbl-site_details
 #| echo: false
 #| tbl-cap: "Study site locations and attributes. The site code, effective imperviousness, Elevation, and catchment area were derived from Kunapo et al. 2020.  Reach slope and other channel dimensions were measured in a survey of the reach upstream and downstream of the sampled reach before riffle construction."
 
-dat_file <- 
-"~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/data_for_model.xlsx"
+dat_file <- "data/urban_riffle_experiment_data_for_model.xlsx"
 sites <- data.frame(readxl::read_excel(dat_file, sheet = "sites"), 
                     stringsAsFactors = FALSE)
 sites <- sites[c("sitecode","str_nm","location","ai","elev_m","carea_km2",
@@ -36,8 +37,7 @@ ft <- flextable::set_header_labels(ft,
 ft
 ```
 
-::: {#fig-site_photos layout-ncol="3"} 
-
+::: {#fig-site_photos layout-ncol="3"}
 ![Blind Creek](images/BLI_2492g_experimental_riffle_19960606.JPG){#fig-bli}
 
 ![Brushy Creek](images/BRS_1572d_experimental_riffle_19960604.JPG){#fig-brs}
