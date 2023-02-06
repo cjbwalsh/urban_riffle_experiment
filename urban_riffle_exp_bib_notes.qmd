@@ -1,14 +1,14 @@
 ---
 title: "Urban riffle experiment: bibliographic notes"
 author: "Chris Walsh"
-format: html
+format: docx
 editor: visual
 bibliography: references.bib
 ---
 
 Bibliographic notes compiled in preparation of urban riffle experiment manuscript.
 
-### @fork2022
+#### @fork2022
 
 "The rate of expansion of urban lands is accelerating worldwide [@liu2020]." (@liu2020 found "global urban extent \[from 1985 to 2015\] has expanded by 9,687 km2 per year... suggesting an unprecedented rate of global urbanization... notably faster than that of population growth, indicating that the urban land area already exceeds what is needed to sustain population growth.")
 
@@ -20,11 +20,11 @@ Their list of 'services' provided by ('on which we depend') urban streams is idi
 
 "...the historic inequities in stormwater infrastructure investments in traditionally underserved communities, which contribute to disproportionate stream degradation in the neighborhoods where these communities live (SUSE5 2020, Moulds et al. 2021)." After a scan of @moulds2021, I don't think this is a realistic interpretation of their study, which was about inequity in flood management, and didn't as far as I can tell even touch on stream degradation.
 
-### @rubin2017
+#### @rubin2017
 
 They review two meta-analyses of in-stream restoration projects by @miller2010 and @palmer2010. They seek a richer analysis than achieved by either meta-analysis. Among the questions they ask of the projects are: 1) were potential construction impacts from the restoration project considered? 2) was habitat heterogeneity measured directly, visually, or not at all? and 3) were different habitat types assessed?
 
-> We need to address each of these questions in the paper, perhaps not directly in response to this paper, but to clarify and justify the limitations of the study.  1) The assessment of *A1* and *A2* should be sufficient to distinguish short-term impacts of riffle construction, A2 allowing time for colonization; 2) They are primarily critical of using standard (visual) rapid assessments of grain size (hear-hear). From the standards, they set, it would seem our measurements of depth and velocity variability and (visual) assessment of grain sizes within the sample units are justifiable and adequate estimates of habitat heterogeneity; 3) Our experimental riffle construction was not an integrated restoration project of a broader reach, but an experimental assessment of small-scale increase in habitat heterogeneity. Thus responses in the reach sections in which riffles were placed were of primary interest. We did collect samples from pools upstream and downstream of riffles, but elected not to analyse responses in those sections given the small changes elicited in the sections with substantial morphological change.
+> We need to address each of these questions in the paper, perhaps not directly in response to this paper, but to clarify and justify the limitations of the study. 1) The assessment of *A1* and *A2* should be sufficient to distinguish short-term impacts of riffle construction, A2 allowing time for colonization; 2) They are primarily critical of using standard (visual) rapid assessments of grain size (hear-hear). From the standards, they set, it would seem our measurements of depth and velocity variability and (visual) assessment of grain sizes within the sample units are justifiable and adequate estimates of habitat heterogeneity; 3) Our experimental riffle construction was not an integrated restoration project of a broader reach, but an experimental assessment of small-scale increase in habitat heterogeneity. Thus responses in the reach sections in which riffles were placed were of primary interest. We did collect samples from pools upstream and downstream of riffles, but elected not to analyse responses in those sections given the small changes elicited in the sections with substantial morphological change.
 
 "Although changes in biodiversity may reflect overall ecological condition at the regional or global scale, in the context of reach-scale habitat restoration, more abundance and diversity may not necessarily be better."
 
@@ -46,9 +46,51 @@ They also refer to the study by @leps2016.
 
 > We may need to consider targets in the discussion. The final section of this paper could be useful for that.
 
-### @scoggins2022
+#### @scoggins2022
 
-### Intro material 
+"Urban streams...are increasingly recognized as ecological and social amenities worthy of restoration and public investment (Palmer et al 2014; Hong and Chang 2020).
+
+Multiple objectives: "regulatory compliance (!?), flood relief, aesthetic improvments and recreation"...(none of these meet the definition of ecologically successful restoration...but they cite Doyle and Shields 2012, Naiman 2013, Baker et al 2014, and Hawley 2022 in support of this statement).
+
+later: "goals can span improving flood management, ecological habitat (!), aesthetics, recreation, community building, etc, (Smith et al 2014, Moran et al 2019)"
+
+Scoggins et al don't really define what they mean by successful and sustainable urban stream restoration (end of intro)
+
+By their own admission, there was a lack of 'obvious stormwater management solutions' in any of their case studies...making them complex and challenging problems...(Or more realistically, impossible cases for *stream* restoration)...they talk of eco-sociological tradeoffs in urban stream management, but I think they need to separate the primary ecological limitation: if they can't do anything about stormwater management, then instream restoration has to be off the table, and it becomes about improving the stream floodplain as parkland...no?
+
+"Explicitly incorporating social dimensions into restoration is essential for adequately defining and achieving the goals..of the restoration itself [@smith2016]."
+
+More restoration in well-off areas [@stanford2018].
+
+One statement stuck in my craw particularly: "...ecologists suggested diversity of aquatic macroinvertebrates as a benchmark for successful restoration, but this was a relatively low priority for non-ecologists"....Expand on this in SUSE keynote if not here.
+
+'Success in urban stream restoration is subjective and multidimensional' [@yocom2014]. In fact, @yocom2014 doesn't say it's subjective. He correctly notes potential benefits (successes) that might be achieved even without ecological success. (Stakeholder success, e.g. improved aesthetics, economic benefits, infrastructure protection or recreation; and Learning success, e.g. citizen eduction, scientific contribution, management experience, improved method).
+
+"restoration focused purely on social goals may be driven by community decision makers and my be largely independent of stream conditions [@dacruzesousa2017]". They compared two restoration projects in Quito and found that the collaborative project, designed and executed by the community was more successful than the project led by the government. Neither project explicitly considered the stream ecosystem!
+
+Their Fig 3C is the LSC model. A particularly silly one!
+
+Their description of the most direct root (Transdisciplinary, community powered-stream restoration) seems sensible (and very similar to the path taken by the MW HWS), but this really needs a consideration of scale.
+
+#### @doyle2012
+
+Current stream restoration science is not adequate to assume high rates of success in recovering
+ecosystem functional integrity. The physical scale of most stream restoration projects is insufficient because watershed land use controls ambient water quality and hydrology, and land use surrounding many restoration projects at the time of their construction, or in the future, do not provide sufficient conditions for functional integrity recovery. Reach scale channel restoration or modification has limited benefits within the broader landscape context. Physical habitat variables are often the basis for indicating success, but are now increasingly seen as poor surrogates for actual biological function; the assumption \'\'if you build it they will come\'\' lacks support of empirical studies. If stream restoration is to play a continued role in compensatory mitigation under the United States Clean Water Act, then significant policy changes are needed to adapt to the limitations of restoration science and the social environment under which most projects are constructed. When used for compensatory mitigation, stream restoration should be held to effectiveness standards for actual and measurable physical, chemical, or biological functional improvement. To achieve improved mitigation results, greater flexibility may be required for the location and funding of restoration projects, the size of projects, and the restoration process itself.
+
+#### @usher2021
+
+Scoggins et al (2022) noted this paper (about community involvement in a proposed daylighting project in Manchester) described a 'tremendous' range of visions brought by community members: not one mentioned the stream! "waterway restoration has tended to privilege ecological over social objectives, while public engagement in project conceptualization has been limited, conducted \'downstream\' subsequent to planning and design stages. Restoration schemes have therefore tended to reflect the concerns of professionals rather than communities, overlooking their potential for social renewal and change."
+
+"...daylighting involves the exposing of an entirely concealed ecosystem amenity [@baker2014]"
+
+####  [@wild2011]
+
+"Culverts can have several effects on local river and wetland habitat by modifying substrate, altering flow, reducing algal and plant growth and dissociating the stream from the surrounding terrestrial environment (Macdonald & Davies 2007). Removing culverts therefore has a high potential to improve aquatic and marginal habitats."
+
+Major environmental focus is on fish passage, but...
+"Some projects reported that deculverted stretches were increasingly colonised by wildlife such as amphibians, birds and invertebrates (e.g. nos 6, 7, 15, 20 and 33). However, the sources of colonisation of these organisms must be present at the catchment scale to achieve such ecological benefits of deculverting (Palmeretal.1997;Ja ̈hnigetal.2009)." (Most references associated with these numbers will be difficult to track down).
+
+### Intro material
 
 ***Value of riffles as habitat***.
 
@@ -62,9 +104,7 @@ Furthermore, emergent rocks, which are common features of riffles can be importa
 
 ***Relevant biology of of collected taxa:***
 
-"Most oligochaetes are benthic deposit feeders and burrow in the sediment, ingesting large amounts of
-particles. A distinctive group of the family Tubificidae, the subfamily Naidinae, is adapted to live on the
-sediment surface or to swim among the macrovegetation where they feed on algae. Only a few freshwater oligochaetes (e.g., species of *Chaetogaster*) are predatory, but such a behaviour is rare throughout the group." [@martin2008].
+"Most oligochaetes are benthic deposit feeders and burrow in the sediment, ingesting large amounts of particles. A distinctive group of the family Tubificidae, the subfamily Naidinae, is adapted to live on the sediment surface or to swim among the macrovegetation where they feed on algae. Only a few freshwater oligochaetes (e.g., species of *Chaetogaster*) are predatory, but such a behaviour is rare throughout the group." [@martin2008].
 
 Rare (no?) occurrences of taxa that use emergent rocks for oviposition. (check the ept list)
 
@@ -78,11 +118,7 @@ Of these, *Polypedilum*, *Chironomus*, *Rheotanytarsus* (lumped with *Paratanyta
 
 Parakiefferiella responded positively to riffle construction (in low EI, negatively in high EI)
 
-				
-			
-		
-
-	
+Net-building hydropsychids:
 
 ***Justification of claims of invasiveness:***
 
@@ -93,5 +129,7 @@ Parakiefferiella responded positively to riffle construction (in low EI, negativ
 *Lumbriculus variegatus:* @pinder2010 notes Lumbriculidae is represented by two introduced species in Australia. Both (*L. variegatus*, the California blackworm, and *Stylodrilus heringianus*) were collected during this study. (Also @martin2008 to support claim of cosmopolitan distribution of Naididae)
 
 ... and likely members of other taxa, are invasive species [e.g. Chironomids @failla2015]
+
+Consider the question of lack of colonisers vs the ability of colonisers to persist in these streams. (Maybe cite @clinton2022 here.
 
 ### References

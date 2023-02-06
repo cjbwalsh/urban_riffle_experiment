@@ -40,7 +40,7 @@ if(!"data" %in% dir()){dir.create("data")}
 # }
 ```
 
-The first part of this document details the specifications and code used to estimate the model of taxon abundance in the main paper. The second part assesses the model fit. 
+The first part of this document details the specifications and code used to estimate the model of taxon abundance in the main paper. The second part assesses the model fit.
 
 ### 1. Model specification
 

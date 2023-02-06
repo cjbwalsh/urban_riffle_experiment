@@ -15,7 +15,7 @@ This document provides further detail on the assembly of environmental and biolo
 
 Macroinvertebrate specimens were identified to the lowest taxonomic level possible using available keys and expertise. The final dataset contains a number of non-standard taxonomic names:
 
-Microturbellaria CRC sp. 1, 2, and 3. (**Need to find correspondence on this**).
+Microturbellaria CRC sp. 1, 2, and 3. Confirmed as three unidentified species of Microturbellaria by Dr Leigh Windsor of James Cook University (pers. comm.)
 
 Tubificinae Group A, comprising *Limnodrilus*, *Antipodrilus* (in part), *Telmatodrilus*, *Borthioneurum vejdovskyanum*, *Rhyacodrilus bifidus*, *Rhizodrilus athingtonae*, *Phyacodrilus fultoni*, and *Ainudrilus billabongus* [@pinder_1994].
 

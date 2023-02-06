@@ -826,9 +826,7 @@ legend("center", pch = 16, col = cols,
 
 ***Relevant biology of of collected taxa:***
 
-"Most oligochaetes are benthic deposit feeders and burrow in the sediment, ingesting large amounts of
-particles. A distinctive group of the family Tubificidae, the subfamily Naidinae, is adapted to live on the
-sediment surface or to swim among the macrovegetation where they feed on algae. Only a few freshwater oligochaetes (e.g., species of *Chaetogaster*) are predatory, but such a behaviour is rare throughout the group." [@martin2008].
+"Most oligochaetes are benthic deposit feeders and burrow in the sediment, ingesting large amounts of particles. A distinctive group of the family Tubificidae, the subfamily Naidinae, is adapted to live on the sediment surface or to swim among the macrovegetation where they feed on algae. Only a few freshwater oligochaetes (e.g., species of *Chaetogaster*) are predatory, but such a behaviour is rare throughout the group." [@martin2008].
 
 Rare (no?) occurrences of taxa that use emergent rocks for oviposition. (check the ept list)
 
