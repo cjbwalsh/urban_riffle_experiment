@@ -38,18 +38,7 @@ if(!"data" %in% dir()){dir.create("data")}
 # }
 
 # Load observed data as in S3
-dat_file <- "data/urban_riffle_experiment_data_for_model.xlsx"
-sites <- data.frame(readxl::read_excel(dat_file, sheet = "sites"), 
-                    stringsAsFactors = FALSE)
-sites <- sf::st_as_sf(sites, coords = c("mgae","mgan"))
-samples <- data.frame(readxl::read_excel(dat_file, sheet = "samples"), 
-                      stringsAsFactors = FALSE)
-biota <- data.frame(readxl::read_excel(dat_file, sheet = "biota"), 
-                    stringsAsFactors = FALSE)
-taxa <- data.frame(readxl::read_excel(dat_file, sheet = "taxa"), 
-                   stringsAsFactors = FALSE)
-higher_taxa <- data.frame(readxl::read_excel(dat_file, sheet = "higher_taxa"), 
-                   stringsAsFactors = FALSE)
+dat_list <- rio::import_list("data/urban_riffle_experiment_data_for_model.xlsx")
 
 samples$seg <- substr(samples$old_samplecode,nchar(samples$old_samplecode)-1,
                       nchar(samples$old_samplecode)-1)
