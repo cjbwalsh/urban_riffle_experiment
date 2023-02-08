@@ -76,11 +76,11 @@ Their description of the most direct root (Transdisciplinary, community powered-
 
 Current stream restoration science is not adequate to assume high rates of success in recovering ecosystem functional integrity. The physical scale of most stream restoration projects is insufficient because watershed land use controls ambient water quality and hydrology, and land use surrounding many restoration projects at the time of their construction, or in the future, do not provide sufficient conditions for functional integrity recovery. Reach scale channel restoration or modification has limited benefits within the broader landscape context. Physical habitat variables are often the basis for indicating success, but are now increasingly seen as poor surrogates for actual biological function; the assumption ''if you build it they will come'' lacks support of empirical studies. If stream restoration is to play a continued role in compensatory mitigation under the United States Clean Water Act, then significant policy changes are needed to adapt to the limitations of restoration science and the social environment under which most projects are constructed. When used for compensatory mitigation, stream restoration should be held to effectiveness standards for actual and measurable physical, chemical, or biological functional improvement. To achieve improved mitigation results, greater flexibility may be required for the location and funding of restoration projects, the size of projects, and the restoration process itself.
 
-#### @usher2021
+#### @usher_etal_2021
 
 Scoggins et al (2022) noted this paper (about community involvement in a proposed daylighting project in Manchester) described a 'tremendous' range of visions brought by community members: not one mentioned the stream! "waterway restoration has tended to privilege ecological over social objectives, while public engagement in project conceptualization has been limited, conducted 'downstream' subsequent to planning and design stages. Restoration schemes have therefore tended to reflect the concerns of professionals rather than communities, overlooking their potential for social renewal and change."
 
-"...daylighting involves the exposing of an entirely concealed ecosystem amenity [@baker2014]"
+"...daylighting involves the exposing of an entirely concealed ecosystem amenity [@baker_etal_2014]"
 
 #### [@wild2011]
 
@@ -129,5 +129,23 @@ Net-building hydropsychids:
 ... and likely members of other taxa, are invasive species [e.g. Chironomids @failla2015]
 
 Consider the question of lack of colonisers vs the ability of colonisers to persist in these streams. (Maybe cite @clinton2022 here.
+
+### @palmer_etal_2014a
+
+...the theoretical basis of restoration ecology is firmly rooted in classic ecology; restoration projects provide unique opportunities to test much of that theory. There is a strong emphasis on understanding what factors enhance restoration of biodiversity (Rodrigues et al. 2011), on the role of physical habitat heterogeneity in the rate and degree of recovery (Holl et al. 2013), and on the use of resilience theory---thresholds, state changes, and feedbacks (Suding et al. 2004)---in understanding the potential for an ecosystem to be restored. Spatial ecology also plays a prominent role in restoration research, particularly including a focus on dispersal dynamics, metapopulation theory, and the landscape context of restoration sites (Reynolds et al. 2013).
+
+The emergence of restoration ecology as applied to rivers and streams is much more recent than that for terrestrial ecosystems, and its theoretical basis has been more grounded in the physical sciences, especially hydrology and geomorphology, than in the ecological sciences. Dominant perspectives on the science and practice of river restoration are driven by social dynamics both external to and internal to the community of scientists and restoration practitioners.
+
+...reconfiguring the channel to accommodate degraded hydrogeomorphic regimes is more common than restoring the hydrologic and sediment regimes themselves. As a result, such projects become channel design activities and fail to address the issues necessary for true restoration, like water allocation or increasing infiltration capacity of watershed soils. Channel reconfiguration is especially common in urban and agricultural regions in which river channels may be reshaped and boulders, wood, and rock deflectors added to slow water flow. In addition, banks may be armored with material to minimize erosion from excessive runoff
+
+NCD (Natural channel design, Rosgen, 1998, 2011) and other channel design approaches are the most common stream restoration approaches
+
+Similarly, if the hydrologic regime is restored but there is no nearby source of invertebrate colonists, then the in-stream communities will remain unrestored [@sundermann_etal_2011]
+
+Unfortunately, recovery of biodiversity was rare for the vast majority of stream restoration projects, and this appears to be closely related to the restoration method. For the most common type of projects---those implemented using channel or in-stream hydrogeomorphic adjustmentsonly 16% showed any improvement in biodiversity (as a Shannon type index or an IBI),
+
+### @hobbs_etal_2012
+
+Escalating global change is resulting in widespread no-analogue environments and novel ecosystems that render traditional goals unachievable. (Need to present an argument that the degraded urban stream should not be considered a novel ecosystem).
 
 ### References

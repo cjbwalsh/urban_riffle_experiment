@@ -18,6 +18,7 @@ source("misc_functions.R") # for ct function
 
 # load misc data files from OSF
 # library(osfr); library(dplyr); library(rgeos); library(sf); library(prettymapr)
+library(rbbt)
 
 ## Packages required for code to run
 requiredPackages <- c("osfr","dplyr","readxl","rio","flextable","ftExtra","rgdal",
@@ -121,21 +122,17 @@ pa_stats <- read.csv("small_data/riffle_baci_pa_stats.csv")
 
 ## Introduction
 
-Value of riffles as habitat. A nice summary of this from @cook2018.
+Most rivers and streams of agricultural and urban landscapes are ecologically degraded [@allan_2004; @walsh_etal_2005]. A common contributor to their degradation is channelization; straightening and grading of the channel to remove heterogeneous channel elements such as riffle-pool sequences and meanders [@brookes_1994]. In urban catchments in particular, the altered flow regime and increased volumes of runoff makes stream channels deeper, wider and simpler [@vietz_etal_2016], and these morphologic changes in turn have often contributed to decisions to channelize or concrete urban streams, or convert them to underground pipes [@elmore_2008].
 
-"Riffles---shallow sections of streams or rivers with rapid current---are important habitat units for benthic macroinvertebrate and fish assemblages (Kessler and Thorp [1993](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5945803/#CR27); Kessler et al. [1995](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5945803/#CR28); Heino et al. [2004](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5945803/#CR23)). Riffles increase water turbulence and oxygen concentration and provide important microhabitat variability in depth, velocity, and substrate for aquatic macroinvertebrates (Statzner et al. [1988](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5945803/#CR59); Merritt et al. [2008](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5945803/#CR33)). The high substrate heterogeneity typical of riffles (Gordon et al. [2004](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5945803/#CR19)) also allows multiple fish species to coexist through spatial partitioning of habitat (Kessler and Thorp [1993](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5945803/#CR27)). Likewise, riffles can support higher densities of benthic macroinvertebrates than pool habitats and are important areas of food production for insectivorous fishes (Scullion et al. [1982](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5945803/#CR55); Gordon et al. [2004](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5945803/#CR19))."
+Despite channel simplification and channelization usually being driven by catchment-scale changes to flow and sediment dynamics, the most common stream management response to addressing dissatisfaction with engineered channels remains re-engineering channels to accommodate altered flow and sediment regimes [@palmer_etal_2014a]. The objectives for such engineering projects can be diverse, but commonly include provision of habitat for stream flora and fauna [e.g. @melbournewater_2019; @wild_etal_2011]. In the absence of other limitations, restoring stuctural heterogeneity to simplified stream channels should, in theory, permit colonization by a greater diversity and abundance of in-stream species by permitting greater niche partitioning [@willis_etal_2005] or providing refugia from disturbance or predation [@dean_connell_1987]. However, where the simplified channel has resulted from changes to flow and sediment dynamics, biotic response to channel engineering is likely to be limited by larger-scale factors [@bernhardt_palmer_2011].
 
-Furthermore, emergent rocks, which are common features of riffles can be important sites for oviposition of many insect species with stream-dependent larvae [@lancaster2010,@lancaster2021].
+Re-introduction of riffle-pool sequences is a common element of channel engineering projects [@miller_etal_2010; @palmer_etal_2010]. Rock riffles in particular, by providing shallower, faster and more variable flow conditions than a channelized runs, add heterogeneity to simplified channels at the reach scale. Within riffles, more variable flow, depth and substrate can provide habitat variability for stream invertebrates [e.g. @statzner_etal_1988] and fish [e.g. @kessler_thorp_1993]. Emergent rocks, which are common features of riffles, can be important sites for oviposition of many insect species with stream-dependent larvae [@lancaster_etal_2010].
 
-\
+However, reviews of the small proportion of river restoration projects that included assessment of ecological response have broadly concluded that recovery of biological assemblages is rare [@palmer_etal_2010; @palmer_etal_2014a; @miller_etal_2010], with @miller_etal_2010 concluding that the strength and consistency of response was affected by catchment-scale condition. Further studies [e.g. @violin_etal_2011; @sudduth2011] pointed to the overriding influence of catchment-scale impacts, particularly in urban catchments that are likely to limit the effects of small-scale morphological change [@bernhardt_palmer_2011]. Despite these conclusions a decade ago, channel engineering and 'daylighting' of buried streams in urban catchments with an objective of providing habitat for stream biota remain popular endeavours [@scoggins_etal_2022; @melbournewater_2019; @delibas_tezer_2017].
 
-Role of riffles in stream restoration practice.
+@rubin_etal_2017 critiqued the reviews of @palmer_etal_2010 and @miller_etal_2010, noting that only a minority of the studies considered were robustly designed with before-after monitoring (and very few with \>1 y after monitoring), or with comparisons between restored and control or reference sites, or with assessment of the degree of change in heterogeneity. They also pointed to the limitations to understanding afforded by the use of simple metrics of richness and diversity as criteria for restoration success.
 
-Continuing practice in urban settings despite larger-scale impacts of conventionally drained urban land.
-
-A need for better understanding of biotic responses to habitat heterogeneity in constrained environments like urban streams to allow better prioritization of management efforts for biodiversity (and other) outcomes.
-
-How we went about addressing that need.
+We aim to address such limitations by providing robust evidence that instream biotic assemblages that are limited by catchment-scale urban impacts are little affected by increased in-stream habitat heterogeneity. We report on a replicated before-after-control-impact experiment of the effects of constructed riffles in simplified streams of urban catchments spanning a range of low to moderate urban density. We compare 6 experimental reaches in which riffles were constructed with 3 control reaches without riffles, measuring densities of macroinvertebrate taxa twice before riffle construction, twice 1 year after, and twice 5-6 years after. We use a hierarchical multi-taxon model to assess changes in the abundance of taxa resulting from the riffles, thus providing a rich description of assemblage response accounting for taxon identity [@ovaskainen_etal_2017], while also reporting richness and biotic metrics more typically used to assess responses to channel change. The experimental addition of riffles to the simplified channels adds reach-scale heterogeneity to the channel by creating a new habitat type absent in the before state and in control sites: we assess the extent of the increased heterogeneity by measuring variation in depth, velocity and substrate at the scale at which invertebrates were sampled.
 
 ## Methods
 
@@ -812,6 +809,8 @@ legend("center", pch = 16, col = cols,
 ```
 
 ## Discussion
+
+Need to address the question of whether the lack of change is a result of lack of colonizers [@sundermann et al_2011]or a lack of persistence. Perhaps the longer-term monitoring of (at least) Brushy could be used to inform this: infrequent repeated occurrences of sensitive taxa....
 
 ***Relevant biology of of collected taxa:***
 
