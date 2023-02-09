@@ -19,16 +19,18 @@ This document provides further detail on the study sites (@tbl-site_details), an
 dat_file <- "data/urban_riffle_experiment_data_for_model.xlsx"
 sites <- data.frame(readxl::read_excel(dat_file, sheet = "sites"), 
                     stringsAsFactors = FALSE)
-sites <- sites[c("sitecode","str_nm","location","ai","elev_m","carea_km2",
+sites <- sites[c("sitecode","str_nm","location","ai","ti","elev_m","carea_km2",
                  "floodplain_ht_m","baseflow_channel_width_m","reach_slope")]
 sites$reach_slope <- sites$reach_slope * 100
 sites$ai <- round(sites$ai*100)
+sites$ti <- round(sites$ti*100)
 ft <- flextable::flextable(sites)
 ft <- flextable::set_header_labels(ft,
                                    sitecode = "Site code",
                                    str_nm = "Stream name",
                                    location = "Location",
-                                   ai = "2004 Effective imperviousness (%)",
+                                   ai = "2004 effective imperviousness (%)",
+                                   ti = "2004 total imperviousness (%)",
                                    elev_m = "Elevation above sea level (m)",
                                    carea_km2 = "Catchment area (sq. km)",
                                    floodplain_ht_m = "Floodplain height (m, mean, range)",

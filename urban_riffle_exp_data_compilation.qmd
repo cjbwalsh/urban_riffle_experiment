@@ -78,6 +78,7 @@ sites$site <- subcs$site[match(substr(sites$sitecode,1,
                                       nchar(sites$sitecode) -1),
                                subcs$reach)]
 sites$ai <- imp_subcs$c_ai[match(sites$site, imp_subcs$site)]
+sites$ti <- imp_subcs$c_ti[match(sites$site, imp_subcs$site)]
 sites$mgae <- sf::st_coordinates(sites)[,1]
 sites$mgan <- sf::st_coordinates(sites)[,2]
 
@@ -120,6 +121,7 @@ metadata1 <- data.frame(table_name = "sites", field = names(sites),
               "Location for access",
               "site code from mwstr database",
       "Attenuated (effective) imperviousness Dec 2004, from mwstr database",
+      "Total imperviousness Dec 2004, from mwstr database",
                "Easting: Map Grid of Australia 1994 Zone 55 (crs = 28355)",
                "Northing: Map Grid of Australia 1994 Zone 55 (crs = 28355)",
               "Elevation above sea level (m) from mwstr database",
@@ -737,7 +739,7 @@ metadata <- rbind(metadata,
                                             "high-level taxonomic group", "single-character code")))
 
 WriteXLS::WriteXLS(list(sites = sites, samples = samples, biota = biota, taxon_all = taxon_all, taxa = taxa, higher_taxa = higher_taxa, metadata = metadata),
-                   "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/data_for_model.xlsx")
+                   "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/urban_riffle_experiment_data_for_model.xlsx")
 
 # Used in calculating assemblage stats
 biotic_indices<- sqlQuery("SELECT * FROM biotic_indices;", "mwbugs")

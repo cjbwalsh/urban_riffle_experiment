@@ -1,6 +1,6 @@
 ---
 title: "Appendix S3. Methods and code for fitting and assessing the models"
-author: "Christopher J Walsh, J. Angus Webb, et al."
+author: "Christopher J Walsh, J Angus Webb, Peter F Breen"
 format: docx
 editor: visual
 editor_options: 
