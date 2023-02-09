@@ -532,7 +532,7 @@ ht_string <- paste(paste0(higher_taxa_in_plot$taxon, " (", higher_taxa_in_plot$h
 
 Simuliidae, with similar habitat requirements to Hydropsychidae, but more tolerant of human impacts, increased in abundance in high EI sites but not low EI sites (@fig-cf_taxon_abunds C), as did Ceratopogonidae, Glossiphonidae, *Cura pinguis*, and *Pisidium* (@fig-coeff_plot_alt).
 
-Most taxa that were positively associated with EI (i.e. tolerant of human disturbance) decreased in abundance after riffle construction, with declines more common after 5--6 years than in the first year (@fig-coeff_plot_alt). Nematoda, Cyclopoida, oligochaetes *Lumbriculus variegatus* (@fig-cf_taxon_abunds D, as an example), *Nais*, *Chaetogaster diaphanus*, Megadrili, Tubificinae groups A and B, and chironomids *Polypedilum* (@fig-cf_taxon_abunds E), as an example),*Chironomus*, Paratanytarsus/Rheotanytarsus decreased in abundance in low EI sites, but not high EI sites. Enchytraeidae oligochaetes decreased in both high and low EI sites.
+Most taxa that were positively associated with EI (i.e. tolerant of human disturbance) decreased in abundance after riffle construction in low EI sites, with declines more common after 5--6 years than in the first year (@fig-coeff_plot_alt). Nematoda, Cyclopoida, oligochaetes *Lumbriculus variegatus* (@fig-cf_taxon_abunds D, as an example), *Nais*, *Chaetogaster diaphanus*, Megadrili, Tubificinae groups A and B, and chironomids *Polypedilum* (@fig-cf_taxon_abunds E), as an example),*Chironomus*, Paratanytarsus/Rheotanytarsus decreased in abundance in low EI sites, but not high EI sites. Enchytraeidae oligochaetes decreased in both high and low EI sites.
 
 Chironomids *Parakiefferiella* (@fig-cf_taxon_abunds F), *Procladius* (@fig-cf_taxon_abunds G) , *Cricotopus*, and *Cryptochironomus* decreased in low EI sites over the 6 years, but increased in high EI sites in year 1 (@fig-coeff_plot_alt).
 
@@ -820,7 +820,11 @@ The riffles in more urban reaches had a greater tendency to infill with sand, as
 
 ### Does habitat heterogeneity alter assemblage composition?
 
-We identified ...
+The assemblages of all sites across the gradient of EI in our study were dominated by cosmopolitan and invasive species, although cosmopolitan infaunal taxa associated with fine sediments, such as tubificid oligochaetes and *Chironomus* [@martin_etal_2008; @berg1995], were less abundant in sites with lower EI, and became less abundant in those sites after riffle construction (Table 1. Fig. 3). We identified three invasive species that were abundant in the dataset: the snails *Potamopyrgus antipodarum* [@ponder_1988] and *Physa acuta* [@zukowski_walker_2009]*,* and the Californian black worm *Lumbriculus variegatus* [@pinder_2010], and it is likely that other abundant oligochaete and chironomid taxa that we grouped include invasive species [@failla_etal_2015; @brinkhurst_gelder_1991]. *P. acuta* and *L. variegatus* were more abundant in more urban streams, while *P. antipodarum* was abundant across the urban gradient. Only *L. variegatus* declined in abundance after riffle construction, and only in less urban reaches.
+
+The macroinvertebrate assemblages of the study reaches were thus typical of degraded urban streams. The dominance of cosmopolitan and invasive species suggest these reaches were subject to the regime of chemical and physical disturbances that arise from catchment urban stormwater runoff [@walsh_etal_2005]. Our study design did not include reference sites, which was suggested as an important element of robust design by @rubin_etal_2017. However, other studies of similar streams in the study region confirm that the assemblage composition in these sites differs strongly from sites of forested catchments, where diverse assemblages of sensitive macroinvertebrate taxa, which were rare or absent from our study sites, are the norm [@walsh_2004; @white_walsh_2020]. Importantly, reaches with similar total imperviousness, but substantially less EI than the least urban sites in this study [e.g. Sassafras Creek with 8% TI, \<1% EI, @walsh_etal_2012, compared to 10% TI and 4% EI for the two least urban streams in this study, Fig. 1, Table S1-1] support diverse assemblages of sensitive taxa. The diverse assemblages of urban streams with less stormwater infrastructure are therefore an appropriate reference condition to serve as a target for condition of streams such as those of our study reaches. The assemblages of the most urban of our study sites remained little changed after riffle construction, while minor shifts toward reference condition were observed in less urban sites (Table 1).
+
+This shift toward reference condition resulted primarily from reduced abundances of tolerant taxa that were more abundant in more urban sites (Fig. 3). It is likely that greater sedimentation among the rocks contributed to the unchanged abundances of tolerant infaunal taxa in more urban reaches. The only sensitive taxon (i.e. with a negative association with EI) to increase in abundance after riffle construction was the net-spinning caddisfly family, Hydropsychidae, which use rock substrates to build filter-feeding nets.
 
 Not much! Address rubin's concern about lack of reference sites: our multi-taxon analysis shows the assemblages of these urban streams are dominated by cosmopolitan and invasive species, who largely inhabit sediments. Given their preference for sediments the lack of overall change in assemblage composition when riffles were introduced to high urban sites is remarkable.
 
@@ -838,68 +842,8 @@ Need to address the question of whether the lack of change is a result of lack o
 
 Rare (no?) occurrences of taxa that use emergent rocks for oviposition. (check the ept list)
 
-***Justification of claims of invasiveness:***
-
-*Potamopyrgus antipodarum*, widespread in Australia after being introduced from New Zealand in the mid-19th Century [@ponder_1988]. @schreiber_etal_2003 hypothesised "that its success as an invader may be related to an ability to quickly re-colonise denuded areas and that population abundances may respond to increased food resources. Disturbances could facilitate this invader by creating spaces for colonisation (e.g. a possible consequence of floods) or changing resource levels (e.g. increased nutrient levels in streams with intense human land use in their catchments)."
-
-*Physa acuta* [@zukowski_walker_2009] (invasive species from Europe)
-
-*Lumbriculus variegatus:* @pinder_2010 notes Lumbriculidae is represented by two introduced species in Australia. Both (*L. variegatus*, the California blackworm, and *Stylodrilus heringianus*) were collected during this study. (Also @martin_etal_2008 to support claim of cosmopolitan distribution of Naididae)
-
-... and likely members of other taxa, are introduced species [e.g. Chironomids @failla_etal_2015]
-
-Proposed themes from working abstract:
-
-1.  Increased heterogeneity only favours those taxa able to tolerate larger scale environmental filters that limit assemblage composition of highly disturbed ecosystems such as streams of urban catchments. (27)
-
-2.  Riffle construction in streams of urban catchments is unlikely to have biodiversity benefits unless the limiting impacts (most likely urban stormwater runoff in areas sewage is well managed) are addressed first. (31)
-
-And the following are 20-year old notes on preliminary results of habitat experiment that might be worth revisiting (from HE prelim findings.doc). Otherwise, the discussion has not yest been started!
-
-1\. Physical effects of riffle structures.
-
-In all streams, the smallest rocks (a few cm larger than the minimum size calculated by the method of Newbury and Gaboury) in each structure remained in place over one year. None of the structures have been outflanked. In all cases, the structures have resulted in a deeper pool upstream, and increased hydraulic diversity among the emplaced rocks. Some changes in sedimentation patterns have been evident in most cases, with increased loads of fine sediment upstream in all cases, and in some cases, downstream of and within the riffle also (see below).
-
-2\. Differences between treatments
-
-I think there will be little or no difference evident between the large-rock and graded-rock treatments. This may be a result of the actual differences in rock size between the two treatments not being as great as originally envisioned. Also, although it was intended that the large rock treatment would not alter the slope, some damming behind the structure was inevitable. Hydraulic changes due to each treatment type were therefore quite similar.
-
-3\. Direct effects of rock emplacement
-
-The fauna colonising the emplaced rocks were, in all cases, different from the fauna of the channel prior to placement. Tubificid and lumbriculid worms tended to dominate the pre-treatment substrata. Chironomid larvae (mainly Cricotopus and Chironomus) were more abundant among the emplaced rocks in Blind Creek. Simuliid larvae (mainly Simulium ornatipes) were more abundant on the emplaced rocks in the faster flowing (and better WQ) Olinda Creek. Differences among the emplaced rocks were less pronounced in Scotchmans Creek, probably as a result of sedimentation.
-
-Although the assemblage structure changed with the addition of rocks, species richness in the section to which rocks were added tended to be lower after the rock emplacement than before.
-
-4\. Wider reach effects of riffle structures
-
-The following conclusions require confirmation with the full dataset (it is really too early to be publishing this).
-
-Algal biomass increased (not necessarily just in the riffle itself) after emplacement.
-
-Fauna typical of slower flowing waters tended to occur more commonly.
-
-Although the overall species richness of each reach tended not to change, in at least one creek (Scotchmans) some species that were rare prior to emplacement were more common after, thus increasing per sample richness. No such change was evident in Blind Creek, where it is assumed poor WQ remains the limiting factor.
-
-Taxa indicative of good water quality were absent or rare both before and after emplacement.
-
-Temporal trends differed between streams. In Scotchmans, overall species richness declined in the November after emplacement, but rose to pre-emplacement levels by January (Colonization effect?) (Total abundances were higher on both after occasions than before). In Olinda, total abundance and species richness increased in the November after emplacement, but declined dramatically by January, presumably due to high levels of siltation.
-
-5\. Conclusions.
-
-The effects of riffle emplacement in urban streams on community structure tend to be small and variable. Smallest effects were obtained in streams with the poorest WQ.
-
-The likely efficacy of habitat restoration measures can probably be assessed by an a priori assessment of water quality of the stream in question. This study will hopefully be able to provide an guide as to the likely changes to community structure, based on existing community structure.
-
-Deleterious effects are possible if the stream carries high silt loads and the structure acts as a silt trap.
-
 ## Acknowledgements
 
-Graham Rooney, Scott Seymour for funding the works and Neil Craigie who designed and built the riffles.
-
-Sharyn Rossrakesh for assistance with reach surveys.
-
-Field and lab assistants (from lab and field notes): Jim Longworth, Elaine Bayes, Jason Sonneman, Andrew Sharpe, Claire Sellens, Sue Witteveen, Melissa Aalbers, Rhys Coleman, John Gooderham, Jessica Miller, Edward Tsyrlin, Kristy ?.
-
-CRC for Freshwater Ecology and Melbourne Water for funding the research.
+This study was funded by the CRC for Freshwater Ecology and Melbourne Water. We thank Graham Rooney, Scott Seymour for arranging funding the works and Neil Craigie who designed and built the riffles, Sharyn Rossrakesh for conducting the reach surveys, and the team who assisted with field collections and lab processing: Jim Longworth, Elaine Bayes, Jason Sonneman, Andrew Sharpe, Claire Sellens, Sue Witteveen, Melissa Aalbers, Rhys Coleman, John Gooderham, Jessica Miller, Edward Tsyrlin, and Kristy Brooke.
 
 ## References
