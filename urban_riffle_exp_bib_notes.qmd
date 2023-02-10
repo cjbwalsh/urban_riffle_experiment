@@ -142,7 +142,21 @@ NCD (Natural channel design, Rosgen, 1998, 2011) and other channel design approa
 
 Similarly, if the hydrologic regime is restored but there is no nearby source of invertebrate colonists, then the in-stream communities will remain unrestored [@sundermann_etal_2011]
 
-Unfortunately, recovery of biodiversity was rare for the vast majority of stream restoration projects, and this appears to be closely related to the restoration method. For the most common type of projects---those implemented using channel or in-stream hydrogeomorphic adjustmentsonly 16% showed any improvement in biodiversity (as a Shannon type index or an IBI),
+Unfortunately, recovery of biodiversity was rare for the vast majority of stream restoration projects, and this appears to be closely related to the restoration method. For the most common type of projects---those implemented using channel or in-stream hydrogeomorphic adjustments only 16% showed any improvement in biodiversity (as a Shannon type index or an IBI),
+
+They class IBI as a diversity index because "it provides more information about community composition than number of EPT or species richness and because it takes into account relative abundances of all species regardless of their level of tolerance to some stressor" (as opposed to EPT richness, or presumably SIGNAL...I'm not really sure I buy this distinction: surely the IBI score is weighted against some reference condition)
+
+### @miller_etal_2010  
+
+A stronger analysis than Palmer et al 2010, of pretty much the same set of studies.  They conducted a meta-analysis of d: the difference in density or richness between restored and unrestored reaches or between pre- and post-restoration conditions, scaled by the pooled standard deviation;  (density or richness?)
+
+Study selection criteria included: 
+"(4) macroinvertebrate responses quantified at the reach and not microhabitat-scale (macroinvertebrates sampled within individual microhabitats [e.g., edge, macrophyte, thalweg] were pooled for analysis when possible);" (Not really sure where that leaves our study!)
+"and (5) study design included a before-after (BA), beforeafter-control-impact (BACI), or control-impact (CI) design." this seems counter to what rubin et al claimed!
+
+"the small number of published studies precluded the use of channel reconfiguration studies."...that's ok - they just didn't include the reconfiguration studies that they did consider in the differing effects of restoration type.
+
+
 
 ### @hobbs_etal_2012
 

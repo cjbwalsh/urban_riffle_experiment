@@ -572,6 +572,12 @@ assemb_stats <- list(tot_rich =
                                   t(apply(tot_rich_cf_mat,2, 
                                           FUN = quantile, 
                                           probs = c(0.025, 0.975)))),
+                     shannon_h = 
+                       data.frame(mean =apply(H_mat,2, 
+                                              FUN = mean),
+                                  t(apply(H_mat,2, 
+                                          FUN = quantile, 
+                                          probs = c(0.025, 0.975)))),
                      evenness = 
                        data.frame(mean =apply(evenness_cf_mat,2, 
                                               FUN = mean),
@@ -630,7 +636,7 @@ assemb_stat_diffs <- list(signal = baci_diffs(signal_cf_mat),
 save(assemb_stat_diffs, file =paste0(model_fit_dir,"assemb_stat_diffs.rda"))
 
 assemb_stat_diffs <-  assemb_stat_diffs[match(c("tot_rich","ept_rich","do_rich",
-                                                "signal","tot_n","ept_n","do_n"),
+                                                "signal","tot_n","ept_n","do_n","H","evenness"),
                                               names(assemb_stat_diffs))]
 for(i in 1:length(assemb_stat_diffs)){
   drawsi <- assemb_stat_diffs[[i]]
