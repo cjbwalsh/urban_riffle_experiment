@@ -3,30 +3,271 @@ title: "Appendix S1. Study site details"
 format: docx
 editor: visual
 bibliography: references.bib
+csl: journal-of-applied-ecology.csl
 nocite: |
   @kunapo_etal_2020
 ---
 
-This document provides further detail on the study sites (@tbl-site_details), and photos of the constructed riffles placed in the 6 impact sites (@fig-site_photos). *Further details to come on missing data*
+This document provides further detail on the study sites (@tbl-site_details). @fig-site_loc_map shows the locations of the 9 sites to permit matching site details in Table 1 with Figure 1 in the manuscript. Figures 2-9 show channel dimensions of each reach as surveyed using a theodolite before riffle construction (except for EUM for which data was lost: reach statistics for that site were estimated from a paper record of the survey). Figure 10 shows photos of the constructed riffles placed in 5 of the impact sites (@fig-site_photos).
 
-<!--# to do: check and correct slopes, find survey information for BLI -->
+```{r}
+#| label: fig-site_loc_map
+#| echo: false
+#| fig-width: 4
+#| fig-height: 5.5
+#| warning: false
+#| message: false
+#| fig-cap: "Map of experimental sites as in Figure 1 of the main paper, labelled with stream codes as used in Table S1-1."
+
+sites <- readxl::read_excel("data/urban_riffle_experiment_data_for_model.xlsx", sheet = "sites")
+sites <- sf::st_as_sf(sites, coords = c("mgae","mgan"), crs = 28355)
+streams <- sf::st_read("data/urban_riffle_experiment_map.gpkg", layer = "streams", quiet = TRUE)
+pipes <- sf::st_read("data/urban_riffle_experiment_map.gpkg", layer = "pipes", quiet = TRUE)
+cats <- sf::st_read("data/urban_riffle_experiment_map.gpkg", layer = "cats", quiet = TRUE)
+coast <- sf::st_read("data/urban_riffle_experiment_map.gpkg", layer = "coast", quiet = TRUE)
+#Colour sites by experimental treatment (see: https://colorbrewer2.org/)
+sites$col <- 
+  RColorBrewer::brewer.pal(3,"Dark2")[match(sites$exp_treatment == "riffle",0:1)]
+sites$reach <- substr(sites$sitecode, 1, nchar(sites$sitecode) - 1)
+
+par(mar = c(0,0,0,0))
+plot(cats$geom, pch = 21, border = "white")
+plot(cats$geom, border = sites$col[match(cats$reach,sites$reach)], 
+     col = scales::alpha(sites$col[match(cats$reach,sites$reach)],0.25),
+     lwd = 2, add = TRUE)
+plot(streams$geom, col = "dodgerblue", add = TRUE)
+plot(pipes$geom, col = gray(0.25), add = TRUE)
+labels <- read.csv("small_data/cat_polygon_label_points.csv")
+text(labels$mgae, labels$mgan, substr(labels$sitecode,1,3), font = 1)
+plot(coast$geom, lwd = 2, add = TRUE)
+plot(sites$geometry, pch = 21, bg = sites$col, add = TRUE) # so that the sites are on top
+box(lwd=2)
+```
+
+```{r}
+#| label: compile_survey_data.
+#| echo: false
+#| include: false
+#| fig-width: 9
+#| fig-height: 5.5
+
+library("dplyr")
+dat_file <- "data/urban_riffle_experiment_data_for_model.xlsx"
+sites <- data.frame(readxl::read_excel(dat_file, sheet = "sites"), 
+                    stringsAsFactors = FALSE)
+survey_data <- data.frame(readxl::read_excel("/mnt/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/data_sources/urban_riffle_exp_survey_data_combined.xlsx"), stringsAsFactors = FALSE)
+survey_dates <-  data.frame(readxl::read_excel("/mnt/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/data_sources/urban_riffle_exp_survey_data_combined.xlsx", sheet = 2), stringsAsFactors = FALSE)
+
+#Correct erroneous data points identified from plots
+# Most upstream point in Ferny elevation/water-level too low to be credible
+survey_data <- survey_data[!(survey_data$survey == "FER_1" & survey_data$no == 1078),]
+# Typo in BRS water depth (650 should be 65)
+survey_data$depth[survey_data$survey == "BRS_1" & survey_data$no == 1036] <- 65
+# Most upstream point in Monbulk too high to be credible
+survey_data <- survey_data[!(survey_data$survey == "MON_1" & survey_data$no == 1101),]
+# Point in Dandenong with likely depth typo error (given slope of water)
+survey_data$depth[survey_data$survey == "DNG_1" & survey_data$no == 1007] <- 200
+# Ditto Hallam Valley main drain
+survey_data$depth[survey_data$survey == "HVD_1" & survey_data$no == 1050] <- NA
+# Dubious cross-sections in SCO, and first three water-depths are not credible
+survey_data <- survey_data[!(survey_data$survey == "SCO_1" & survey_data$ypos %in% c("x5a","x3b")),]
+survey_data$depth[survey_data$survey == "SCO_1" & survey_data$no %in% 1083:1085] <- NA
+# delete dubious point in BLI
+survey_data <- survey_data[!(survey_data$survey == "BLI_1" & survey_data$no == 1094),]
+# Typo in BLI water depth (30 should be 300)
+survey_data$depth[survey_data$survey == "BLI_1" & survey_data$no == 1040] <- 300
+
+surveys <- unique(survey_data$survey)
+hyptnse <- function(x,y){sqrt(x^2 + y^2)}
+# Function for the survey plots below and for calculating channel statistics in 
+# Table 1. Run first without producing plots for Table 1 calculations.
+plot_survey <- function(surv, plot_fig = TRUE){
+  strcode <- ifelse(substr(surv,1,3) == "MON","MNB",substr(surv,1,3))
+  sitei <- sites$sitecode[substr(sites$sitecode,1,3) == strcode]
+  survi <- survey_data[survey_data$survey == surv,]
+  # I'm going to recalculate these fields, so set to NA
+  survi[c("elev1","length","width","water")] <- NA
+  # Check unique identifier
+  # duplicate entries checked and removed (different stations given same ID)
+  if(surv %in% c("FER_1","DNG_1")) survi <- survi[!duplicated(survi$no),]
+  if(sum(duplicated(survi$no)) > 0) stop()
+  survi$elev1 <- survi$elev - min(survi$elev)
+  thalwegi <- survi[!is.na(survi$xpos) & survi$xpos == "c",]
+  longer_axis <- c("east","north")[which.max(c(diff(range(thalwegi[c("east")])),
+                                               diff(range(thalwegi[c("north")]))))]
+  thalwegi <- thalwegi[order(thalwegi[,longer_axis]),]
+  survi <- survi[order(survi[,longer_axis]),]
+  # check first point in thalwegi is the most downstream
+  if(substr(thalwegi$ypos[1],1,3) != "dst") {
+  thalwegi <- thalwegi[order(thalwegi[,longer_axis], decreasing = TRUE),]
+  survi <- survi[order(survi[,longer_axis], decreasing = TRUE),]
+  if(substr(thalwegi$ypos[1],1,3) != "dst") stop()
+  }
+  thalwegi$length[1] <- 0
+  for(j in 2:nrow(thalwegi)){
+  thalwegi$length[j] <- thalwegi$length[j - 1] + 
+                        hyptnse(thalwegi$east[j]-thalwegi$east[j-1],
+                                thalwegi$north[j]-thalwegi$north[j-1])
+  }
+  survi$length[match(thalwegi$no,survi$no)] <- thalwegi$length
+  x_secs <- unique(survi$ypos[!is.na(survi$ypos) & substr(survi$ypos,1,1) == "x"])
+  x_secs <- x_secs[substr(x_secs,nchar(x_secs),nchar(x_secs)) == "a"]
+  for(j in 1:length(x_secs)){
+    if(sum(thalwegi$ypos == x_secs[j]) > 0 )
+    survi$length[survi$ypos == x_secs[j]] <- thalwegi$length[thalwegi$ypos == x_secs[j]][1]
+    # a couple of transects have >1 c point per transect. All points are close to each other
+    # so just pick the first one
+  }
+  survi_sf <- sf::st_as_sf(survi, coords= c("east","north"))
+  thalwegi_sf <- as.matrix(thalwegi[c("east","north")]) %>% sf::st_linestring()
+  lwe_sf <- as.matrix(survi[!is.na(survi$xpos) & survi$xpos == "lwse", 
+                            c("east","north")]) %>% sf::st_linestring()
+  rwe_sf <- as.matrix(survi[!is.na(survi$xpos) & survi$xpos == "rwse", 
+                            c("east","north")]) %>% sf::st_linestring()
+  survi$water <- survi$depth*0.001 + survi$elev1
+  wwidths <- vector("numeric")
+for(j in 1:length(x_secs)){
+  x_secj <- survi[!is.na(survi$ypos) & survi$ypos == x_secs[j],]
+  longer_xaxis <- c("east","north")[which.max(c(diff(range(x_secj[c("east")])),
+                                               diff(range(x_secj[c("north")]))))]
+  x_secj <- x_secj[order(x_secj[,longer_xaxis]),]
+  # transect_posj <- transect_poss[ transect_poss %in% x_secj$xpos]
+  # x_secj <- x_secj[match(transect_posj, x_secj$xpos),]
+  if(nrow(x_secj) > 1 & "c" %in% x_secj$xpos){
+  x_secj$width[1] <- 0
+  for(k in 2:nrow(x_secj)){
+    x_secj$width[k] <- x_secj$width[k - 1] + hyptnse(x_secj$east[k] - x_secj$east[k - 1],
+                                                     x_secj$north[k] - x_secj$north[k - 1])
+  }
+  x_secj$width <- x_secj$width - x_secj$width[!is.na(x_secj$xpos) & x_secj$xpos == "c"][1]
+  # see above for explanation of [1]
+  survi$width[match(x_secj$no, survi$no)] <- x_secj$width
+  }
+  wwidths <- c(wwidths, 
+  hyptnse(x = x_secj$east[grep("lwse",x_secj$code)] -  x_secj$east[grep("rwse",x_secj$code)],
+          y = x_secj$north[grep("lwse",x_secj$code)] -  x_secj$north[grep("rwse",x_secj$code)]))
+}
+  water_lm <- lm(survi$water ~ survi$length)
+  summary <-  data.frame(sitecode = sitei,
+                            slope_water_mean = coef(water_lm)[2],
+                            slope_water_lo95 = confint(water_lm)[2,1], 
+                            slope_water_hi95 = confint(water_lm)[2,2], 
+                            wetted_width_mean = mean(wwidths),
+                            wetted_width_sd = sd(wwidths))
+    if(plot_fig){
+  layout(matrix(c(2,2,1,3),2,2,byrow=TRUE), widths = c(12,6), heights = c(8,12))
+  par(mar = c(0,0,0,0))
+  plot(survi_sf$geometry, type = "n")
+  plot(thalwegi_sf, col = "dodgerblue", add = TRUE)
+  plot(lwe_sf, add = TRUE)
+  plot(rwe_sf, add = TRUE)
+  lbfh_field <- unique(survi$xpos)[grep("lbfh",unique(survi$xpos))]
+  for(k in 1:length(lbfh_field))   {           
+  lbfh_sf <- as.matrix(survi[!is.na(survi$xpos) & survi$xpos == lbfh_field[k], 
+                            c("east","north")]) %>% sf::st_linestring()
+  plot(lbfh_sf, add = TRUE, col = "brown", lty = k)
+  }
+  rbfh_field <- unique(survi$xpos)[grep("rbfh",unique(survi$xpos))]
+  for(k in 1:length(rbfh_field))   {           
+  rbfh_sf <- as.matrix(survi[!is.na(survi$xpos) & survi$xpos == rbfh_field[k], 
+                            c("east","north")]) %>% sf::st_linestring()
+  plot(rbfh_sf, add = TRUE, col = "brown", lty = k)
+  }
+  for(j in 1:length(x_secs)){
+    if(sum(!is.na(survi$ypos) & survi$ypos == x_secs[j]) > 1){
+  xsecj <- as.matrix(survi[!is.na(survi$ypos) & survi$ypos == x_secs[j], 
+                            c("east","north")]) %>% sf::st_linestring()
+   plot(xsecj, add = TRUE, lty = 3) 
+   labj <- survi[!is.na(survi$ypos) & survi$ypos == x_secs[j], 
+                            c("east","north")][1,]
+   text(labj$east, labj$north, substr(x_secs[j],2,nchar(x_secs[j])))
+   }
+  }
+title(main = "B.", adj = 0, line = -2)
+par(mar = c(4,4,1,1))
+plot(c(min(thalwegi$length),max(thalwegi$length)),
+         c(min(thalwegi$elev1), max(survi$water, na.rm = TRUE)), 
+     type ='n', xlab = "Distance along (m)", ylab = "Elev (m)", las = 1)
+lines(thalwegi$length,thalwegi$elev1)
+points(survi$length,survi$water); #this includes estimate of water height in non-thalweg cross-section measurements
+with(survi[survi$xpos == "c",], points(length,water,pch = 21, bg ="dodgerblue"))
+title(main = "A.", adj = 0)
+
+par(mar = c(4,4,1,1))
+# transect_poss <- c("rpath","rbfh2","rbfh1","rbfh","rubnk","rbnk","rwse",
+#                            "crrr","rrrc","crr","rrc","cr","rc","c","cl","lc",
+#                            "lcl","cll","llc","clll","lwse","lbnk" ,"lubnk","lbfh","ltrack")
+plot(survi$width, survi$elev1, type = "n", xlab = "Transvere dist from thalweg (m)", 
+     ylab ="Elevation from lowest point in survey (m)", ylim = c(0,5), xlim = c(-20,20))
+abline(v = min(survi$width, na.rm = TRUE):max(survi$width, na.rm = TRUE), 
+         col = gray(0.75))
+abline(h = seq(min(survi$elev1, na.rm = TRUE),
+                 max(survi$elev1, na.rm = TRUE), 0.1), 
+         col = gray(0.75))
+x_secs_to_plot <- x_secs[grep("a",x_secs)]
+for(j in 1:length(x_secs_to_plot))  { 
+  x_secj <- survi[survi$ypos == x_secs_to_plot[j],]
+  longer_xaxis <- c("east","north")[which.max(c(diff(range(x_secj[c("east")])),
+                                               diff(range(x_secj[c("north")]))))]
+  x_secj <- x_secj[order(x_secj[,longer_xaxis]),]
+    lines(x_secj$width, x_secj$elev1, col = RColorBrewer::brewer.pal(8,"Set1")[j])
+    with(x_secj[grep("wse",x_secj$xpos),],lines(width,elev1, lty = 3))
+    with(x_secj[grep("bfh",x_secj$xpos),],points(width,elev1, pch = 21, bg = "red"))
+  }
+  title(main = sitei, font.main = 2)
+  title(main = "C.", adj = 0)
+  legend("bottomleft", lty = 1, 
+       col = RColorBrewer::brewer.pal(8,"Set1")[1:length(x_secs_to_plot)],
+       legend = gsub("x","",x_secs_to_plot))
+    }else{
+  return(summary)
+}
+} 
+
+surveys <- paste(c("BLI","DNG","BRS","OLN","HVD","SCO","FER","MON"),1,sep = "_")
+site_stats <- plot_survey(surveys[1],plot_fig = FALSE)
+for(i in 2:length(surveys)){
+  site_stats <- rbind(site_stats,
+                     plot_survey(surveys[i],plot_fig = FALSE))
+}
+site_stats$slope_perc <- pmax(0,round(site_stats$slope_water_mean*100,2))
+# estimated slopes of BLI and FER were slightly negative because of survey error
+# so they are rounded to 0.
+# there was a 30 cm fall at the culvert 66 m upstream of the BLI reach
+# There was a similar fall ~ 50 m ustream of FER reach
+site_stats$wet_width <- paste(round(site_stats$wetted_width_mean,1),
+                              format(round(site_stats$wetted_width_sd,1),digits = 1), 
+                              sep = "±")
+site_stats <- site_stats[c("sitecode","slope_perc","wet_width")]
+# EUM survey data misplaced: estimated from paper copy of survey results 
+# wetted widths c(2,1.6,1.3,1,0.8)/0.4
+site_stats <- rbind(site_stats,
+                    data.frame(sitecode = "EUM_5211f",
+                               slope_perc = 0.2, wet_width = "3.3±1.2"))
+```
 
 ```{r}
 #| label: tbl-site_details
 #| echo: false
-#| tbl-cap: "Study site locations and attributes. The site code, effective imperviousness, Elevation, and catchment area were derived from Kunapo et al. 2020.  Reach slope and other channel dimensions were measured in a survey of the reach upstream and downstream of the sampled reach before riffle construction."
+#| tbl-cap: "Study site locations and attributes. The site code, effective and total imperviousness, elevation, and catchment area were derived from Kunapo et al. 2020.  Reach slope and channel width were measured in surveys of the reach of the sampled reach before riffle construction."
 
 dat_file <- "data/urban_riffle_experiment_data_for_model.xlsx"
 sites <- data.frame(readxl::read_excel(dat_file, sheet = "sites"), 
                     stringsAsFactors = FALSE)
-sites <- sites[c("sitecode","str_nm","location","ai","ti","elev_m","carea_km2",
-                 "floodplain_ht_m","baseflow_channel_width_m","reach_slope")]
-sites$reach_slope <- sites$reach_slope * 100
+sites$treatment <- c(rep("Exp",6),rep("Ctrl",3))[match(substr(sites$sitecode,1,3),
+                                                       c("BLI","DNG","BRS","OLN","SCO",
+                                                         "HVD","FER","MNB","EUM" ))]
+sites <- sites[order(sites$treatment, decreasing = TRUE),]
+sites <- sites[c("sitecode","treatment","str_nm","location","ai","ti","elev_m","carea_km2",
+                 "baseflow_channel_width_m","reach_slope")]
+sites$reach_slope <- site_stats$slope_perc[match(sites$sitecode,site_stats$sitecode)]
+sites$baseflow_channel_width_m <- site_stats$wet_width[match(sites$sitecode,site_stats$sitecode)]
 sites$ai <- round(sites$ai*100)
 sites$ti <- round(sites$ti*100)
 ft <- flextable::flextable(sites)
 ft <- flextable::set_header_labels(ft,
                                    sitecode = "Site code",
+                                   treatment = "Treatment",
                                    str_nm = "Stream name",
                                    location = "Location",
                                    ai = "2004 effective imperviousness (%)",
@@ -39,20 +280,96 @@ ft <- flextable::set_header_labels(ft,
 ft
 ```
 
+```{r}
+#| label: fig-FER.
+#| echo: false
+#| fig-width: 9
+#| fig-height: 5.5
+#| fig-cap: "Channel dimensions of the control reach on Ferny Creek, surveyed in October 1995. A. Elevation profile showing thalweg (black line) and the water surface measured at the channel centre (blue circles) and at other parts of the channel (open circles).  B. Map of the Thalweg (blue) wetted perimeter (black) and estimated bankfull width (brown), and cross-sections. C. Elevation profiles of the cross-sections shown in B.  Bankfull height estimates are red points."
+
+fer_surv <- plot_survey("FER_1")
+```
+
+```{r}
+#| label: fig-BRS.
+#| echo: false
+#| fig-width: 9
+#| fig-height: 5.5
+#| fig-cap: "Channel dimensions of the experimental reach on Brushy Creek, surveyed in October 1995. A. Elevation profile showing thalweg (black line) and the water surface measured at the channel centre (blue circles) and at other parts of the channel (open circles).  B. Map of the Thalweg (blue) wetted perimeter (black) and estimated bankfull width (brown), and cross-sections. C. Elevation profiles of the cross-sections shown in B.  Bankfull height estimates are red points."
+
+brs_surv <- plot_survey("BRS_1")
+```
+
+```{r}
+#| label: fig-SCO.
+#| echo: false
+#| fig-width: 9
+#| fig-height: 5.5
+#| fig-cap: "Channel dimensions of the experimental reach on Scotchmans Creek, surveyed in October 1995. A. Elevation profile showing thalweg (black line) and the water surface measured at the channel centre (blue circles) and at other parts of the channel (open circles).  B. Map of the Thalweg (blue) wetted perimeter (black) and estimated bankfull width (brown), and cross-sections. C. Elevation profiles of the cross-sections shown in B.  Bankfull height estimates are red points."
+
+sco_surv <- plot_survey("SCO_1")
+```
+
+```{r}
+#| label: fig-MON.
+#| echo: false
+#| fig-width: 9
+#| fig-height: 5.5
+#| fig-cap: "Channel dimensions of the control reach on Monbulk Creek, surveyed in November 1995. A. Elevation profile showing thalweg (black line) and the water surface measured at the channel centre (blue circles) and at other parts of the channel (open circles).  B. Map of the Thalweg (blue) wetted perimeter (black) and estimated bankfull width (brown), and cross-sections. C. Elevation profiles of the cross-sections shown in B.  Bankfull height estimates are red points."
+
+mon_surv <- plot_survey("MON_1")
+```
+
+```{r}
+#| label: fig-OLN.
+#| echo: false
+#| fig-width: 9
+#| fig-height: 5.5
+#| fig-cap: "Channel dimensions of the experimental reach on Olinda Creek, surveyed in January 1996. A. Elevation profile showing thalweg (black line) and the water surface measured at the channel centre (blue circles) and at other parts of the channel (open circles).  B. Map of the Thalweg (blue) wetted perimeter (black) and estimated bankfull width (brown), and cross-sections. C. Elevation profiles of the cross-sections shown in B.  Bankfull height estimates are red points."
+
+oln_surv <- plot_survey("OLN_1")
+```
+
+```{r}
+#| label: fig-BLI.
+#| echo: false
+#| fig-width: 9
+#| fig-height: 5.5
+#| fig-cap: "Channel dimensions of the experimental reach on Blind Creek, surveyed in January 1996. A. Elevation profile showing thalweg (black line) and the water surface measured at the channel centre (blue circles) and at other parts of the channel (open circles).  B. Map of the Thalweg (blue) wetted perimeter (black) and estimated bankfull width (brown), and cross-sections. C. Elevation profiles of the cross-sections shown in B.  Bankfull height estimates are red points."
+
+bli_surv <- plot_survey("BLI_1")
+```
+
+```{r}
+#| label: fig-DNG.
+#| echo: false
+#| fig-width: 9
+#| fig-height: 5.5
+#| fig-cap: "Channel dimensions of the experimental reach on Dandenong Creek, surveyed in November 1995. A. Elevation profile showing thalweg (black line) and the water surface measured at the channel centre (blue circles) and at other parts of the channel (open circles).  B. Map of the Thalweg (blue) wetted perimeter (black) and estimated bankfull width (brown), and cross-sections. C. Elevation profiles of the cross-sections shown in B.  Bankfull height estimates are red points."
+
+dng_surv <- plot_survey("DNG_1")
+```
+
+```{r}
+#| label: fig-HVD.
+#| echo: false
+#| fig-width: 9
+#| fig-height: 5.5
+#| fig-cap: "Channel dimensions of the experimental reach on Hallam Valley main drain, surveyed in November 1995. A. Elevation profile showing thalweg (black line) and the water surface measured at the channel centre (blue circles) and at other parts of the channel (open circles).  B. Map of the Thalweg (blue) wetted perimeter (black) and estimated bankfull width (brown), and cross-sections. C. Elevation profiles of the cross-sections shown in B.  Bankfull height estimates are red points."
+
+hvd_surv <- plot_survey("HVD_1")
+```
+
 ::: {#fig-site_photos layout-ncol="3"}
-![Blind Creek](images/BLI_2492g_experimental_riffle_19960606.JPG){#fig-bli}
+![Blind Creek](/mnt/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/images/BLI_2492g_experimental_riffle_19960606.JPG){#fig-bli}
 
-![Brushy Creek](images/BRS_1572d_experimental_riffle_19960604.JPG){#fig-brs}
+![Brushy Creek](/mnt/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/images/BRS_1572d_experimental_riffle_19960604.JPG){#fig-brs}
 
-![Dandenong Creek](images/DNG_7141a_experimental_riffle_200102xx.JPG){#fig-dng}
+![Dandenong Creek](/mnt/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/images/DNG_7141a_experimental_riffle_200102xx.JPG){#fig-dng}
 
-![Hallam Valley Main Drain](images/HVD_7836d_experimental_riffle_200102xx.JPG){#fig-hvd}
+![Hallam Valley Main Drain](/mnt/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/images/HVD_7836d_experimental_riffle_200102xx.JPG){#fig-hvd}
 
-![Olinda Creek](images/OLN_5632h_experimental_riffle_200102xx.JPG){#fig-oln}
+![Olinda Creek](/mnt/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/images/OLN_5632h_experimental_riffle_200102xx.JPG){#fig-oln}
 
-![Scotchmans Creek](images/still_looking.JPG){#fig-sco}
-
-Riffles after construction in each 'impact' site.
+Riffles after construction in 5 of the experimental sites.
 :::
-
-(There is a 'before' photo of Scotchmans in the survey file: must be an after photo of the riffle somewhere!)

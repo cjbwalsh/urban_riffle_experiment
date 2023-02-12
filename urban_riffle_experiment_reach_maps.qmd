@@ -49,7 +49,8 @@ channel_stats <- data.frame(sitecode = sites$sitecode,
 surveys <- unique(survey_data$survey)
 hyptnse <- function(x,y){sqrt(x^2 + y^2)}
 plot_survey <- function(surv){
-  sitei <- sites$sitecode[substr(sites$sitecode,1,3) == substr(surv,1,3)]
+  strcode <- ifelse(substr(surv,1,3) == "MON","MNB",substr(surv,1,3))
+  sitei <- sites$sitecode[substr(sites$sitecode,1,3) == strcode]
   layout(matrix(c(2,2,1,3),2,2,byrow=TRUE), widths = c(12,6), heights = c(8,12))
   par(mar = c(0,0,0,0))
   survi <- survey_data[survey_data$survey == surv,]
@@ -197,9 +198,8 @@ summary <-  data.frame(sitecode = sitei,
 #| fig-height: 5.5
 #| fig-cap: "Channel dimensions of the control reach on Ferny Creek, surveyed in October 1995. A. Elevation profile showing thalweg (black line) and the water surface measured at the channel centre (blue circles) and at other parts of the channel (open circles).  B. Map of the Thalweg (blue) wetted perimeter (black) and estimated bankfull width (brown), and cross-sections. C. Elevation profiles of the cross-sections shown in B.  Bankfull height estimates are red points."
 
-plot_survey("FER_1")
+fer_surv <- plot_survey("FER_1")
 ```
-
 
 ```{r}
 #| label: fig-BRS.
@@ -208,9 +208,8 @@ plot_survey("FER_1")
 #| fig-height: 5.5
 #| fig-cap: "Channel dimensions of the experimental reach on Brushy Creek, surveyed in October 1995. A. Elevation profile showing thalweg (black line) and the water surface measured at the channel centre (blue circles) and at other parts of the channel (open circles).  B. Map of the Thalweg (blue) wetted perimeter (black) and estimated bankfull width (brown), and cross-sections. C. Elevation profiles of the cross-sections shown in B.  Bankfull height estimates are red points."
 
-plot_survey("BRS_1")
+brs_surv <- plot_survey("BRS_1")
 ```
-
 
 ```{r}
 #| label: fig-SCO.
@@ -219,7 +218,7 @@ plot_survey("BRS_1")
 #| fig-height: 5.5
 #| fig-cap: "Channel dimensions of the experimental reach on Scotchmans Creek, surveyed in October 1995. A. Elevation profile showing thalweg (black line) and the water surface measured at the channel centre (blue circles) and at other parts of the channel (open circles).  B. Map of the Thalweg (blue) wetted perimeter (black) and estimated bankfull width (brown), and cross-sections. C. Elevation profiles of the cross-sections shown in B.  Bankfull height estimates are red points."
 
-plot_survey("SCO_1")
+sco_surv <- plot_survey("SCO_1")
 ```
 
 ```{r}
@@ -229,9 +228,8 @@ plot_survey("SCO_1")
 #| fig-height: 5.5
 #| fig-cap: "Channel dimensions of the control reach on Monbulk Creek, surveyed in November 1995. A. Elevation profile showing thalweg (black line) and the water surface measured at the channel centre (blue circles) and at other parts of the channel (open circles).  B. Map of the Thalweg (blue) wetted perimeter (black) and estimated bankfull width (brown), and cross-sections. C. Elevation profiles of the cross-sections shown in B.  Bankfull height estimates are red points."
 
-plot_survey("MON_1")
+mon_surv <- plot_survey("MON_1")
 ```
-
 
 ```{r}
 #| label: fig-OLN.
@@ -240,9 +238,8 @@ plot_survey("MON_1")
 #| fig-height: 5.5
 #| fig-cap: "Channel dimensions of the experimental reach on Olinda Creek, surveyed in January 1996. A. Elevation profile showing thalweg (black line) and the water surface measured at the channel centre (blue circles) and at other parts of the channel (open circles).  B. Map of the Thalweg (blue) wetted perimeter (black) and estimated bankfull width (brown), and cross-sections. C. Elevation profiles of the cross-sections shown in B.  Bankfull height estimates are red points."
 
-plot_survey("OLN_1")
+oln_surv <- plot_survey("OLN_1")
 ```
-
 
 ```{r}
 #| label: fig-BLI.
@@ -251,9 +248,8 @@ plot_survey("OLN_1")
 #| fig-height: 5.5
 #| fig-cap: "Channel dimensions of the experimental reach on Blind Creek, surveyed in January 1996. A. Elevation profile showing thalweg (black line) and the water surface measured at the channel centre (blue circles) and at other parts of the channel (open circles).  B. Map of the Thalweg (blue) wetted perimeter (black) and estimated bankfull width (brown), and cross-sections. C. Elevation profiles of the cross-sections shown in B.  Bankfull height estimates are red points."
 
-plot_survey("BLI_1")
+bli_surv <- plot_survey("BLI_1")
 ```
-
 
 ```{r}
 #| label: fig-DNG.
@@ -262,9 +258,8 @@ plot_survey("BLI_1")
 #| fig-height: 5.5
 #| fig-cap: "Channel dimensions of the experimental reach on Dandenong Creek, surveyed in November 1995. A. Elevation profile showing thalweg (black line) and the water surface measured at the channel centre (blue circles) and at other parts of the channel (open circles).  B. Map of the Thalweg (blue) wetted perimeter (black) and estimated bankfull width (brown), and cross-sections. C. Elevation profiles of the cross-sections shown in B.  Bankfull height estimates are red points."
 
-plot_survey("DNG_1")
+dng_surv <- plot_survey("DNG_1")
 ```
-
 
 ```{r}
 #| label: fig-HVD.
@@ -273,5 +268,5 @@ plot_survey("DNG_1")
 #| fig-height: 5.5
 #| fig-cap: "Channel dimensions of the experimental reach on Hallam Valley main drain, surveyed in November 1995. A. Elevation profile showing thalweg (black line) and the water surface measured at the channel centre (blue circles) and at other parts of the channel (open circles).  B. Map of the Thalweg (blue) wetted perimeter (black) and estimated bankfull width (brown), and cross-sections. C. Elevation profiles of the cross-sections shown in B.  Bankfull height estimates are red points."
 
-plot_survey("HVD_1")
+hvd_surv <- plot_survey("HVD_1")
 ```

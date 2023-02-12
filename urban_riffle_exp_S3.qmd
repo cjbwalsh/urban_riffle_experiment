@@ -6,6 +6,7 @@ editor: visual
 editor_options: 
   chunk_output_type: console
 bibliography: references.bib
+csl: journal-of-applied-ecology.csl
 ---
 
 ```{r}
