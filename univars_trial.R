@@ -3,6 +3,20 @@ check_cmdstan_toolchain(fix = TRUE, quiet = TRUE)
 # Set random seed to ensure reproducible results
 rand_seed = 9430568
 
+baci_diffs <- function(mat){
+  data.frame(delta_baci1_low = 
+               mat[,combos$control_lowi[1]] - mat[,combos$impact_lowi[1]] -
+               (mat[,combos$control_lowi[2]] - mat[,combos$impact_lowi[2]]),
+             delta_baci2_low = 
+               mat[,combos$control_lowi[1]] - mat[,combos$impact_lowi[1]] -
+               (mat[,combos$control_lowi[3]] - mat[,combos$impact_lowi[3]]),
+             delta_baci1_hi =
+               mat[,combos$control_hii[1]] - mat[,combos$impact_hii[1]] -
+               (mat[,combos$control_hii[2]] - mat[,combos$impact_hii[2]]),
+             delta_baci2_hi = mat[,combos$control_hii[1]] - mat[,combos$impact_hii[1]] -
+               (mat[,combos$control_hii[3]] - mat[,combos$impact_hii[3]]))
+}
+
 ## Load data: ultimately from OSF repository
 # library(osfr); library(dplyr)
 # if(!"data" %in% dir()){system("mkdir data")}
@@ -12,7 +26,7 @@ rand_seed = 9430568
 # }
 # data_for_model.xlsx compiled in urban_riffle_exp_data_compilation.R
 dat_file <- 
-  "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/data_for_model.xlsx"
+  "data/urban_riffle_experiment_data_for_model.xlsx"
 sites <- data.frame(readxl::read_excel(dat_file, sheet = "sites"), 
                     stringsAsFactors = FALSE)
 samples <- data.frame(readxl::read_excel(dat_file, sheet = "samples"), 
@@ -106,7 +120,7 @@ y_transform_pars <- data.frame(stat = names(ys)[1:12],
                                log_add = c(1.75e-04,0,0.0007442,0,0.001,
                                            0.001,0.0094382,0.001,5e-04,0,0,0))
 
-mod <- cmdstan_model("normal_rand_sa_si_t_fixedmatrix_baci.stan", pedantic = TRUE) 
+mod <- cmdstan_model("normal_rand_sa_si_fixedmatrix_baci.stan", pedantic = TRUE) 
 
 univar_beta_summary <- 
   data.frame(model = NA, param = NA, variable = NA, mean = NA, median = NA,
@@ -142,23 +156,23 @@ sdata <- list(n_obs = nrow(samplesi),
               n_site = nrow(sites),
               n_sample = nrow(sample_nos),
               n_pred = ncol(u),
-              n_t = max(samplesi$t),
+ #             n_t = max(samplesi$t),
               site_no = samplesi$site_no,
               samp_no = samplesi$sample_no,
-              t_no = samplesi$t,
+#              t_no = samplesi$t,
               u = u,
               y = ys[[i]][match(samplesi$smpcode,samples$smpcode)]
 )
 
 nt <- 4; nc <- 4
-ni <- c(6000,2000,6000,6000,6000,3000,3000,3000,3000,4000,4000,4000)
-nb <- c(3000,1000,3000,3000,3000,2000,2000,2000,2000,2500,2500,2500)
+ni <- rep(2000,12) # c(6000,2000,6000,6000,6000,3000,3000,3000,3000,4000,4000,4000)
+nb <- rep(1000,12) # c(3000,1000,3000,3000,3000,2000,2000,2000,2000,2500,2500,2500)
 # even with standardized y, 6000 iters, vel_m_s_var has low BFMI (0.035-0.076) and 0% divergences    
 # sigma_sa/a_sa, seemingly the main problem: even if prior for sigma_sa is set to exponential(3) (as it seems to sit near 0)
 # bfmi remains low.  All main effects are well sampled
 # similar story for vel_m_s_mean
 
-ad <- c(0.9,0.8,0.99,0.95,0.95,0.99,0.99,0.95,0.98,0.85,0.95,0.95)
+ad <- rep(0.8,12) # c(0.9,0.8,0.99,0.95,0.95,0.99,0.99,0.95,0.98,0.85,0.95,0.95)
 stanfit_i <- mod$sample(data = sdata,
                         seed = rand_seed, chains = nc,
                         parallel_chains = nc, iter_warmup = nb[i],
@@ -177,9 +191,9 @@ stanfit_i$diagnostic_summary()
 # EBFMI 0.273, 0.289, 0.290, 0.309, zero divergences, zero max treedepth reached.
 # # The above three steps required < 500 Mb RAM
 summ <- stanfit_i$summary() # This took ~2h and needed >40 Gb RAM
-min(summ$ess_bulk,na.rm=TRUE) # 657 from 6500...rerun this with 5500 tonight!
-min(summ$ess_tail,na.rm=TRUE) # 1333
-max(summ$rhat,na.rm=TRUE)  # 1.005
+min(summ$ess_bulk,na.rm=TRUE) 
+min(summ$ess_tail,na.rm=TRUE) 
+max(summ$rhat,na.rm=TRUE)  
 
 univar_beta_summary <- rbind(univar_beta_summary, 
                              data.frame(model = names(ys)[i], 
@@ -194,8 +208,8 @@ univar_diagnostics <- rbind(univar_diagnostics, data.frame(model = names(ys)[i],
                                  min_ess_bulk = min(summ$ess_bulk,na.rm=TRUE),
                                  min_ess_tail = min(summ$ess_tail,na.rm=TRUE)))
 
-drawsi <- as.data.frame(stanfit_i$draws(format = "df", variables = c("a_si","a_sa","a_t","gamma",
-                                                                     "sigma_si","sigma_sa","sigma_t","sigma")))
+drawsi <- as.data.frame(stanfit_i$draws(format = "df", variables = c("a_si","a_sa","gamma",  #"a_t",
+                                                                     "sigma_si","sigma_sa","sigma")))  #,"sigma_t"
 predx <- unique(cbind(samplesi[c("sample","site_no","sample_no","t")],u))
 temp <- aggregate(sdata$y, by = list(sample = samplesi$sample),FUN = mean)
 predx$x <- temp$x[match(predx$sample, temp$sample)]
@@ -203,7 +217,7 @@ predx$x <- temp$x[match(predx$sample, temp$sample)]
     predy_draws <-
       drawsi[grep("a_si",names(drawsi))][match(predx$site_no, 1:sdata$n_site)] +
       drawsi[grep("a_sa",names(drawsi))][match(predx$sample_no, 1:sdata$n_sample)] +
-      drawsi[grep("a_t",names(drawsi))][match(predx$t, 1:sdata$n_t)] +
+#      drawsi[grep("a_t",names(drawsi))][match(predx$t, 1:sdata$n_t)] +
       drawsi[,"gamma[1]"] %*% t(predx$`(Intercept)`) +
       drawsi[,"gamma[2]"] %*% t(predx$ba1) +
       drawsi[,"gamma[3]"] %*% t(predx$ba2) +
@@ -218,7 +232,7 @@ predx$x <- temp$x[match(predx$sample, temp$sample)]
     predy_draws <-
       drawsi[grep("a_si",names(drawsi))][match(predx$site_no, 1:sdata$n_site)] +
       drawsi[grep("a_sa",names(drawsi))][match(predx$sample_no, 1:sdata$n_sample)] +
-      drawsi[grep("a_t",names(drawsi))][match(predx$t, 1:sdata$n_t)] +
+#      drawsi[grep("a_t",names(drawsi))][match(predx$t, 1:sdata$n_t)] +
       drawsi[,"gamma[1]"] %*% t(predx$`(Intercept)`) +
       drawsi[,"gamma[2]"] %*% t(predx$ba1) +
       drawsi[,"gamma[3]"] %*% t(predx$ci) +
@@ -368,8 +382,8 @@ for(i in 1:12){
 stanfit_i <- readRDS(stanfit_i, file = paste0("~/uomShare/wergStaff/ChrisW/git-data/urban_",
                                    "riffle_experiment/model_fits/fit_riffle_baci_",
                                    names(ys)[i], ".rds"))
-drawsi <- as.data.frame(stanfit_i$draws(format = "df", variables = c("a_si","a_sa","a_t","gamma",
-                                                                     "sigma_si","sigma_sa","sigma_t","sigma")))
+drawsi <- as.data.frame(stanfit_i$draws(format = "df", variables = c("a_si","a_sa","gamma",  #"a_t",
+                                                                     "sigma_si","sigma_sa","sigma"))) #"sigma_t",
 cf_drawsi <- 
   drawsi[,"gamma[1]"] %*% t(predx_cf$`(Intercept)`) +
   drawsi[,"gamma[2]"] %*% t(predx_cf$ba1) +
