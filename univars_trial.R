@@ -114,13 +114,17 @@ ys <- list(depth_m_var = as.vector(scale(log(samples$depth_m_var + 1.75e-04))),
            max_phi = as.vector(scale(samples$max_phi)),
            med_phi = as.vector(scale(samples$med_phi)))
 
+# OM data for trips 5-6 unreliable
+ys <- ys[!grepl("_g",names(ys))]
+
 y_transform_pars <- data.frame(stat = names(ys)[1:12],
                                scaled = c(TRUE,FALSE,rep(TRUE,10)), 
                                log = c(rep(TRUE,9),rep(FALSE,3)), 
                                log_add = c(1.75e-04,0,0.0007442,0,0.001,
                                            0.001,0.0094382,0.001,5e-04,0,0,0))
+y_transform_pars <- y_transform_pars[!grepl("_g",y_transform_pars$stat),]
 
-mod <- cmdstan_model("normal_rand_sa_si_fixedmatrix_baci.stan", pedantic = TRUE) 
+mod <- cmdstan_model("normal_rand_sa_si_t_fixedmatrix_baci.stan", pedantic = TRUE) 
 
 univar_beta_summary <- 
   data.frame(model = NA, param = NA, variable = NA, mean = NA, median = NA,
@@ -134,17 +138,13 @@ gofs <-data.frame(model = NA, oe_r_squ = NA, oe_slope = NA, pred_95 = NA)[0,]
 param_summary <- list()
 cfs <- list()
 
-for(i in 1:12){
+for(i in 1:length(ys)){
 # remove NAs, and check if data covers trips 5 and 6
   yi <- names(ys)[i]
 samplesi <- samples[!is.na(samples[ifelse(yi == "cpomw_g","cpom_g",yi)]),]
 if(length(unique(samplesi$sitecode)) != nrow(sites)) stop()
 # recode ba for cases where there are no data for ba 2 (trips 5 and 6)
 samplesi$ba <- factor(samplesi$ba)
-# OM data for trips 5-6 unreliable
-if(grepl("_g",yi)){
-  samplesi <- samplesi[samplesi$t < 5,]
-}
 u <- model.matrix(~ ba + ci + ba:ci + i + ba:ci:i, data = samplesi)
 # and for sample no (as there a variable missing samples)
 sample_nos <- data.frame(sample = unique(samplesi$sample))
@@ -156,29 +156,22 @@ sdata <- list(n_obs = nrow(samplesi),
               n_site = nrow(sites),
               n_sample = nrow(sample_nos),
               n_pred = ncol(u),
- #             n_t = max(samplesi$t),
+              n_t = max(samplesi$t),
               site_no = samplesi$site_no,
               samp_no = samplesi$sample_no,
-#              t_no = samplesi$t,
+              t_no = samplesi$t,
               u = u,
               y = ys[[i]][match(samplesi$smpcode,samples$smpcode)]
 )
 
-nt <- 4; nc <- 4
-ni <- rep(2000,12) # c(6000,2000,6000,6000,6000,3000,3000,3000,3000,4000,4000,4000)
-nb <- rep(1000,12) # c(3000,1000,3000,3000,3000,2000,2000,2000,2000,2500,2500,2500)
-# even with standardized y, 6000 iters, vel_m_s_var has low BFMI (0.035-0.076) and 0% divergences    
-# sigma_sa/a_sa, seemingly the main problem: even if prior for sigma_sa is set to exponential(3) (as it seems to sit near 0)
-# bfmi remains low.  All main effects are well sampled
-# similar story for vel_m_s_mean
-
-ad <- rep(0.8,12) # c(0.9,0.8,0.99,0.95,0.95,0.99,0.99,0.95,0.98,0.85,0.95,0.95)
 stanfit_i <- mod$sample(data = sdata,
-                        seed = rand_seed, chains = nc,
-                        parallel_chains = nc, iter_warmup = nb[i],
-                        adapt_delta = ad[i],
-                        max_treedepth = ifelse(i %in% c(1,2,3,5,6,7,9,11,12),15,10),
-                        iter_sampling = (ni - nb)[i], refresh = 100)
+                        seed = rand_seed, chains = 4,
+                        parallel_chains = 4, 
+                        iter_warmup = 1500,
+                        adapt_delta = ifelse(names(ys[i]) %in% c("min_phi","max_phi","med_phi"), 0.95, 0.8),
+                        max_treedepth = ifelse(names(ys[i]) == "depth_m_mean", 12, 10),
+                        iter_sampling = c(1000,600,700,500,700,500,750)[i], 
+                        refresh = 100)
 # #  save csv files rather than the model object to use less RAM
 stanfit_i$save_output_files(
   dir = "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/",
@@ -188,12 +181,10 @@ saveRDS(stanfit_i, file = paste0("~/uomShare/wergStaff/ChrisW/git-data/urban_",
                                  "riffle_experiment/model_fits/fit_riffle_baci_",
                                  names(ys)[i], ".rds"))
 stanfit_i$diagnostic_summary()
-# EBFMI 0.273, 0.289, 0.290, 0.309, zero divergences, zero max treedepth reached.
-# # The above three steps required < 500 Mb RAM
-summ <- stanfit_i$summary() # This took ~2h and needed >40 Gb RAM
-min(summ$ess_bulk,na.rm=TRUE) 
-min(summ$ess_tail,na.rm=TRUE) 
-max(summ$rhat,na.rm=TRUE)  
+summ <- stanfit_i$summary() 
+# min(summ$ess_bulk,na.rm=TRUE) 
+# min(summ$ess_tail,na.rm=TRUE) 
+# max(summ$rhat,na.rm=TRUE)  
 
 univar_beta_summary <- rbind(univar_beta_summary, 
                              data.frame(model = names(ys)[i], 
@@ -208,15 +199,19 @@ univar_diagnostics <- rbind(univar_diagnostics, data.frame(model = names(ys)[i],
                                  min_ess_bulk = min(summ$ess_bulk,na.rm=TRUE),
                                  min_ess_tail = min(summ$ess_tail,na.rm=TRUE)))
 
-drawsi <- as.data.frame(stanfit_i$draws(format = "df", variables = c("a_si","a_sa","gamma",  #"a_t",
-                                                                     "sigma_si","sigma_sa","sigma")))  #,"sigma_t"
+drawsi <- as.data.frame(stanfit_i$draws(format = "df", variables = c("a_s","a_st","gamma", "a_t",
+                                                                     "sigma_s","sigma_t","sigma_st","sigma")))  #
 predx <- unique(cbind(samplesi[c("sample","site_no","sample_no","t")],u))
+
+bayesplot::mcmc_trace(drawsi, pars = c("sigma_s","sigma_t", "sigma_st"),
+                    facet_args = list(nrow = 3))
+
 temp <- aggregate(sdata$y, by = list(sample = samplesi$sample),FUN = mean)
 predx$x <- temp$x[match(predx$sample, temp$sample)]
   if("ba2" %in% names(as.data.frame(u))){
     predy_draws <-
-      drawsi[grep("a_si",names(drawsi))][match(predx$site_no, 1:sdata$n_site)] +
-      drawsi[grep("a_sa",names(drawsi))][match(predx$sample_no, 1:sdata$n_sample)] +
+      drawsi[grep("a_s",names(drawsi))][match(predx$site_no, 1:sdata$n_site)] +
+      drawsi[grep("a_st",names(drawsi))][match(predx$sample_no, 1:sdata$n_sample)] +
 #      drawsi[grep("a_t",names(drawsi))][match(predx$t, 1:sdata$n_t)] +
       drawsi[,"gamma[1]"] %*% t(predx$`(Intercept)`) +
       drawsi[,"gamma[2]"] %*% t(predx$ba1) +
@@ -230,8 +225,8 @@ predx$x <- temp$x[match(predx$sample, temp$sample)]
       drawsi[,"gamma[10]"] %*% t(predx$`ba2:ci:i`) 
   }else{
     predy_draws <-
-      drawsi[grep("a_si",names(drawsi))][match(predx$site_no, 1:sdata$n_site)] +
-      drawsi[grep("a_sa",names(drawsi))][match(predx$sample_no, 1:sdata$n_sample)] +
+      drawsi[grep("a_s",names(drawsi))][match(predx$site_no, 1:sdata$n_site)] +
+      drawsi[grep("a_st",names(drawsi))][match(predx$sample_no, 1:sdata$n_sample)] +
 #      drawsi[grep("a_t",names(drawsi))][match(predx$t, 1:sdata$n_t)] +
       drawsi[,"gamma[1]"] %*% t(predx$`(Intercept)`) +
       drawsi[,"gamma[2]"] %*% t(predx$ba1) +
@@ -378,12 +373,12 @@ for(i in 1:length(cfs)){
 }
 
 env_diffs <- list()
-for(i in 1:12){
+for(i in 1:length(ys)){
 stanfit_i <- readRDS(stanfit_i, file = paste0("~/uomShare/wergStaff/ChrisW/git-data/urban_",
                                    "riffle_experiment/model_fits/fit_riffle_baci_",
                                    names(ys)[i], ".rds"))
-drawsi <- as.data.frame(stanfit_i$draws(format = "df", variables = c("a_si","a_sa","gamma",  #"a_t",
-                                                                     "sigma_si","sigma_sa","sigma"))) #"sigma_t",
+drawsi <- as.data.frame(stanfit_i$draws(format = "df", variables = c("a_s","a_st","gamma",  #"a_t",
+                                                                     "sigma_s","sigma_st","sigma"))) #"sigma_t",
 cf_drawsi <- 
   drawsi[,"gamma[1]"] %*% t(predx_cf$`(Intercept)`) +
   drawsi[,"gamma[2]"] %*% t(predx_cf$ba1) +
@@ -422,7 +417,7 @@ diffs <- c("delta_baci1_hi","delta_baci2_hi","delta_baci1_low","delta_baci2_low"
 nms <- c( bquote(Delta~"A1 4% EI"), bquote(Delta~"A2 4% EI"), 
           bquote(Delta~"A1 32% EI"), bquote(Delta~"A2 32% EI"))
 miny <- 0.5; maxy <- 4.5
-for(j in 8:12){
+for(j in 1:7){
   summp <- env_diff_summs[env_diff_summs$stat == names(cfs)[j],]
   summp <- summp[match(diffs,summp$diff),]
   par(mar = c(4,ifelse(j %in% c(1,5), 5, 1),1,0))

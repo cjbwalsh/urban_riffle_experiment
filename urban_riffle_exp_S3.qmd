@@ -45,11 +45,15 @@ The first part of this document details the specifications and code used to esti
 
 ### 1. Model specification
 
-We estimated the posterior distributions of parameters in the multi-taxon model of taxon abundances and the models of depth, velocity and organic matter and algal mass in the sample units using the Markov chain Monte-Carlo (MCMC) sampler of Stan [@carpenter_etal_2017], calling Stan from R using the library `cmdstanr` [@gabry_cesnovar_2022].
+The dataset for all models consisted of 3--4 sample units, collectively termed a sample, taken from each of 9 sites (6 experimental in which riffles were constructed and 3 controls) on each of 6 occasions (2 before, B; 2 in the first year after, A1; and 2 5-6 years after riffle construction, A2). Each sample was taken in either autumn (spring = 0) or spring (spring = 1).  The sites spanned an urban gradient represented by (log-transformed and scaled) effective imperviousness I.
 
-$\beta$ parameters (of fixed effects) were formulated as random effects drawn from community-level hyper-distributions with the mean parameters specified as diffuse normal distributions (mean 0, standard deviation---sd---5) and, for the multi-taxon model, the parameters for each species drawn from a multivariate normal distribution with a covariance matrix that describes the residual associations among species. The hyperprior correlation matrix ($\Omega$) had an LKJ prior with shape 2, and scale with an exponentially distributed prior with rate 1 [@stan_dev_team_2022] . For the multi-taxon model, the random-effect parameters for site ($\theta_{si}$) and sample ($\theta_{sa}$) were drawn from site-level and sample-level (respectively) normal hyper-distributions, with mean 0 and sds with normal distributions (mean 0, sd 2). The random effect for sampling occasion ($\theta_{t}$) was drawn from a hyper-distribution from the 6 sampling occasions with mean 0 and an exponentially distributed (rate 1) distribution for the multi-taxon model. For the environmental variable models, all random-effect hyper-distributions were exponentially distrubted (rate 1). In the multi-taxon model, the parameters modelling error in abundance of each taxon among sample units ($\epsilon$), and the dispersion parameter ($\phi$) of the negative binomial distribution for each taxon both had weakly informative normal prior distributions (mean 1, sd 1).
+We estimated the posterior distributions of parameters in the multi-taxon model of taxon abundances and the models of environmental variables (depth, velocity and $\Phi$, particle size) in the sample units using the Markov chain Monte-Carlo (MCMC) sampler of Stan [@carpenter_etal_2017], calling Stan from R using the library `cmdstanr` [@gabry_cesnovar_2022].
 
-For the multi-taxon model, we drew inference from 9,000 posterior samples taken from 4 unthinned chains, discarding the first 1,000 samples of each chain. This number of samples was sufficient to ensure bulk and tail effective sample sizes of at least 100 per chain for all parameters. We diagnosed convergence by visually inspecting the MCMC chains for adequate mixing and stationarity, and ensured that the diagnostic tests for zero-divergent transitions, Gelman-Rubin statistic ($\hat{R}$) \< 1.1, and zero cases of saturated tree-depth were satisfied. The Bayesian Fraction of Missing Information (mean 0.299) was marginally lower than the nominal threshold of 0.3.
+We used weakly informative prior distributions for all parameters, and confirmed that resulting posterior distributions were substantially narrower.  We modelled the environmental variables (transformed as necessary, Table 1) as normal disributions with standard deviation (sd) having a prior normal distribition (mean 0, sd 1). In the multi-taxon model, we modelled count of each taxon in each sample unit as a negative binomial distribution with a dispersion parameter ($\phi$) having a normal prior distribution (mean 1, sd 1).
+
+In all models, we formulated $\beta$ parameters (of fixed effects) as random effects drawn from community-level hyper-distributions with the mean parameters specified as diffuse normal distributions (mean 0, sd 5) and, for the multi-taxon model, the parameters for each species were drawn from a multivariate normal distribution with a covariance matrix that describes the residual associations among species. The hyperprior correlation matrix ($\Omega$) had an LKJ prior with shape 2, and scale with an exponentially distributed prior with rate 1 [@stan_dev_team_2022]. For all models, the random-effect parameters for site ($\theta_{s}$), time ($\theta_{t}$) and sample ($\theta_{s,t}$) were drawn from normal hyper-distributions, with mean 0 and sd with a normal prior distribution (mean 0, sd 1). 
+
+For the multi-taxon model, we drew inference from 5,000 posterior samples taken from 4 unthinned chains, discarding the first 1,000 samples of each chain. This number of samples was sufficient to ensure bulk and tail effective sample sizes of at least 100 per chain for all parameters. We diagnosed convergence by visually inspecting the MCMC chains for adequate mixing and stationarity, and ensured that the diagnostic tests for zero-divergent transitions, Gelman-Rubin statistic ($\hat{R}$) \< 1.1, and zero cases of saturated tree-depth were satisfied. The Bayesian Fraction of Missing Information (mean 0.299) was marginally lower than the nominal threshold of 0.3.
 
 The environmental variable models remain a work in progress. Although the inferences made from them appear sound, the models did not, in their current parameterization, satisfy Stan's diagnostic criteria (Table 1). The velocity models in particular have low BFMI, resulting in low effective sample size. The phi models are ok, except for a small number (\<0.01%) of divergences (this is probably satisfactory). *Any suggestions?* ($\hat{R}$ and zero tree-depth criteria were met by all)
 
@@ -89,45 +93,46 @@ data {
   int<lower=1> n_pred;        // Number of predictor variables
   int<lower=1> n_t;           // Number of sampling occasions
   matrix[n_obs,n_pred] u;     // group predictors (model matrix) 
-  array[n_obs,n_taxa] int c;  // Counts of species in each subsample
-  array[n_obs,n_taxa] real s; // Subsample proportion for each observation
+  array[n_obs,n_taxa] int c;  // Count of each taxon in each subsample
+  array[n_obs,n_taxa] real s; // Subsample proportion for each s-u
   array[n_obs] int site_no;   // Site number
-  array[n_obs] int samp_no;   // Sample number
-  array[n_obs] int t_no;      // sampling occasion number
+  array[n_obs] int samp_no;   // Sample number (vectorised [t_no, site_no])
+  array[n_obs] int t_no;      // Sampling occasion number
 }
 parameters {
-  vector[n_pred] mu_gamma;
+  vector[n_pred] mu_gamma;         //means of beta parameter hyperdistributions          
   matrix[n_pred,n_taxa] gamma;        // beta parameters of fixed effects in u
-  matrix[n_site,n_taxa] a_si;         // coefficient of random site effect
-  matrix[n_sample,n_taxa] a_sa;       // coefficient of random sample effect
-  matrix[n_t,n_taxa] a_t;             // Coefficient of time effect 
-  matrix[n_obs,n_taxa] eps_raw;
-  // raw s-u variability (see reparameterization below)   
-  real<lower=0> sigma_si;      //sd of hyperdistribution of a_sis among taxa
-  real<lower=0> sigma_sa;      //sd of hyperdistribution of a_sas among taxa
-  real<lower=0> sigma_t;       //sd of hyperdistribution of a_ts among taxa
-  vector<lower=0>[n_taxa] sigma_eps; // sd of random s-u error for each taxon
-  vector<lower=0>[n_taxa] phi;       // dispersion parameter for neg-binomial distribution
-  corr_matrix[n_pred] Omega;         // Hyperprior correlation matrix among taxa
-  vector<lower=0>[n_pred] tau;       // Scale for correlation matrix
+  matrix[n_site,n_taxa] a_s_raw;      // raw coefficient of random site effect
+  matrix[n_t,n_taxa] a_t_raw;         // raw oefficient of time effect 
+  matrix[n_sample,n_taxa] a_st_raw;   // raw coefficient of random sample effect 
+                                      //(1 sample per site_no per t_no)
+  // see reparameterizations below for explanationof these raw coefficients
+  vector<lower=0>[n_taxa] sigma_s; //rsd of hyperdistribution of a_sis among taxa
+  vector<lower=0>[n_taxa] sigma_t; //sd of hyperdistribution of a_ts among taxa
+  vector<lower=0>[n_taxa] sigma_st;//sd of hyperdistribution of a_sas among taxa
+  vector<lower=0>[n_taxa] phi;     //dispersion parameter for neg-binomial distn
+  corr_matrix[n_pred] Omega;       // Hyperprior correlation matrix among taxa
+  vector<lower=0>[n_pred] tau;     // Scale for correlation matrix
 }
 transformed parameters {
-  matrix[n_obs,n_taxa] eps;         // Abundance noise
   matrix[n_obs,n_taxa] log_lambda;  // Log total count
+  matrix[n_site,n_taxa] a_s;        // coefficient of random site effect
+  matrix[n_t,n_taxa] a_t;           // Coefficient of random time effect 
+  matrix[n_sample,n_taxa] a_st;     // coefficient of random sample effect
+                         // (sample = 3-4 s-us from each site on each occasion)
+  for(j in 1:n_taxa){
+  a_s[,j] =  sigma_s[j] * a_s_raw[,j];  
+  a_t[,j] =  sigma_t[j] * a_t_raw[,j];  
+  a_st[,j] =  sigma_st[j] * a_st_raw[,j];  
+  }
+// with (e.g.) a_s_raw ~ std_normal(), this implies a_s ~ normal(0, sigma_s)
+// See https://mc-stan.org/docs/stan-users-guide/reparameterization.html
 
-//  for(i in 1:n_obs){
-    for(j in 1:n_taxa){
-      eps[,j] =  sigma_eps[j] * eps_raw[,j];  
-   // with eps_raw ~ std_normal(), this implies eps ~ normal(0, sigma_eps)
-   // See https://mc-stan.org/docs/stan-users-guide/reparameterization.html
- }
-//  }
-  
   for(i in 1:n_obs){
      for(j in 1:n_taxa){
        //The linear model
-      log_lambda[i,j] = a_si[site_no[i],j] +  a_sa[samp_no[i],j] +  
-                        a_t[t_no[i],j] +  u[i,] * gamma[,j] + eps[i,j]; 
+      log_lambda[i,j] = a_s[site_no[i],j] +  a_t[t_no[i],j] +  
+                       a_st[samp_no[i],j] +  u[i,] * gamma[,j]; 
       }
       }
 }
@@ -135,14 +140,12 @@ transformed parameters {
 model {
   // Priors
    mu_gamma ~ normal(0,5);
-   to_vector(a_si) ~ normal(0,sigma_si);
-   to_vector(a_sa) ~ normal(0,sigma_sa);
-   to_vector(a_t) ~ normal(0,sigma_t);
-   to_vector(eps_raw) ~ std_normal();
-   sigma_si ~ normal(0,2);
-   sigma_sa ~ normal(0,2);
-   sigma_t ~ exponential(1);  // sampled poorly if normal(0,2)
-   sigma_eps ~ normal(1,1); // sampled poorly if normal(0,1)
+   to_vector(a_s_raw) ~ std_normal();
+   to_vector(a_t_raw) ~ std_normal();
+   to_vector(a_st_raw) ~ std_normal();
+   sigma_s ~ normal(0,1);
+   sigma_t ~ normal(0,1);
+   sigma_st ~ normal(0,1);
    phi ~ normal(1,1);
    tau ~ exponential(1);
    Omega ~ lkj_corr( 2 );  
@@ -169,11 +172,13 @@ model {
 
 generated quantities {
   // log-likelihood only used for model comparisons during model development.
-  // The most complex model considered has been used, so model comparisons not reported
+  // The most complex model considered has been used,
+  // so model comparisons not reported
   array[n_obs,n_taxa] real log_lik;
  for (i in 1 : n_obs) {
    for(j in 1 : n_taxa){
-   log_lik[i,j] = neg_binomial_2_log_lpmf(c[i,j] | log_lambda[i,j] + log(s[i,j]), phi[j]);
+   log_lik[i,j] = neg_binomial_2_log_lpmf(c[i,j] | log_lambda[i,j] +
+                    log(s[i,j]), phi[j]);
  }
  }
  }
@@ -278,28 +283,27 @@ rand_seed = 9430570
 # Check model is up-to-date: if not, compile.
 mod <- cmdstan_model("nbinom_me_rand_sa_si_t_fixedmatrix_baci.stan", pedantic = TRUE) 
 
-ni <- 9000; nt <- 4; nb <- 1000; nc <- 4
+ni <- 5000; nt <- 4; nb <- 1000; nc <- 4
 stanfit_i <- mod$sample(data = sdata,
                         seed = rand_seed, chains = nc,
                         parallel_chains = nc, iter_warmup = nb,
                         iter_sampling = ni - nb, refresh = 100)
-# 6000 iterations 3.6 h
+# 5000 iterations took ~2 h
 # #  save csv files rather than the model object to use less RAM
 stanfit_i$save_output_files(dir = model_fit_dir, basename = "fit_riffle_baci_mt", 
                             timestamp = FALSE, random = FALSE)
 stanfit_i$sampler_diagnostics()
 saveRDS(stanfit_i, file = paste0(model_fit_dir,"fit_riffle_baci_mt.rds"))
 stanfit_i$diagnostic_summary()
-# EBFMI 0.31, 0.27, 0.31, 0.30 zero divergences, zero max treedepth reached.
+# EBFMI 0.41, 0.53, 0.49, 0.48 zero divergences, zero max tree depth reached.
 # # The above three steps required < 500 Mb RAM
-summ <- stanfit_i$summary() # This took ~2h and needed >40 Gb RAM
-min(summ$ess_bulk,na.rm=TRUE) # 471
-min(summ$ess_tail,na.rm=TRUE) # 499
-max(summ$rhat,na.rm=TRUE)  # 1.008
-# # all diagnostic_summary statistics were fine 
-# # (slightly low BFMI due to sigma_t being difficult to fit. All other parameters sampled well)
+summ <- stanfit_i$summary() # took an additional 0.5 h and needed >40 Gb RAM
+min(summ$ess_bulk,na.rm=TRUE) # 569
+min(summ$ess_tail,na.rm=TRUE) # 943
+max(summ$rhat,na.rm=TRUE)  # 1.013
+# # all diagnostic_summary diagnostics were satisfied
 
-mod_draws <- as.data.frame(stanfit_i$draws(format = "df", variables = c("a_si","a_sa","a_t","gamma","phi")))
+mod_draws <- as.data.frame(stanfit_i$draws(format = "df", variables = c("a_s","a_t","a_st","gamma","phi")))
 save(mod_draws, file = paste0(model_fit_dir,"fit_riffle_baci_draws.rda"))
 ```
 

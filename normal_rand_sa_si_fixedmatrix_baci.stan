@@ -29,8 +29,8 @@ model {
    a_si ~ normal(0, sigma_si);
    a_sa ~ normal(0, sigma_sa);
    to_vector(gamma) ~ normal(0,5);
-   sigma_si ~ exponential(1); //normal(0.5,2); 
-   sigma_sa ~ exponential(1); //normal(0,1); 
+   sigma_si ~ student_t(2, 0, 0.3); //exponential(1); //normal(0.5,2); 
+   sigma_sa ~ student_t(2, 0, 0.3); //exponential(1); //normal(0,1); 
    sigma ~ normal(0,1);
 
  // Likelihood

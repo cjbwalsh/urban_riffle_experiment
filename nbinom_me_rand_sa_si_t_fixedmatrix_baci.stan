@@ -7,45 +7,46 @@ data {
   int<lower=1> n_pred;        // Number of predictor variables
   int<lower=1> n_t;           // Number of sampling occasions
   matrix[n_obs,n_pred] u;     // group predictors (model matrix) 
-  array[n_obs,n_taxa] int c;  // Counts of species in each subsample
-  array[n_obs,n_taxa] real s; // Subsample proportion for each observation
+  array[n_obs,n_taxa] int c;  // Count of each taxon in each subsample
+  array[n_obs,n_taxa] real s; // Subsample proportion for each s-u
   array[n_obs] int site_no;   // Site number
-  array[n_obs] int samp_no;   // Sample number
-  array[n_obs] int t_no;      // sampling occasion number
+  array[n_obs] int samp_no;   // Sample number (vectorised [t_no, site_no])
+  array[n_obs] int t_no;      // Sampling occasion number
 }
 parameters {
-  vector[n_pred] mu_gamma;
+  vector[n_pred] mu_gamma;         //means of beta parameter hyperdistributions          
   matrix[n_pred,n_taxa] gamma;        // beta parameters of fixed effects in u
-  matrix[n_site,n_taxa] a_si;         // coefficient of random site effect
-  matrix[n_sample,n_taxa] a_sa;       // coefficient of random sample effect
-  matrix[n_t,n_taxa] a_t;             // Coefficient of time effect 
-  matrix[n_obs,n_taxa] eps_raw;
-  // raw s-u variability (see reparameterization below)   
-  real<lower=0> sigma_si;      //sd of hyperdistribution of a_sis among taxa
-  real<lower=0> sigma_sa;      //sd of hyperdistribution of a_sas among taxa
-  real<lower=0> sigma_t;       //sd of hyperdistribution of a_ts among taxa
-  vector<lower=0>[n_taxa] sigma_eps; // sd of random s-u error for each taxon
-  vector<lower=0>[n_taxa] phi;       // dispersion parameter for neg-binomial distribution
-  corr_matrix[n_pred] Omega;         // Hyperprior correlation matrix among taxa
-  vector<lower=0>[n_pred] tau;       // Scale for correlation matrix
+  matrix[n_site,n_taxa] a_s_raw;      // raw coefficient of random site effect
+  matrix[n_t,n_taxa] a_t_raw;         // raw oefficient of time effect 
+  matrix[n_sample,n_taxa] a_st_raw;   // raw coefficient of random sample effect 
+                                      //(1 sample per site_no per t_no)
+  // see reparameterizations below for explanationof these raw coefficients
+  vector<lower=0>[n_taxa] sigma_s; //rsd of hyperdistribution of a_sis among taxa
+  vector<lower=0>[n_taxa] sigma_t; //sd of hyperdistribution of a_ts among taxa
+  vector<lower=0>[n_taxa] sigma_st;//sd of hyperdistribution of a_sas among taxa
+  vector<lower=0>[n_taxa] phi;     //dispersion parameter for neg-binomial distn
+  corr_matrix[n_pred] Omega;       // Hyperprior correlation matrix among taxa
+  vector<lower=0>[n_pred] tau;     // Scale for correlation matrix
 }
 transformed parameters {
-  matrix[n_obs,n_taxa] eps;         // Abundance noise
   matrix[n_obs,n_taxa] log_lambda;  // Log total count
+  matrix[n_site,n_taxa] a_s;        // coefficient of random site effect
+  matrix[n_t,n_taxa] a_t;           // Coefficient of random time effect 
+  matrix[n_sample,n_taxa] a_st;     // coefficient of random sample effect
+                         // (sample = 3-4 s-us from each site on each occasion)
+  for(j in 1:n_taxa){
+  a_s[,j] =  sigma_s[j] * a_s_raw[,j];  
+  a_t[,j] =  sigma_t[j] * a_t_raw[,j];  
+  a_st[,j] =  sigma_st[j] * a_st_raw[,j];  
+  }
+// with (e.g.) a_s_raw ~ std_normal(), this implies a_s ~ normal(0, sigma_s)
+// See https://mc-stan.org/docs/stan-users-guide/reparameterization.html
 
-//  for(i in 1:n_obs){
-    for(j in 1:n_taxa){
-      eps[,j] =  sigma_eps[j] * eps_raw[,j];  
-   // with eps_raw ~ std_normal(), this implies eps ~ normal(0, sigma_eps)
-   // See https://mc-stan.org/docs/stan-users-guide/reparameterization.html
- }
-//  }
-  
   for(i in 1:n_obs){
      for(j in 1:n_taxa){
        //The linear model
-      log_lambda[i,j] = a_si[site_no[i],j] +  a_sa[samp_no[i],j] +  
-                        a_t[t_no[i],j] +  u[i,] * gamma[,j] + eps[i,j]; 
+      log_lambda[i,j] = a_s[site_no[i],j] +  a_t[t_no[i],j] +  
+                       a_st[samp_no[i],j] +  u[i,] * gamma[,j]; 
       }
       }
 }
@@ -53,14 +54,12 @@ transformed parameters {
 model {
   // Priors
    mu_gamma ~ normal(0,5);
-   to_vector(a_si) ~ normal(0,sigma_si);
-   to_vector(a_sa) ~ normal(0,sigma_sa);
-   to_vector(a_t) ~ normal(0,sigma_t);
-   to_vector(eps_raw) ~ std_normal();
-   sigma_si ~ normal(0,2);
-   sigma_sa ~ normal(0,2);
-   sigma_t ~ exponential(1);  // sampled poorly if normal(0,2)
-   sigma_eps ~ normal(1,1); // sampled poorly if normal(0,1)
+   to_vector(a_s_raw) ~ std_normal();
+   to_vector(a_t_raw) ~ std_normal();
+   to_vector(a_st_raw) ~ std_normal();
+   sigma_s ~ normal(0,1);
+   sigma_t ~ normal(0,1);
+   sigma_st ~ normal(0,1);
    phi ~ normal(1,1);
    tau ~ exponential(1);
    Omega ~ lkj_corr( 2 );  
