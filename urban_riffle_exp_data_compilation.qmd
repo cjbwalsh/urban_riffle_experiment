@@ -223,6 +223,7 @@ depth_vel$vel_m_s[unique(gsub("<","",vel_m_s_char[is.na(depth_vel$vel_m_s)])) ==
 # hist(log(depth_vel$vel_m_s))
 mean_depth_vel <- aggregate(depth_vel[c("depth_m","vel_m_s")], 
                             by = list(old_samplecode = depth_vel$old_samplecode), FUN = mean, na.rm = TRUE)
+mean_depth_vel$vel_m_s[is.na(mean_depth_vel$vel_m_s)] <- NA
 var_depth_vel <- aggregate(depth_vel[c("depth_m","vel_m_s")], 
                             by = list(old_samplecode = depth_vel$old_samplecode), FUN = var, na.rm = TRUE)
 # hist(log(var_depth_vel$depth_m + 5e-06))
