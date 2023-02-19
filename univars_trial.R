@@ -1,7 +1,7 @@
 library(cmdstanr)
 check_cmdstan_toolchain(fix = TRUE, quiet = TRUE)
 # Set random seed to ensure reproducible results
-rand_seed = 9430568
+rand_seed = 9430570
 
 baci_diffs <- function(mat){
   data.frame(delta_baci1_low = 
