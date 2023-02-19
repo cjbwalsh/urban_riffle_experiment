@@ -3,7 +3,7 @@ data {
   int<lower=0> n_obs;         // Number of observations (sample-units, s-u)
   int<lower=1> n_taxa;        // Number of taxa
   int<lower=1> n_site;        // Number of sites
-  int<lower=1> n_sample;      // Number of samples
+  int<lower=1> n_sample;      // Number of samples (combinations of t_no, site_no)
   int<lower=1> n_pred;        // Number of predictor variables
   int<lower=1> n_t;           // Number of sampling occasions
   matrix[n_obs,n_pred] u;     // group predictors (model matrix) 
@@ -20,10 +20,10 @@ parameters {
   matrix[n_t,n_taxa] a_t_raw;         // raw oefficient of time effect 
   matrix[n_sample,n_taxa] a_st_raw;   // raw coefficient of random sample effect 
                                       //(1 sample per site_no per t_no)
-  // see reparameterizations below for explanationof these raw coefficients
-  vector<lower=0>[n_taxa] sigma_s; //rsd of hyperdistribution of a_sis among taxa
+  // see reparameterizations below for explanation of these raw coefficients
+  vector<lower=0>[n_taxa] sigma_s; //rsd of hyperdistribution of a_ss among taxa
   vector<lower=0>[n_taxa] sigma_t; //sd of hyperdistribution of a_ts among taxa
-  vector<lower=0>[n_taxa] sigma_st;//sd of hyperdistribution of a_sas among taxa
+  vector<lower=0>[n_taxa] sigma_st;//sd of hyperdistribution of a_sts among taxa
   vector<lower=0>[n_taxa] phi;     //dispersion parameter for neg-binomial distn
   corr_matrix[n_pred] Omega;       // Hyperprior correlation matrix among taxa
   vector<lower=0>[n_pred] tau;     // Scale for correlation matrix
@@ -79,7 +79,7 @@ model {
   // probability of the linear model.  It is equivalent to a (50 times) slower 
   // parameterization modelling the marginal binomial and negative-binomial
   // probabilities separately, by looping through all feasible total counts
-  // given a each count and subsample proportion.
+  // given each count and subsample proportion.
    }
   }
 }
