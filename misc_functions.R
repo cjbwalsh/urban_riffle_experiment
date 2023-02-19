@@ -18,3 +18,29 @@ ct <- function (rows,
     results[is.na(results)] <- 0
   results
 }
+
+unscale <- function(y_scaled_transformed, x, scaled = TRUE, log = TRUE, log_add = 0){  
+  #y_scaled_transformed is modelled output of variable x calculated on scaled 
+  # (if scale = TRUE), and logged (if log = TRUE) data, x
+  # x is the original vector of raw modelled data before transformation (if log = TRUE) and scaling
+  # log_add is the amount added before logging to avoid log(0)
+  if(log){
+    x_transformed <- log(x + log_add)
+  }else{
+    x_transformed <- x
+  }
+  if(scaled){
+    scale_x <- scale(x_transformed) 
+    y_transformed <- y_scaled_transformed * attr(scale_x, 'scaled:scale') + 
+      attr(scale_x, 'scaled:center')
+  }else{
+    y_transformed <- y_scaled_transformed
+  }
+  if(log){
+    y <- exp(y_transformed) - log_add
+  }else{
+    y <- y_transformed
+  }
+  list(y_transformed = y_transformed, 
+       y = y)
+}
