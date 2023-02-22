@@ -1,5 +1,6 @@
 ---
 title: "Appendix S2: Notes on biological data preparation"
+author: "Christopher J Walsh, J Angus Webb, Daniel C Gwinn, and Peter F Breen"
 format: docx
 editor: visual
 bibliography: references.bib
@@ -53,3 +54,5 @@ Taxonomic groups for which unidentified specimens outnumbered identified specime
 -   Hydroptilidae: 19 records identified as *Hellyethira* or *Hydroptila*, but three samples containing only unidentified Hydroptilidae.
 
 -   Leptoceridae: 8 records identified as *Triplectides*, *Notalina* or *Lectrides*, but four samples containing only unidentified Leptoceridae
+
+## References

@@ -44,3 +44,19 @@ unscale <- function(y_scaled_transformed, x, scaled = TRUE, log = TRUE, log_add 
   list(y_transformed = y_transformed, 
        y = y)
 }
+
+baci_diffs <- function(mat){
+  # Function for calculating the posterior distributions of the 4 contrasts used in the paper
+  data.frame(delta_baci1_low = 
+               mat[,combos$control_lowi[1]] - mat[,combos$impact_lowi[1]] -
+               (mat[,combos$control_lowi[2]] - mat[,combos$impact_lowi[2]]),
+             delta_baci2_low = 
+               mat[,combos$control_lowi[1]] - mat[,combos$impact_lowi[1]] -
+               (mat[,combos$control_lowi[3]] - mat[,combos$impact_lowi[3]]),
+             delta_baci1_hi =
+               mat[,combos$control_hii[1]] - mat[,combos$impact_hii[1]] -
+               (mat[,combos$control_hii[2]] - mat[,combos$impact_hii[2]]),
+             delta_baci2_hi = mat[,combos$control_hii[1]] - mat[,combos$impact_hii[1]] -
+               (mat[,combos$control_hii[3]] - mat[,combos$impact_hii[3]]))
+}
+

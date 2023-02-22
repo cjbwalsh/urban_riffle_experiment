@@ -1,5 +1,6 @@
 ---
 title: "Appendix S1. Study site details"
+author: "Christopher J Walsh, J Angus Webb, Daniel C Gwinn, and Peter F Breen"
 format: docx
 editor: visual
 bibliography: references.bib
@@ -8,7 +9,7 @@ nocite: |
   @kunapo_etal_2020
 ---
 
-This document provides further detail on the study sites (@tbl-site_details). @fig-site_loc_map shows the locations of the 9 sites to permit matching site details in Table 1 with Figure 1 in the manuscript. Figures 2-9 show channel dimensions of each reach as surveyed using a theodolite before riffle construction (except for EUM for which data was lost: reach statistics for that site were estimated from a paper record of the survey). Figure 10 shows photos of the constructed riffles placed in 5 of the impact sites (@fig-site_photos).
+This document provides further detail on the study sites (@tbl-site_details). @fig-site_loc_map shows the locations of the 9 sites to permit matching site details in Table 1 with Figure 1 in the manuscript. Figures 2-9 show channel dimensions of each reach as surveyed using a theodolite before riffle construction (except for EUM for which data was lost: reach statistics for that site were estimated from a paper record of the survey). Figure 10 shows photos of the constructed riffles placed in 5 of the impact sites, and a photo of the 6th reach before riffle construction (@fig-site_photos).
 
 ```{r}
 #| label: fig-site_loc_map
@@ -371,5 +372,7 @@ hvd_surv <- plot_survey("HVD_1")
 
 ![Olinda Creek](/mnt/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/images/OLN_5632h_experimental_riffle_200102xx.JPG){#fig-oln}
 
-Riffles after construction in 5 of the experimental sites.
+![Scotchmans Creek (before riffle construction)](/mnt/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/images/SCO_1555g_pre_riffle_1996.jpg){#fig-sco}
+
+Riffles after construction in 5 of the experimental sites, and the lower part of the experimental reach before riffle construction in Scotchmans Creek (after photo unavailable).
 :::
