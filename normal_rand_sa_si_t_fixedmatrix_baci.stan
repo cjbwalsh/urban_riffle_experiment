@@ -47,10 +47,10 @@ model {
    a_t_raw ~ std_normal();  
    a_st_raw ~ std_normal();
    to_vector(gamma) ~ normal(0,5);
-   sigma_s ~ normal(0,1);  
-   sigma_t ~ normal(0,1); 
-   sigma_st ~ normal(0,1);
-   sigma ~ normal(0,1);
+   sigma_s ~ normal(0,3);  
+   sigma_t ~ normal(0,3); 
+   sigma_st ~ normal(0,3);
+   sigma ~ normal(0,3);
 
  // Likelihood
   for (i in 1 : n_obs) {

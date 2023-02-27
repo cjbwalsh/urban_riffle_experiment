@@ -4,7 +4,7 @@ author: "Christopher J Walsh, J Angus Webb, Daniel C Gwinn, and Peter F Breen"
 format: docx
 editor: visual
 bibliography: references.bib
-csl: journal-of-applied-ecology.csl
+csl: ecological-applications.csl
 nocite: |
   @kunapo_etal_2020
 ---

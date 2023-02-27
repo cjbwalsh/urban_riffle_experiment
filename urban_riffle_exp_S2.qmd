@@ -4,7 +4,7 @@ author: "Christopher J Walsh, J Angus Webb, Daniel C Gwinn, and Peter F Breen"
 format: docx
 editor: visual
 bibliography: references.bib
-csl: journal-of-applied-ecology.csl
+csl: ecological-applications.csl
 ---
 
 This document provides further detail on the assembly of biological data used in the study. It also includes explanatory notes for non-standard taxonomic names used.

@@ -24,7 +24,7 @@ parameters {
   vector<lower=0>[n_taxa] sigma_s; //rsd of hyperdistribution of a_ss among taxa
   vector<lower=0>[n_taxa] sigma_t; //sd of hyperdistribution of a_ts among taxa
   vector<lower=0>[n_taxa] sigma_st;//sd of hyperdistribution of a_sts among taxa
-  vector<lower=0>[n_taxa] phi;     //dispersion parameter for neg-binomial distn
+  vector<lower=0>[n_taxa] inv_phi;  //inverse-square of dispersion parameter for neg-binomial distn
   corr_matrix[n_pred] Omega;       // Hyperprior correlation matrix among taxa
   vector<lower=0>[n_pred] tau;     // Scale for correlation matrix
 }
@@ -34,6 +34,8 @@ transformed parameters {
   matrix[n_t,n_taxa] a_t;           // Coefficient of random time effect 
   matrix[n_sample,n_taxa] a_st;     // coefficient of random sample effect
                          // (sample = 3-4 s-us from each site on each occasion)
+  vector<lower=0>[n_taxa] phi;     //dispersion parameter for neg-binomial distn
+
   for(j in 1:n_taxa){
   a_s[,j] =  sigma_s[j] * a_s_raw[,j];  
   a_t[,j] =  sigma_t[j] * a_t_raw[,j];  
@@ -41,6 +43,9 @@ transformed parameters {
   }
 // with (e.g.) a_s_raw ~ std_normal(), this implies a_s ~ normal(0, sigma_s)
 // See https://mc-stan.org/docs/stan-users-guide/reparameterization.html
+
+   phi = pow(1/inv_phi,2);
+// see https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations
 
   for(i in 1:n_obs){
      for(j in 1:n_taxa){
@@ -57,10 +62,10 @@ model {
    to_vector(a_s_raw) ~ std_normal();
    to_vector(a_t_raw) ~ std_normal();
    to_vector(a_st_raw) ~ std_normal();
-   sigma_s ~ normal(0,1);
-   sigma_t ~ normal(0,1);
-   sigma_st ~ normal(0,1);
-   phi ~ normal(1,1);
+   sigma_s ~ normal(0,3);
+   sigma_t ~ normal(0,3);
+   sigma_st ~ normal(0,3);
+   inv_phi ~ normal(0,3);
    tau ~ exponential(1);
    Omega ~ lkj_corr( 2 );  
    
