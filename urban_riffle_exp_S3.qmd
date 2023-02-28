@@ -265,12 +265,12 @@ sdata <- list(n_obs = nrow(samplesi),
 stanfit_i <- env_mod$sample(data = sdata,
                         seed = rand_seed, chains = 4,
                         parallel_chains = 4, 
-                        iter_warmup = 3000,
+                        iter_warmup = 2500,
 # adjustments to Stan settings to meet diagnostic criteria
-                        adapt_delta = ifelse(!names(ys[i]) %in% 
-                                               c("depth_m_var","depth_m_mean"), 0.98, 0.85),
-                        max_treedepth = ifelse(names(ys[i]) == "depth_m_mean", 12, 10),
-                        iter_sampling = c(550,500,600,800,600,500,700)[i],
+                        adapt_delta = c(0.98,0.99,0.99,0.98,0.99,0.99,0.98)[i],
+                        max_treedepth = ifelse(names(ys[i]) %in% 
+                                c("depth_m_var","depth_m_mean","min_phi","max_phi"), 14, 10),
+                        iter_sampling = c(1000,500,600,520,700,700,600)[i],
                         refresh = 120)
 # #  save csv files rather than the model object to use less RAM
 stanfit_i$save_output_files(
@@ -616,7 +616,7 @@ stanfit_i <- mod$sample(data = mt_data,
                         seed = rand_seed, chains = 4,
                         parallel_chains = 4, iter_warmup = 1000,
                         adapt_delta = 0.95,
-                        iter_sampling = 4000, refresh = 100) 
+                        iter_sampling = 5050, refresh = 100) 
 # 5000 iterations took ~4 h
 # #  save csv files rather than the model object to use less RAM
 stanfit_i$save_output_files(dir = model_fit_dir, basename = "fit_riffle_baci_mt", 
@@ -624,12 +624,12 @@ stanfit_i$save_output_files(dir = model_fit_dir, basename = "fit_riffle_baci_mt"
 stanfit_i$sampler_diagnostics()
 saveRDS(stanfit_i, file = paste0(model_fit_dir,"fit_riffle_baci_mt.rds"))
 stanfit_i$diagnostic_summary()
-# EBFMI 0.39, 0.39, 0.40, 0.42; 0 divergences; 0 maximum tree-depth reached.
+# EBFMI 0.39, 0.34, 0.38, 0.41; 0 divergences; 0 maximum tree-depth reached.
 # # The above three steps required < 500 Mb RAM
 summ <- stanfit_i$summary() # took an additional 24 min and needed >40 Gb RAM
-min(summ$ess_bulk,na.rm=TRUE) # 400
-min(summ$ess_tail,na.rm=TRUE) # 565
-max(summ$rhat,na.rm=TRUE)  # 1.018
+min(summ$ess_bulk,na.rm=TRUE) # 432
+min(summ$ess_tail,na.rm=TRUE) # 9225
+max(summ$rhat,na.rm=TRUE)  # 1.010
 # # all diagnostic_summary diagnostics were satisfied
 
 mod_draws <- as.data.frame(stanfit_i$draws(format = "df", variables = c("a_s",
@@ -809,7 +809,7 @@ pa_cf_mat <- p_cf_mat <- n_cf_mat <- list()
 
 # system.time({
 for(t in 1:ncol(biota_ct)){
-pa_cf_mat[[t]] <- p_cf_mat[[t]] <- predy_cf[[t]]
+p_cf_mat[[t]] <- predy_cf[[t]]
 n_cf_mat[[t]] <- exp(predy_cf[[t]])
 for(i in 1:ncol(p_cf_mat[[t]]))
   # Probability of occurrence in 1 sample unit
@@ -818,16 +818,13 @@ p_cf_mat[[t]][,i] <- 1 - pnbinom(0,mu = exp(predy_cf[[t]][,i]),
   # Probability of occurrence in 4 sample units
 p_cf_mat[[t]] <- 1 - (1 - p_cf_mat[[t]])^4
   # back-transformed abundance per 4 samples
-  # Predicted presence-absence (1,0) if p > 0.5
-pa_cf_mat[[t]][p_cf_mat[[t]] < 0.5] <- 0
-pa_cf_mat[[t]][p_cf_mat[[t]] >= 0.5] <- 1
 }
 # }) # ~15 s
-names(p_cf_mat) <- names(pa_cf_mat) <- colnames(biota_ct)
-tot_rich_cf_mat <- Reduce('+', pa_cf_mat)
+names(p_cf_mat) <- colnames(biota_ct)
+tot_rich_cf_mat <- Reduce('+', p_cf_mat)
 # see https://stackoverflow.com/questions/11641701/sum-a-list-of-matrices
-ept_rich_cf_mat <- Reduce('+', pa_cf_mat[substr(names(pa_cf_mat),1,2) %in% c("QE","QP","QT")])
-do_rich_cf_mat <- Reduce('+', pa_cf_mat[substr(names(pa_cf_mat),1,2) %in% c("QD","LO")])
+ept_rich_cf_mat <- Reduce('+', p_cf_mat[substr(names(p_cf_mat),1,2) %in% c("QE","QP","QT")])
+do_rich_cf_mat <- Reduce('+', p_cf_mat[substr(names(p_cf_mat),1,2) %in% c("QD","LO")])
 
 tot_n_cf_mat <- Reduce('+', n_cf_mat)
 ept_n_cf_mat <- Reduce('+', n_cf_mat[substr(names(p_cf_mat),1,2) %in% c("QE","QP","QT")])
@@ -863,8 +860,12 @@ for(i in 1:nrow(signal)){
   ss <- ifelse(signal$shortcode[i] == "LO",
                which(substr(names(p_cf_mat),1,2) == "LO"),
                which(substr(names(p_cf_mat),1,4) %in% signal$shortcode[i]))
+  # probability of occurrence of taxon i (lumping oligochaetes)
   signal_mat[[i]] <-
-    Reduce(function(x) 1-(1-x)^length(ss), pa_cf_mat[ss])
+    Reduce(function(x) 1-(1-x)^length(ss), p_cf_mat[ss])
+  # convert signal_mat to presence-absence
+  signal_mat[[i]] <- matrix(unlist(Map(function(x) rbinom(1,1,x),
+                            signal_mat[[i]])),ncol = ncol(p_cf_mat[[1]]))
   signal_mat[[i]][signal_mat[[i]] > 0] <-
     signal_mat[[i]][signal_mat[[i]] > 0]* signal$SIGNALWoV2003[i]
 }
@@ -1150,12 +1151,70 @@ for(t in 1:mt_data$n_taxa){
 
 # Function for calculating probability of occurrence in n sample units, given a vector of probabilities, x, of length n
 p_per_n <- function(x) {1 - prod(1 - x)} # x, a vector of probabilities
+# for case of all ps being equal
+p_per_n1 <- function(x,n) {1 - (1 - x)^n} # x, a vector of probabilities
 
 p_mean_per_sample <- matrix(ncol = mt_data$n_sample, nrow = mt_data$n_taxa)
 for(t in 1:mt_data$n_taxa){
   for(j in 1:mt_data$n_sample){
     p_mean_per_sample[t,j] <- p_per_n(rep(p_mean[j,t],sum(samples$sample_no == j)))
   }}
+
+# An alternative way to estimate richness: 
+p_per_samp_mat <- p_mat
+for(i in 1:mt_data$n_taxa){
+  for(j in 1:mt_data$n_sample){
+    p_per_samp_mat[[i]][,j] <- p_per_n1(p_mat[[i]][,j],sum(samples$sample_no == j))
+  }
+}
+pa_mat <- list()
+for(i in 1:mt_data$n_taxa){
+  # convert signal_mat to presence-absence assuming P > 0.5 is a presence
+  pa_mat[[i]] <- t(apply(p_per_samp_mat[[i]], 1, function(x) round(x)))
+  }
+
+pa1_mat <- p_per_samp_mat
+for(i in 1:mt_data$n_taxa){
+  # convert signal_mat to presence-absence using rbinom(1,1,0)
+    for(k in 1:ncol(pa1_mat[[i]])){
+  pa1_mat[[i]][,k] <- rbinom(nrow(pa1_mat[[i]]),1,p_per_samp_mat[[i]][,k])
+    }
+  }
+
+tot_rich_mat <- Reduce("+",p_per_samp_mat)
+tot_rich_mat1 <- Reduce("+",pa_mat)
+tot_rich_mat2 <- Reduce("+",pa1_mat)
+
+par(mfrow = c(2,2));par(mar = c(4,4,1,1))
+plot(apply(tot_rich_mat,2,FUN = mean), ylim = c(20,50),
+      apply(p_mean_per_sample,2, FUN = sum),
+     ylab = "Sum of mean probabilities per sample",
+     xlab = "Mean of summed probabilities per sample")
+abline(0,1)
+title(main = "A.", adj = 0)
+
+plot(apply(tot_rich_mat1,2,FUN = mean), ylim = c(20,50),
+      apply(p_mean_per_sample,2, FUN = sum),
+     xlab = "Mean number of taxa per sample (P >= 0.5)",
+     ylab = "Sum of mean probabilities per sample")
+abline(0,1)
+title(main = "B.", adj = 0)
+
+plot(apply(tot_rich_mat1,2,FUN = mean), ylim = c(20,50),
+      apply(tot_rich_mat,2,FUN = mean),
+     xlab = "Mean number of taxa per sample (P >= 0.5)",
+     ylab = "Mean of summed probabilities per sample")
+abline(0,1)
+title(main = "C.", adj = 0)
+
+plot(apply(tot_rich_mat,2,FUN = mean), ylim = c(20,50),
+      apply(tot_rich_mat2,2,FUN = mean),
+     xlab = "Sum of mean probabilities per sample",
+     ylab = "Mean number of taxa per sample (rbinom)")
+abline(0,1)
+title(main = "D.", adj = 0)
+
+
 
 # Probability of presence in observed data
 obs_per_sample <- matrix(ncol = mt_data$n_sample, nrow = mt_data$n_taxa)
@@ -1201,7 +1260,7 @@ for(i in 1:mt_data$n_sample){
 }
 
 x <- apply(obs_per_sample,2, FUN = sum)
-y <- apply(p_mean_per_sample,2, FUN = function(x) sum(x >= 0.5))
+y <- apply(p_mean_per_sample,2, FUN = sum)
      # this is a better fit than if FUN = sum with which R2 = 0.64 (0.72))
 plot(x, y, cex = sample_p + 0.5, axes = FALSE, 
      xlab = "Observed no. taxa", ylab = "Predicted no. taxa")
@@ -1216,7 +1275,7 @@ title(main = paste0("  R-sq = ", r21, " (", r22, ")"),
 
 x <- apply(obs_per_sample[substr(names(p_mat),1,2) %in% c("QE","QP","QT"),],2, FUN = sum)
 y <- apply(p_mean_per_sample[substr(names(p_mat),1,2) %in% c("QE","QP","QT"),],2, 
-           FUN = function(x) sum(x >= 0.5))
+           FUN = sum)
      # this is a better fit than if FUN = sum with which R2 = 0.92 (0.92))
 plot(x, y, cex = sample_p + 0.5, axes = FALSE, 
      xlab = "Observed no. EPT taxa", ylab = "Predicted no. EPT taxa")
