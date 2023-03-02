@@ -27,27 +27,27 @@ lapply(requiredPackages, require, character.only = TRUE)
 
 ## Check if there is a 'data' directory. If not make one
 if(!"data" %in% dir()){dir.create("data")}
-## While in review, the 3 large data files are in a private OSF repository
-## They can be downloaded to the data directory using this view-only link
-## https://osf.io/cms84/?view_only=256efadc4a124bcb96c6483226ef3a23
-## When the repository is public, the following will allow automatic download
-# ## The following checks for large data files, and if absent downloads them 
+## Check for large data files. If absent download them 
 # ## from the OSF repository to the data directory
-# if(!"wq_data_compiled.xlsx" %in% dir("data")){
-# wq_files <- osf_retrieve_node("cms84") %>% osf_ls_files()
-# osf_download(wq_files, path = "data")
-# }
+big_files <- c("ia_5m_raster.tif","urban_riffle_exp_survey_data_combined.xlsx",
+               "urban_riffle_experiment_data_for_model.xlsx",
+               "urban_riffle_experiment_map.gpkg")
+missing <- big_files[!big_files %in% dir("data")]
+if(length(missing) > 0){
+ dl_files <- osf_retrieve_node("cms84") %>% osf_ls_files()
+ osf_download(dl_files, path = "data", conflicts = "skip")
+ }
 ```
 
 The first part of this document details the specifications and code used to estimate the model of taxon abundance in the main paper. The second part assesses the model fit.
 
 ## 1. Model specification
 
-The dataset for all models consisted of 3--4 sample units, collectively termed a sample, taken from each of 9 sites (6 experimental in which riffles were constructed and 3 controls) on each of 6 occasions (2 before, B; 2 in the first year after, A1; and 2 5-6 years after riffle construction, A2). Each sample was taken in either autumn (spring = 0) or spring (spring = 1).  The sites spanned an urban gradient represented by (log-transformed and scaled) effective imperviousness I.
+The dataset for all models consisted of 3--4 sample units, collectively termed a sample, taken from each of 9 sites (6 experimental in which riffles were constructed and 3 controls) on each of 6 occasions (2 before, B; 2 in the first year after, A1; and 2 5--6 years after riffle construction, A2). Each sample was taken in either autumn (spring = 0) or spring (spring = 1). The sites spanned an urban gradient represented by (log-transformed and scaled) effective imperviousness I.
 
 We estimated the posterior distributions of parameters in the multi-taxon model of taxon abundances and the models of environmental variables (depth, velocity and $\Phi$, particle size) in the sample units using the Markov chain Monte-Carlo (MCMC) sampler of Stan [@carpenter_etal_2017], calling Stan from R using the library `cmdstanr` [@gabry_cesnovar_2022].
 
-We used uninformative prior distributions for fixed effect parameters (BA, CI, I, and their interactions, and spring) and weakly informative prior distributions for the random variable parameters.  We modelled the environmental variables (transformed as necessary and scaled, Table 1) as normal distributions with standard deviation (sd) having a prior half-normal distribition (mean 0, sd 1). In the multi-taxon model, we modelled count of each taxon in each sample unit as a negative binomial distribution with a dispersion parameter ($\phi$) having a normal prior distribution (restricted to values > 0, mean 1, sd 1).
+We modeled the environmental variables (transformed as necessary and scaled, Table 1) as normal distributions with standard deviation (sd) having a prior half-normal distribution (mean 0, sd 3): in all cases, the posterior distribution was a small subset of this. In the multi-taxon model, we modeled count of each taxon in each sample unit as a negative binomial distribution with the prior for distribution of the dispersion parameter for each taxon ($\phi$) set as a random effect drawn from a common assemblage-level normal hyper-distribution as $1/\sqrt\phi_j \sim \ \textrm{Normal}(\mu_j, \sigma_j)$ where $\mu_k$ and $\sigma_k$ are the assemblage level mean and standard deviation respectively, with prior half-normal distributions (mean 0, sd 5). The inverse square root of $phi$ was used to avoid concentration of the prior mass on highly over-dispersed distributions [@stan_dev_team_2022].
 
 ```{r}
 #| label: tbl-env_vars
@@ -74,13 +74,13 @@ ft <- data.frame(Variable = c("Variance of depth (m)", "Mean of depth (m)",
 ft
 ```
 
-In all models, we formulated $\beta$ parameters (of fixed effects) as random effects drawn from community-level hyper-distributions with the mean parameters specified as diffuse normal distributions (mean 0, sd 5) and, for the multi-taxon model, the parameters for each species were drawn from a multivariate normal distribution with a covariance matrix that describes the residual associations among species. The hyperprior correlation matrix ($\Omega$) had an LKJ prior with shape 2, and scale with an exponentially distributed prior with rate 1 [@mcelreath_2020; @stan_dev_team_2022]. For all models, the random-effect parameters for site ($\theta_{s}$), time ($\theta_{t}$) and sample ($\theta_{s,t}$) were drawn from normal hyper-distributions, with mean 0 and sd with a half-normal prior distribution (mean 0, sd 2). 
+In all models, we formulated $\beta$ parameters (of fixed effects) as random effects drawn from community-level hyper-distributions with the mean parameters specified as diffuse normal distributions (mean 0, sd 5) and, for the multi-taxon model, the parameters for each species were drawn from a from a common assemblage-level multivariate-Normal hyper-distribution as $\beta_{k,j} \sim \textrm{MVNormal}(\mu_k, \Omega)$, where $\mu_k$ is the estimated assemblage mean for the $\beta$ parameter $k$ and $\Omega$ is the estimated variance-covariance matrix with an LKJ prior with shape 2, and scale with an exponentially distributed prior with rate 1 [@mcelreath_2020; @stan_dev_team_2022]. For all models, the random-effect parameters for site ($\theta_{s}$), time ($\theta_{t}$) and sample ($\theta_{s,t}$) were drawn from normal hyper-distributions, with mean 0 and sd with a half-normal prior distribution (mean 0, sd 3); a distribution wide enough to cover feasible effect sizes while avoiding large values when the data provide little information on group-level variance [@stan_dev_team_2022].
 
-For all models, we drew inference from 4 unthinned chains, taking 3,500--3,800 posterior samples from each chain and discarding the first 3,000 for the models of environmental variables, and 4,500 samples discarding the first 1,000 for the multi-taxon model. The retained samples were sufficient to ensure bulk and tail effective sample sizes of at least 100 per chain for all parameters. We diagnosed convergence of each model by visually inspecting the MCMC chains for adequate mixing and stationarity, and ensured that the diagnostic tests for zero-divergent transitions, zero cases of saturated tree-depth, Gelman-Rubin statistic ($\hat{R}$) < 1.1, and Bayesian Fraction of Missing Information >0.3, were satisfied.
+For all models, we drew inference from 4 unthinned chains, taking 3,500--4,000 posterior samples from each chain and discarding the first 2,500 for the models of environmental variables, and 6,000 samples discarding the first 1,000 for the multi-taxon model. The retained samples were sufficient to ensure bulk and tail effective sample sizes of at least 100 per chain for all parameters. We diagnosed convergence of each model by visually inspecting the MCMC chains for adequate mixing and stationarity, and ensured that the diagnostic tests for zero-divergent transitions, zero cases of saturated tree-depth, Gelman-Rubin statistic ($\hat{R}$) \< 1.1, and Bayesian Fraction of Missing Information \>0.3, were satisfied.
 
 ### Models of environmental variables
 
-The Before-After-Control-Impact effects on environmental variables were modelled assuming a normal distribution for each (appropriately transformed, Table 1) environmental variable. The Stan code for the model, `normal_rand_sa_si_t_fixedmatrix-baci.stan`, is reproduced below, with annotations defining variables and parameters, and explaining model components. Below that is the code used to load the data, run, check and evaluate the model for each variable, and produce output objects used to produce figures in the manuscript. Running all models took ~3.5 min.
+The Before-After-Control-Impact effects on environmental variables were modeled assuming a normal distribution for each (appropriately transformed, Table 1) environmental variable. The Stan code for the model, `normal_rand_sa_si_t_fixedmatrix-baci.stan`, is reproduced below, with annotations defining variables and parameters, and explaining model components. Below that is the code used to load the data, run, check and evaluate the model for each variable, and produce output objects used to produce figures in the manuscript. Running all models took \~7 min.
 
 #### Stan code
 
@@ -202,7 +202,6 @@ samples$spring <- as.integer(substr(samples$old_samplecode,1,1) %in% c(1,3,5))
 u <- model.matrix(~ ba + ci + ba:ci + i + ba:ci:i + spring, data = samples)
 ```
 
-
 ```{r}
 #| label: sample_env_models
 #| echo: true
@@ -293,9 +292,9 @@ write.csv(univar_diagnostics, "small_data/univar_diagnostics.csv", row.names = F
 # }) # ~5 min
 ```
 
-The following chunk loops through the seven environmental variables, loading the model object for that variable and extracting the posterior distributions of the model parameters.  The parameter distributions are used to calculate a prediction for every sample in the data set. We compared these predictions to the observed mean values to assess model fit.  
+The following chunk loops through the seven environmental variables, loading the model object for that variable and extracting the posterior distributions of the model parameters. The parameter distributions are used to calculate a prediction for every sample in the data set. We compared these predictions to the observed mean values to assess model fit.
 
-The predictors were assembled as the table, `predx`: the unique set of predictors to permit prediction the mean value of the variable in each of the samples of the study: a data.frame with 14 predictors (columns) and 53 combinations of predictor values (one for each sample).
+The predictors were assembled as the table, `predx`: the unique set of predictors (the full model including random variables) to permit prediction the mean value of the variable in each of the samples of the study: a data.frame with 14 predictors (columns) and 53 combinations of predictor values (one for each sample).
 
 `predy_draws` is a data.frame with 51--53 columns (matching predx rows, varied because of two samples missing substrate data) and 2400 rows (600 samples times 4 chains): the posterior distribution of the predicted mean abundance for each `predx` value. The chunk also calculates resulting goodness of fit measures reported below (and in Table 1).
 
@@ -329,6 +328,7 @@ for(i in 1:length(ys)){
                                         "sigma_s","sigma_t","sigma_st","sigma"))) 
   predx <- unique(cbind(samplesi[c("sample","site_no","sample_no","t_no")],ui))
   temp <- aggregate(sdata$y, by = list(sample = samplesi$sample),FUN = mean)
+  # Predictions of y given the data using the full model
   predx$x <- temp$x[match(predx$sample, temp$sample)]
     predy_draws <-
       drawsi[grep("a_s",names(drawsi))][match(predx$site_no, 1:sdata$n_site)] +
@@ -365,7 +365,7 @@ write.csv(gofs, "small_data/env_gofs.csv", row.names = FALSE)
 })  # 9 s
 ```
 
-The following code extracts the posterior distribution of mean abundance for each taxon in samples across the gradient of imperviousness for all combinations of *ba* = 0, 1 or 2; *ci* = 0 or 1; *I* = minimum and maximum values in dataset (=4% and 32% EI); spring = 0 (i.e. autumn), omitting random sample, site and t errors (For counterfactual plots used in the paper, demonstrating effect of riffle emplacement under different levels of urban impact), and the primary differences of interest in the BACI design:
+The following code extracts the posterior distribution of mean abundance for each taxon in samples across the gradient of imperviousness for all combinations of the binary variables *B, A1, A2*, and *R*; *I* = minimum and maximum values in dataset (=4% and 32% EI), omitting random sample, site and t errors (For counterfactual plots used in the paper, demonstrating effect of riffle emplacement under different levels of urban impact), and the primary differences of interest in the BACI design:
 
 1.  (control minus impact before \[B\]) - (control minus impact in first year after \[A1\]) for low (minimum) *I*
 
@@ -375,7 +375,7 @@ The following code extracts the posterior distribution of mean abundance for eac
 
 4.  (control minus impact before \[B\]) - (control minus impact 5-6 y after \[A2\]) for high *I*
 
-It saves a table `env_diff_summs.csv` used to plot Figure 2 in the paper.
+Note that, in the code, the fixed effects are assembled using R's model.matrix function, such that B = ba0, A1 = ba1, A2 = ba2, R = ci.  The code saves a table `env_diff_summs.csv` used to plot Figure 2 in the paper.
 
 ```{r}
 #| label: env_diff_summs
@@ -414,6 +414,28 @@ cf_drawsi <-
       drawsi[,"gamma[8]"] %*% t(predx_cf$`ba0:ci:i`) + 
       drawsi[,"gamma[9]"] %*% t(predx_cf$`ba1:ci:i`) +
       drawsi[,"gamma[10]"] %*% t(predx_cf$`ba2:ci:i`) 
+
+# Dan's method
+# Before scenarios c(1,4,55,58)
+# A1 scenarios c(2,5,56,59) but with A1 set to zero
+predx_cf_dg <- predx_cf[c(1,4,55,58,2,5,56,59),]
+predx_cf_dg$ba1[5:8] <- 0
+cf_draws_dg <- 
+      drawsi[,"gamma[1]"] %*% t(predx_cf_dg$`(Intercept)`) +
+      drawsi[,"gamma[2]"] %*% t(predx_cf_dg$ba1) +
+      drawsi[,"gamma[3]"] %*% t(predx_cf_dg$ba2) +
+      drawsi[,"gamma[4]"] %*% t(predx_cf_dg$ci) +
+      drawsi[,"gamma[5]"] %*% t(predx_cf_dg$i) + 
+      drawsi[,"gamma[6]"] %*% t(predx_cf_dg$`ba1:ci`) +
+      drawsi[,"gamma[7]"] %*% t(predx_cf_dg$`ba2:ci`) +
+      drawsi[,"gamma[8]"] %*% t(predx_cf_dg$`ba0:ci:i`) + 
+      drawsi[,"gamma[9]"] %*% t(predx_cf_dg$`ba1:ci:i`) +
+      drawsi[,"gamma[10]"] %*% t(predx_cf_dg$`ba2:ci:i`) 
+x <- data.frame(predx_cf_dg, 
+             mean = apply(cf_draws_dg,2, mean),
+             t(as.data.frame(apply(cf_draws_dg, 2,
+                                    quantile, probs = c(0.025,0.05,0.5,0.95,0.975)))))
+
 cfs[[i]] <- cfi <- 
   data.frame(predx_cf, 
              mean = apply(cf_drawsi,2, mean),
@@ -445,14 +467,13 @@ WriteXLS::WriteXLS(cfs, "small_data/env_var_predy_cf.xlsx")
 }) # 6 s
 ```
 
-
 ### The multi-taxon model
 
-The Before-After-Control-Impact effects on count per sample unit of the 113 macroinvertebrate taxa were modelled as a multi-taxon model, assuming a negative binomial distribution of counts, and binomially distributed subsampling error. The Stan code for the model, `nbinom_me_rand_sa_si_t_fixedmatrix-baci.stan`, is reproduced below, with annotations defining variables and parameters, and explaining model components. Below that is the code used to load the data, run, check and evaluate the model, and produce output objects used to produce figures in the manuscript. The multi-taxon model took 2 h to run on a 2.6-GHz system on 4 parallel cores, and compilation of the parameter draws required ~20 Gb RAM.
+The Before-After-Control-Impact effects on count per sample unit of the 113 macroinvertebrate taxa were modeled as a multi-taxon model, assuming a negative binomial distribution of counts, and binomially distributed subsampling error. The Stan code for the model, `nbinom_me_rand_sa_si_t_fixedmatrix-baci.stan`, is reproduced below, with annotations defining variables and parameters, and explaining model components. Below that is the code used to load the data, run, check and evaluate the model, and produce output objects used to produce figures in the manuscript. The multi-taxon model took 4 h to run on a 2.6-GHz system on 4 parallel cores, and compilation of the parameter draws required \~40 Gb RAM.
 
 #### Stan code
 
-```{stan output.var = "mt_mod"} 
+```{stan output.var = "mt_mod"}
 #| echo: true
 #| eval: false
 
@@ -481,7 +502,9 @@ parameters {
   vector<lower=0>[n_taxa] sigma_s; //rsd of hyperdistribution of a_ss among taxa
   vector<lower=0>[n_taxa] sigma_t; //sd of hyperdistribution of a_ts among taxa
   vector<lower=0>[n_taxa] sigma_st;//sd of hyperdistribution of a_sts among taxa
-  vector<lower=0>[n_taxa] phi;     //dispersion parameter for neg-binomial distn
+  vector<lower=0>[n_taxa] inv_phi; //inverse-square of dispersion parameter for neg-binomial distn
+  real<lower=0> mu_inv_phi;        // see phi, below
+  real<lower=0> sd_inv_phi;        // see phi, below
   corr_matrix[n_pred] Omega;       // Hyperprior correlation matrix among taxa
   vector<lower=0>[n_pred] tau;     // Scale for correlation matrix
 }
@@ -491,6 +514,8 @@ transformed parameters {
   matrix[n_t,n_taxa] a_t;           // Coefficient of random time effect 
   matrix[n_sample,n_taxa] a_st;     // coefficient of random sample effect
                          // (sample = 3-4 s-us from each site on each occasion)
+  vector<lower=0>[n_taxa] phi;     //dispersion parameter for neg-binomial distn
+
   for(j in 1:n_taxa){
   a_s[,j] =  sigma_s[j] * a_s_raw[,j];  
   a_t[,j] =  sigma_t[j] * a_t_raw[,j];  
@@ -498,6 +523,9 @@ transformed parameters {
   }
 // with (e.g.) a_s_raw ~ std_normal(), this implies a_s ~ normal(0, sigma_s)
 // See https://mc-stan.org/docs/stan-users-guide/reparameterization.html
+
+   phi = pow(1/inv_phi,2);         
+// see https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations
 
   for(i in 1:n_obs){
      for(j in 1:n_taxa){
@@ -514,10 +542,12 @@ model {
    to_vector(a_s_raw) ~ std_normal();
    to_vector(a_t_raw) ~ std_normal();
    to_vector(a_st_raw) ~ std_normal();
-   sigma_s ~ normal(0,2);
-   sigma_t ~ normal(0,2);
-   sigma_st ~ normal(0,2);
-   phi ~ normal(1,1);
+   sigma_s ~ normal(0,3);
+   sigma_t ~ normal(0,3);
+   sigma_st ~ normal(0,3);
+   inv_phi ~ normal(mu_inv_phi, sd_inv_phi);
+   mu_inv_phi ~ normal(0,5);
+   sd_inv_phi ~ normal(0,5);
    tau ~ exponential(1);
    Omega ~ lkj_corr( 2 );  
    
@@ -541,18 +571,18 @@ model {
   }
 }
 
-generated quantities {
-  // log-likelihood only used for model comparisons during model development.
-  // The most complex model considered has been used,
-  // so model comparisons not reported
-  array[n_obs,n_taxa] real log_lik;
- for (i in 1 : n_obs) {
-   for(j in 1 : n_taxa){
-   log_lik[i,j] = neg_binomial_2_log_lpmf(c[i,j] | log_lambda[i,j] +
-                    log(s[i,j]), phi[j]);
- }
- }
- }
+// generated quantities {
+//   // log-likelihood only used for model comparisons during model development.
+//   // The most complex model considered has been used, 
+//   // so model comparisons not reported
+//   array[n_obs,n_taxa] real log_lik;  
+//  for (i in 1 : n_obs) {
+//    for(j in 1 : n_taxa){
+//    log_lik[i,j] = neg_binomial_2_log_lpmf(c[i,j] | log_lambda[i,j] + 
+//                     log(s[i,j]), phi[j]);
+//  }
+//  }
+//  }
  
 ```
 
@@ -616,29 +646,29 @@ stanfit_i <- mod$sample(data = mt_data,
                         seed = rand_seed, chains = 4,
                         parallel_chains = 4, iter_warmup = 1000,
                         adapt_delta = 0.95,
-                        iter_sampling = 5050, refresh = 100) 
-# 5000 iterations took ~4 h
+                        iter_sampling = 5000, refresh = 120) 
+# 6000 iterations took ~5 h
 # #  save csv files rather than the model object to use less RAM
 stanfit_i$save_output_files(dir = model_fit_dir, basename = "fit_riffle_baci_mt", 
                             timestamp = FALSE, random = FALSE)
 stanfit_i$sampler_diagnostics()
 saveRDS(stanfit_i, file = paste0(model_fit_dir,"fit_riffle_baci_mt.rds"))
 stanfit_i$diagnostic_summary()
-# EBFMI 0.39, 0.34, 0.38, 0.41; 0 divergences; 0 maximum tree-depth reached.
+# EBFMI 0.37, 0.39, 0.36, 0.42; 0 divergences; 0 maximum tree-depth reached.
 # # The above three steps required < 500 Mb RAM
 summ <- stanfit_i$summary() # took an additional 24 min and needed >40 Gb RAM
-min(summ$ess_bulk,na.rm=TRUE) # 432
-min(summ$ess_tail,na.rm=TRUE) # 9225
-max(summ$rhat,na.rm=TRUE)  # 1.010
+min(summ$ess_bulk,na.rm=TRUE) # 461
+min(summ$ess_tail,na.rm=TRUE) # 828
+max(summ$rhat,na.rm=TRUE)  # 1.015
 # # all diagnostic_summary diagnostics were satisfied
 
 mod_draws <- as.data.frame(stanfit_i$draws(format = "df", variables = c("a_s",
-                    "a_t","a_st","gamma","phi","sigma_s","sigma_t","sigma_st","inv_phi")))
+                    "a_t","a_st","gamma","phi","sigma_s","sigma_t","sigma_st",
+                    "inv_phi","mu_inv_phi","sd_inv_phi")))
 save(mod_draws, file = paste0(model_fit_dir,"fit_riffle_baci_draws.rda"))
 ```
 
-The following uses the posterior distributions of the model parameters to predict mean abundance for each taxon in each sample (for assessment of model fit), using the unique predictor combinations of all samples in the dataset (`predx`, described above)  The resulting object `predy_draws` is a list of 113 elements (one for each taxon; the name of each element = the relevant taxoncode).  Each element is a data.frame with 53 columns (matching predx rows) and 16000 rows (4000 samples times 4 chains): the posterior distribution of the predicted mean abundance of each taxon for each `predx` value. 
-`param_summs` is a list of summary tables of quantiles of each distribution for each taxon, saved as `param_summs.xlsx`, with 113 sheets containing the table for each taxon.
+The following uses the posterior distributions of the model parameters to predict mean abundance for each taxon in each sample (for assessment of model fit), using the unique predictor combinations of all samples in the dataset (`predx`, described above) The resulting object `predy_draws` is a list of 113 elements (one for each taxon; the name of each element = the relevant taxoncode). Each element is a data.frame with 53 columns (matching predx rows) and 16000 rows (4000 samples times 4 chains): the posterior distribution of the predicted mean abundance of each taxon for each `predx` value. `param_summs` is a list of summary tables of quantiles of each distribution for each taxon, saved as `param_summs.xlsx`, with 113 sheets containing the table for each taxon.
 
 ```{r}
 #| label: predy_summary
@@ -692,7 +722,7 @@ names(param_summs) <- params
 WriteXLS::WriteXLS(param_summs, "small_data/param_summs.xlsx")
 ```
 
-The following extracts the posterior distribution of mean abundance for each taxon in samples across the gradient of imperviousness for all combinations of *ba* = 0, 1 or 2; *ci* = 0 or 1; *I* = minimum and maximum values in dataset (=4% and 32% EI); spring = 0 (i.e. autumn), omitting random sample, site and t errors, and the primary differences of interest in the BACI design, as described above.  
+The following extracts the posterior distribution of mean abundance for each taxon in samples across the gradient of imperviousness for all combinations of the BACI effects and high and low values of *I*, as described above for the environmental variable models, and with the season effect S = 0 (i.e. autumn), omitting random sample, site and t errors. It then calculates the differences to detect an effect of the riffles as described above for the environmental variable models.
 
 ```{r}
 #| label: pred_cf
@@ -1015,9 +1045,9 @@ We assessed the predictive performance of our model by comparing model predictio
 
 ### Methods
 
-We quantified model accuracy and bias first by calculating the correlation coefficient, *R*, and slope of the linear regression between predicted and observed values of each model.  The environmental variables were transformed as they were in the model, and for the multi-taxon model, we used log-mean abundance \[log(x + 1)\] of each taxon in each sample (count in each sample unit estimated as count/subsample fraction). We assessed prediction at the level of sample rather than at the sample-unit level because the model allows prediction at that level, and our primary interest is to predict mean response to riffle construction at the site level.
+We quantified model accuracy and bias first by calculating the correlation coefficient, *R*, and slope of the linear regression between predicted and observed values of each model. The environmental variables were transformed as they were in the model, and for the multi-taxon model, we used log-mean abundance \[log(x + 1)\] of each taxon in each sample (count in each sample unit estimated as count/subsample fraction). We assessed prediction at the level of sample rather than at the sample-unit level because the model allows prediction at that level, and our primary interest is to predict mean response to riffle construction at the site level.
 
-We also assessed accuracy of model predictions for occurrence of each taxon (rather than abundance) by assessing the area under the operator curve (AUC) for logistic regressions between predicted probability of occurrence and observed presence or absence in each sample, where predicted probability of occurrence in a sample,
+We also assessed accuracy of model predictions for occurrence of each taxon (rather than abundance) by assessing the area under the operator curve (AUC) for logistic regressions between mean predicted probability of occurrence and observed presence or absence in each sample, where predicted probability of occurrence in a sample,
 
 $$
 p\_s = 1 - \Pi(1 - p\_{su}_i)
@@ -1025,16 +1055,15 @@ $$ {#eq-s3_ps}
 
 where $p\_su_i$ is the probability of occurrence in the *i*th sample unit comprising the sample, calculated as 1 - negative-binomial probabliity of zero, given predicted $\mu$ and $\phi$.
 
-Finally, we assessed the accuracy of the multi-taxon model's estimates of assemblage level metrics, by calculating the *R^2^* and slope of the linear regression between predicted and observed number of taxa in each sample, both total number of taxa, and the number of Ephemeropotera, Plecoptera and Trichoptera taxa (three groups of sensitive species commonly used as a stream health metric). Predicted number of taxa was estimated as the number of taxa with probability of occurrence $\ge$0.5. Because observed taxon richness is likely to be affected by subsample size, we interpreted the relationship between predicted and observed numbers of taxa accounting for mean subsample proportion in the subsample units making up each sample. We also calculated *R^2^* of the predicted number of taxa as a function of observed number of taxa + mean subsample proportion.
+Finally, we assessed the accuracy of the multi-taxon model's estimates of assemblage level metrics, by calculating the *R^2^* and slope of the linear regression between predicted and observed number of taxa in each sample, both total number of taxa, and the number of Ephemeropotera, Plecoptera and Trichoptera taxa (three groups of sensitive species commonly used as a stream health metric). Predicted number of taxa was estimated as the mean summed probabilities of occurrence in each posterior sample. Because observed taxon richness is likely to be affected by subsample size, we interpreted the relationship between predicted and observed numbers of taxa accounting for mean subsample proportion in the subsample units making up each sample. We also calculated *R^2^* of the predicted number of taxa as a function of observed number of taxa + mean subsample proportion.
 
 ### Results
 
 All environmental variables were well predicted by their respective models, with almost perfect correlation between observed and predicted (Table 1).
 
-The abundances of all taxa (estimated as the number counted divided by the subsample fraction) were well predicted by the model. The observed and predicted abundances of all taxa were correlated with R \> 0.65, and all but 2 >0.8 (@fig-nbinom_me_fit_by_taxon A). Abundance predictions of 42 prevalent and abundant taxa, including all but one of those for which an effect of the experimental riffles was inferred, showed little bias (regression slopes between 0.8 and 1.25), while abundance predictions for most taxa with low prevalence tended to be underestimated (slopes <0.8, @fig-nbinom_me_fit_by_taxon B). Underestimation or overestimation of slope is to be expected for taxa with many zero or low abundances.
+The abundances of all taxa (estimated as the number counted divided by the subsample fraction) were well predicted by the model. The observed and predicted abundances of all taxa were correlated with R \> 0.65, and all but 2 \>0.8 (@fig-nbinom_me_fit_by_taxon A). Abundance predictions of 42 prevalent and abundant taxa, including all but one of those for which an effect of the experimental riffles was inferred, showed little bias (regression slopes between 0.8 and 1.25), while abundance predictions for most taxa with low prevalence tended to be underestimated (slopes \<0.8, @fig-nbinom_me_fit_by_taxon B). Underestimation or overestimation of slope is to be expected for taxa with many zero or low abundances.
 
-
-The model also predicted occurrence of all taxa with high certainty (all AUC values of the 111 taxa absent from at least one sample $\ge$0.90, @fig-nbinom_pa_stats). The probabilities of occurrence of all taxa summed to accurate estimates of taxon richness in the 53 samples (@fig-richness_op). The raw correlation between predicted and observed numbers of all taxa was reduced by the effect of subsampling (@fig-richness_op A). The predicted number of taxa was higher than the observed for samples with lower numbers of taxa because more of them had small subsample fractions compared to more taxa-rich samples. The regression of predicted \~ observed + subsample fraction had a higher *R^2^* (0.75). The model predicted EPT richness with high accuracy (*R^2^* 0.96), with a smaller effect of subsample fraction (@fig-richness_op B).
+The model also predicted occurrence of all taxa with high certainty (all AUC values of the 111 taxa absent from at least one sample \>0.87, @fig-nbinom_pa_stats). The probabilities of occurrence of all taxa summed to accurate estimates of taxon richness in the 53 samples (@fig-richness_op). The raw correlation between predicted and observed numbers of all taxa was reduced by the effect of subsampling (@fig-richness_op A). The predicted number of taxa was higher than the observed for samples with lower numbers of taxa because more of them had small subsample fractions compared to more taxon-rich samples. The regression of predicted \~ observed + subsample fraction had a higher *R^2^* (0.81). The model predicted EPT richness with high accuracy (*R^2^* 0.94), with a small negative effect of subsample fraction (@fig-richness_op B).
 
 The accurate prediction of the data by all models provide confidence in inferences of the experimental effects of interest.
 
@@ -1131,6 +1160,11 @@ write.csv(oe_stats, "small_data/riffle_baci_oe_stats.csv", row.names = FALSE)
 #| fig-height: 3.5
 #| fig-cap: "a) Area under the receiver operator characteristic curve (AUC) of predictions of presence-absence from the negative-binomial model for 111 taxa as a function of their prevalence in the 53 samples. AUC could not be calculated for the two taxa that occurred in all samples (Nematoda and Enchytraiedae)."
 
+# Function for calculating probability of occurrence in n sample units, given a vector of probabilities, x, of length n
+p_per_n <- function(x) {1 - prod(1 - x)} # x, a vector of probabilities
+# and for case of all ps being equal
+p_per_n1 <- function(x,n) {1 - (1 - x)^n} # x, a single probability, n the number of replicates of x
+
 # load draws of parameters from model (object mod_draws calculated above)
 load(paste0(model_fit_dir, "fit_riffle_baci_draws.rda"))
 
@@ -1138,83 +1172,23 @@ phi_draws <- mod_draws[,grep("phi",names(mod_draws))]
 p_mat <- list()
 # system.time({
 for(t in 1:mt_data$n_taxa){
+  # calculate probability of occurrence per sample-unit from estimated N and phi assuming neg-binomial distribution
 p_mat[[t]] <- predy_draws[[colnames(biota_ct)[t]]]
 for(i in 1:ncol(p_mat[[t]]))
 p_mat[[t]][,i] <- 1 - pnbinom(0,mu = exp(predy_draws[[colnames(biota_ct)[t]]][,i]),size = phi_draws[t][,1])
 }
 # }) # ~15 s
 names(p_mat) <- colnames(biota_ct)
-p_mean <- matrix(nrow = mt_data$n_sample, ncol= mt_data$n_taxa)
-for(t in 1:mt_data$n_taxa){
-  p_mean[,t] <- apply(p_mat[[t]], 2, FUN = mean)
-}
-
-# Function for calculating probability of occurrence in n sample units, given a vector of probabilities, x, of length n
-p_per_n <- function(x) {1 - prod(1 - x)} # x, a vector of probabilities
-# for case of all ps being equal
-p_per_n1 <- function(x,n) {1 - (1 - x)^n} # x, a vector of probabilities
-
-p_mean_per_sample <- matrix(ncol = mt_data$n_sample, nrow = mt_data$n_taxa)
-for(t in 1:mt_data$n_taxa){
-  for(j in 1:mt_data$n_sample){
-    p_mean_per_sample[t,j] <- p_per_n(rep(p_mean[j,t],sum(samples$sample_no == j)))
-  }}
-
-# An alternative way to estimate richness: 
+  # adjust probabilities to P per sample (collection of 3 or 4 sample-units)
 p_per_samp_mat <- p_mat
 for(i in 1:mt_data$n_taxa){
   for(j in 1:mt_data$n_sample){
     p_per_samp_mat[[i]][,j] <- p_per_n1(p_mat[[i]][,j],sum(samples$sample_no == j))
   }
 }
-pa_mat <- list()
-for(i in 1:mt_data$n_taxa){
-  # convert signal_mat to presence-absence assuming P > 0.5 is a presence
-  pa_mat[[i]] <- t(apply(p_per_samp_mat[[i]], 1, function(x) round(x)))
-  }
-
-pa1_mat <- p_per_samp_mat
-for(i in 1:mt_data$n_taxa){
-  # convert signal_mat to presence-absence using rbinom(1,1,0)
-    for(k in 1:ncol(pa1_mat[[i]])){
-  pa1_mat[[i]][,k] <- rbinom(nrow(pa1_mat[[i]]),1,p_per_samp_mat[[i]][,k])
-    }
-  }
 
 tot_rich_mat <- Reduce("+",p_per_samp_mat)
-tot_rich_mat1 <- Reduce("+",pa_mat)
-tot_rich_mat2 <- Reduce("+",pa1_mat)
-
-par(mfrow = c(2,2));par(mar = c(4,4,1,1))
-plot(apply(tot_rich_mat,2,FUN = mean), ylim = c(20,50),
-      apply(p_mean_per_sample,2, FUN = sum),
-     ylab = "Sum of mean probabilities per sample",
-     xlab = "Mean of summed probabilities per sample")
-abline(0,1)
-title(main = "A.", adj = 0)
-
-plot(apply(tot_rich_mat1,2,FUN = mean), ylim = c(20,50),
-      apply(p_mean_per_sample,2, FUN = sum),
-     xlab = "Mean number of taxa per sample (P >= 0.5)",
-     ylab = "Sum of mean probabilities per sample")
-abline(0,1)
-title(main = "B.", adj = 0)
-
-plot(apply(tot_rich_mat1,2,FUN = mean), ylim = c(20,50),
-      apply(tot_rich_mat,2,FUN = mean),
-     xlab = "Mean number of taxa per sample (P >= 0.5)",
-     ylab = "Mean of summed probabilities per sample")
-abline(0,1)
-title(main = "C.", adj = 0)
-
-plot(apply(tot_rich_mat,2,FUN = mean), ylim = c(20,50),
-      apply(tot_rich_mat2,2,FUN = mean),
-     xlab = "Sum of mean probabilities per sample",
-     ylab = "Mean number of taxa per sample (rbinom)")
-abline(0,1)
-title(main = "D.", adj = 0)
-
-
+ept_rich_mat <- Reduce("+",p_per_samp_mat[substr(names(p_mat),1,2) %in% c("QE","QP","QT")])
 
 # Probability of presence in observed data
 obs_per_sample <- matrix(ncol = mt_data$n_sample, nrow = mt_data$n_taxa)
@@ -1225,6 +1199,15 @@ for(t in 1:mt_data$n_taxa){
   }
 
 library("PresenceAbsence")
+p_mean <- matrix(nrow = mt_data$n_sample, ncol= mt_data$n_taxa)
+for(t in 1:mt_data$n_taxa){
+  p_mean[,t] <- apply(p_mat[[t]], 2, FUN = mean)
+}
+p_mean_per_sample <- matrix(ncol = mt_data$n_sample, nrow = mt_data$n_taxa)
+for(t in 1:mt_data$n_taxa){
+  for(j in 1:mt_data$n_sample){
+    p_mean_per_sample[t,j] <- p_per_n(rep(p_mean[j,t],sum(samples$sample_no == j)))
+  }}
 pa_stats <- data.frame(shortcode = colnames(biota_ct),
                        taxon = taxa$taxon[match(colnames(biota_ct),taxa$shortcode)], 
                        prevalence = prevalence_by_sample$prev[match(prevalence_by_sample$shortcode, colnames(biota_ct))],
@@ -1260,9 +1243,9 @@ for(i in 1:mt_data$n_sample){
 }
 
 x <- apply(obs_per_sample,2, FUN = sum)
-y <- apply(p_mean_per_sample,2, FUN = sum)
+y <- apply(tot_rich_mat,2,FUN = mean)
      # this is a better fit than if FUN = sum with which R2 = 0.64 (0.72))
-plot(x, y, cex = sample_p + 0.5, axes = FALSE, 
+plot(x, y, cex = sample_p + 0.5, axes = FALSE, ylim = c(15,50), xlim = c(15,50),
      xlab = "Observed no. taxa", ylab = "Predicted no. taxa")
 axis(1); axis(2, las = 1); box(bty = 'l')
 abline(0,1)
@@ -1274,10 +1257,9 @@ title(main = paste0("  R-sq = ", r21, " (", r22, ")"),
       adj = 0, line = -1, font.main = 1, cex.main = 1)
 
 x <- apply(obs_per_sample[substr(names(p_mat),1,2) %in% c("QE","QP","QT"),],2, FUN = sum)
-y <- apply(p_mean_per_sample[substr(names(p_mat),1,2) %in% c("QE","QP","QT"),],2, 
-           FUN = sum)
+y <- apply(ept_rich_mat,2,FUN = mean)
      # this is a better fit than if FUN = sum with which R2 = 0.92 (0.92))
-plot(x, y, cex = sample_p + 0.5, axes = FALSE, 
+plot(x, y, cex = sample_p + 0.5, axes = FALSE, ylim = c(0,8), xlim = c(0,8),
      xlab = "Observed no. EPT taxa", ylab = "Predicted no. EPT taxa")
 axis(1); axis(2, las = 1); box(bty = 'l')
 legend("bottomright", pch = 1, pt.cex = c(0.6,1.0,1.5), 
