@@ -415,27 +415,6 @@ cf_drawsi <-
       drawsi[,"gamma[9]"] %*% t(predx_cf$`ba1:ci:i`) +
       drawsi[,"gamma[10]"] %*% t(predx_cf$`ba2:ci:i`) 
 
-# Dan's method
-# Before scenarios c(1,4,55,58)
-# A1 scenarios c(2,5,56,59) but with A1 set to zero
-predx_cf_dg <- predx_cf[c(1,4,55,58,2,5,56,59),]
-predx_cf_dg$ba1[5:8] <- 0
-cf_draws_dg <- 
-      drawsi[,"gamma[1]"] %*% t(predx_cf_dg$`(Intercept)`) +
-      drawsi[,"gamma[2]"] %*% t(predx_cf_dg$ba1) +
-      drawsi[,"gamma[3]"] %*% t(predx_cf_dg$ba2) +
-      drawsi[,"gamma[4]"] %*% t(predx_cf_dg$ci) +
-      drawsi[,"gamma[5]"] %*% t(predx_cf_dg$i) + 
-      drawsi[,"gamma[6]"] %*% t(predx_cf_dg$`ba1:ci`) +
-      drawsi[,"gamma[7]"] %*% t(predx_cf_dg$`ba2:ci`) +
-      drawsi[,"gamma[8]"] %*% t(predx_cf_dg$`ba0:ci:i`) + 
-      drawsi[,"gamma[9]"] %*% t(predx_cf_dg$`ba1:ci:i`) +
-      drawsi[,"gamma[10]"] %*% t(predx_cf_dg$`ba2:ci:i`) 
-x <- data.frame(predx_cf_dg, 
-             mean = apply(cf_draws_dg,2, mean),
-             t(as.data.frame(apply(cf_draws_dg, 2,
-                                    quantile, probs = c(0.025,0.05,0.5,0.95,0.975)))))
-
 cfs[[i]] <- cfi <- 
   data.frame(predx_cf, 
              mean = apply(cf_drawsi,2, mean),
@@ -832,7 +811,7 @@ WriteXLS::WriteXLS(diff_summs, "small_data/diff_summs.xlsx")
 # load taxon abundance predictions for 60 counter-factual scenarios (from above) if necessary
 load(paste0(model_fit_dir,"fit_riffle_baci_predy_cf_draws.rda"))
 
-phi_draws <- mod_draws[,grep("phi",names(mod_draws))]
+phi_draws <- mod_draws[,substr(names(mod_draws),1,3) == "phi"]
 pa_cf_mat <- p_cf_mat <- n_cf_mat <- list()
 
 # And use them to calculate assemblage statistics
@@ -844,7 +823,7 @@ n_cf_mat[[t]] <- exp(predy_cf[[t]])
 for(i in 1:ncol(p_cf_mat[[t]]))
   # Probability of occurrence in 1 sample unit
 p_cf_mat[[t]][,i] <- 1 - pnbinom(0,mu = exp(predy_cf[[t]][,i]),
-                                 size = phi_draws[t][,1])
+                                 size = phi_draws[,t])
   # Probability of occurrence in 4 sample units
 p_cf_mat[[t]] <- 1 - (1 - p_cf_mat[[t]])^4
   # back-transformed abundance per 4 samples
@@ -1076,23 +1055,72 @@ The accurate prediction of the data by all models provide confidence in inferenc
 #| fig-height: 3.5
 #| fig-cap: "a) Correlation coefficients for each taxon of between observed (count in each subsample divided by subsample fraction, log(x + 1)-transformed and averaged for all sample units in each sample) and predicted (P) abundances (mean estimate of log-mean abundances of each taxon in the sample from each site), and b) Slopes of the regression of predicted as a function of observed, both plotted against prevalence of each taxon. Green points indicate taxa for which a non-zero effect of riffle construction was inferred at the 90% confidence level."
 
+  # Generate posterior prediction distributions for Y and c: needs to be done at the sample-unit scale to 
+  # account for variation in s
+# c_draws_obs <- list()
+# for(i in 1:mt_data$n_taxa){
+#   ci <- data.frame(matrix(nrow = nrow(phi_draws[1]),ncol= mt_data$n_obs))
+#   names(ci) <- samples$smpcode
+#   for(j in 1:mt_data$n_obs){
+#       Y_ij_draws <- rnbinom(nrow(phi_draws[i]),
+#                 mu = exp(predy_draws[[colnames(mt_data$c)[i]]][,sample_nos$sample == samples$sample[j]]),
+#                 size = phi_draws[i][,1])
+#       ci[,j] <- rbinom(nrow(phi_draws[i]), Y_ij_draws, mt_data$s[j,i])
+#   }
+#   c_draws_obs[[i]] <- ci
+# }
+# names(c_draws_obs) <- names(mt_data$c)
+#   
+# c_draws <- list()
+# for(i in 1:mt_data$n_taxa){
+#   ci <- aggregate(t(c_draws_obs[[i]]), by = list(sample = samples$sample), FUN = sum)
+#   c_draws[[i]] <- t(ci[,-1])
+# }
+# save(c_draws, file = paste0(model_fit_dir,"c_draws.rda"))
+
+load(paste0(model_fit_dir,"c_draws.rda"))
+c_obs <- aggregate(mt_data$c, by = list(samples$sample), FUN = sum)
+
+ppd_ppn <- c_obs
+for(i in 1:mt_data$n_taxa){
+for(j in 1:mt_data$n_sample){
+    if(c_obs[j, i + 1] == median(c_draws[[i]])){
+      ppd_ppn[j,i] <- 0.5
+      }else{
+      ppd_ppn[j,i] <- ecdf(c_draws[[i]])(c_obs[j, i + 1]) > 0
+        }
+}
+}
+outl <- function(x) { sum(x > 0.975 | x < 0.025)}
+
+oe_stats <- data.frame(taxon = names(c_obs)[-1],
+                       r.squ = NA, slope = NA, 
+                       mean_ppd_pctl = apply(ppd_ppn[,-1],2,FUN = median), 
+                       n_outlier = apply(ppd_ppn[,-1],2,FUN = outl),
+                       abs_det_ppn = NA, pre_det_ppn = NA, det_ppn = NA)
+for(i in 1:nrow(oe_stats)){
+x <- log(c_obs[,i + 1] + 1)
+y <- apply(log(c_draws[[i]] + 1),2,FUN = mean)
+oe_stats$r.squ[i] <- summary(lm(y ~ x))$adj.r.squared
+oe_stats$slope[i] <- coefficients(lm(y ~ x))[2]
+abs_det <- pre_det <- det <- 0
+n_abs <- n_pre <- 0
+for(j in 1:length(c_obs[,i + 1])){
+  if(c_obs[j,i+1] == 0){
+  abs_det <- abs_det + sum(c_draws[[i]][,j] == 0)
+  n_abs <- n_abs + 1
+  }else{
+  pre_det <- pre_det + sum(c_draws[[i]][,j] > 0)
+  n_pre <- n_pre + 1
+  }
+  det_ppn <- abs_det + pre_det
+}
+oe_stats$abs_det_ppn[i] <- abs_det/(n_abs * nrow(c_draws[[i]]))
+oe_stats$pre_det_ppn[i] <- pre_det/(n_pre * nrow(c_draws[[i]]))
+oe_stats$det_ppn[i] <- det_ppn/(prod(dim(c_draws[[i]])))
+}
 # load object predy_draws, calculated above 
 predy_draws <- get(load(paste0(model_fit_dir,"fit_riffle_baci_predy_draws.rda")))
-
-# Calculate Observed (mean log-transformed counts per sample) to Expected (predicted mean abundance per sample)
-oe_stats <- data.frame(taxoncode = colnames(mt_data$c), 
-                       cor = NA, slope = NA, adj_r_squ = NA)
-for(i in 1:mt_data$n_taxa){
-  y <- log(exp(apply(predy_draws[[colnames(mt_data$c)[i]]],2,FUN = mean)) + 1)
-  x <- aggregate(log(mt_data$c[,i]/mt_data$s[,i] + 1),
-                       by = list(site_no = samples$site_no, 
-                       sample_no = samples$sample_no,
-                       t = samples$t), FUN = mean)$x
-  oe_stats$cor[i] <- cor(x,y)
-  lmi <- lm(y ~ x)
-  oe_stats$adj_r_squ[i] <- summary(lmi)$adj.r.squared
-  oe_stats$slope[i] <- coefficients(lmi)[2]
-  }
 
 # Calculate prevalence of each taxon by sample
 prevalence <- apply(biota_ct, 2, FUN = function(x){sum(x > 0)})
@@ -1175,7 +1203,7 @@ for(t in 1:mt_data$n_taxa){
   # calculate probability of occurrence per sample-unit from estimated N and phi assuming neg-binomial distribution
 p_mat[[t]] <- predy_draws[[colnames(biota_ct)[t]]]
 for(i in 1:ncol(p_mat[[t]]))
-p_mat[[t]][,i] <- 1 - pnbinom(0,mu = exp(predy_draws[[colnames(biota_ct)[t]]][,i]),size = phi_draws[t][,1])
+p_mat[[t]][,i] <- 1 - pnbinom(0,mu = exp(predy_draws[[colnames(biota_ct)[t]]][,i]),size = phi_draws[,t])
 }
 # }) # ~15 s
 names(p_mat) <- colnames(biota_ct)
