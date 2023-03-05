@@ -741,6 +741,17 @@ metadata <- rbind(metadata,
 
 WriteXLS::WriteXLS(list(sites = sites, samples = samples, biota = biota, taxon_all = taxon_all, taxa = taxa, higher_taxa = higher_taxa, metadata = metadata),
                    "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/urban_riffle_experiment_data_for_model.xlsx")
+# On review, it became apparent that the organic matter dry weight data from samples was unreliable 
+# (Distinct analyst differences between trips 1-4 and 5-6). I thus chose to remove those data from consideration
+datlist <- rio::import_list("~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/urban_riffle_experiment_data_for_model.xlsx")
+datlist$samples <- datlist$samples[!grepl("_g",names(datlist$samples))]
+metadata_samples <- datlist$metadata[datlist$metadata$table_name == "samples",]
+metadata <- datlist$metadata[datlist$metadata$table_name != "samples",]
+metadata_samples <- metadata_samples[metadata_samples$field %in% names(datlist$samples),]
+metadata <- rbind(metadata, metadata_samples)
+datlist$metadata <- metadata
+WriteXLS::WriteXLS(datlist,
+    "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/urban_riffle_experiment_data_for_model.xlsx")
 
 # Used in calculating assemblage stats
 biotic_indices<- sqlQuery("SELECT * FROM biotic_indices;", "mwbugs")

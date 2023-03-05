@@ -4,22 +4,22 @@ format: docx
 editor: visual
 ---
 
-Posterior distributions in red, prior (half-normal(0,5)) in grey.
+Posterior distributions in red, prior (half-normal(0,3)) in grey.
 
 ```{r}
 #| fig-width: 6.5
 #| fig-height: 9
 #| fig-cap: "sigma_s"
+#| echo: false
 
 model_fit_dir <-
     "~/uomShare/wergStaff/ChrisW/git-data/urban_riffle_experiment/model_fits/"
 load(paste0(model_fit_dir,"fit_riffle_baci_draws.rda"))
-# Used to inspect appropriateness of sigma priors (all fall within limits of normal(0,2))
 par(mar = c(2,2,1,1))
 par(mfrow = c(6,5))
 for(i in 1:113) {
-  hist(rnorm(2000,0,5),xlim = c(0,15),ylim = c(0,1000),
-       breaks = seq(-33,33,1), main = "")
+  hist(rnorm(20200,0,3),xlim = c(0,15),ylim = c(0,5000),
+       breaks = seq(-20,20,1), main = "")
   hist(mod_draws[[paste0("sigma_s[",i,"]")]], 
        col = scales::alpha("red",0.5),add = TRUE)
   }
@@ -29,13 +29,13 @@ for(i in 1:113) {
 #| fig-width: 6.5
 #| fig-height: 9
 #| fig-cap: "sigma_t"
+#| echo: false
 
-# # Used to inspect appropriateness of sigma priors (all fall within limits of normal(0,2))
 par(mar = c(2,2,1,1))
 par(mfrow = c(6,5))
 for(i in 1:113) {
-  hist(rnorm(2000,0,5),xlim = c(0,15),ylim = c(0,1000),
-       breaks = seq(-33,33,1), main = "")
+  hist(rnorm(20200,0,3),xlim = c(0,15),ylim = c(0,5000),
+       breaks = seq(-20,20,1), main = "")
   hist(mod_draws[[paste0("sigma_t[",i,"]")]], 
        col = scales::alpha("red",0.5),add = TRUE)
   }
@@ -45,13 +45,13 @@ for(i in 1:113) {
 #| fig-width: 6.5
 #| fig-height: 9
 #| fig-cap: "sigma_st"
+#| echo: false
 
-# # Used to inspect appropriateness of sigma priors (all fall within limits of normal(0,2))
 par(mar = c(2,2,1,1))
 par(mfrow = c(6,5))
 for(i in 1:113) {
-  hist(rnorm(2000,0,5),xlim = c(0,15),ylim = c(0,1000),
-       breaks = seq(-33,33,1), main = "")
+  hist(rnorm(20200,0,3),xlim = c(0,15),ylim = c(0,5000),
+       main = "", breaks = seq(-20,20,1)) 
   hist(mod_draws[[paste0("sigma_st[",i,"]")]], 
        col = scales::alpha("red",0.5),add = TRUE)
   }
@@ -60,15 +60,31 @@ for(i in 1:113) {
 ```{r}
 #| fig-width: 6.5
 #| fig-height: 9
-#| fig-cap: "sigma_s"
+#| fig-cap: "inv_phi"
+#| echo: false
 
-# # Used to inspect appropriateness of sigma priors (all fall within limits of normal(0,2))
 par(mar = c(2,2,1,1))
 par(mfrow = c(6,5))
 for(i in 1:113) {
-  hist(rnorm(2000,0,5),xlim = c(0,15),ylim = c(0,1000), #, 
-       breaks = seq(-33,33,1), main = "")
+  hist(rnorm(4000,0,3),xlim = c(0,15),ylim = c(0,1000), #, 
+       breaks = seq(-20,20,1), main = "")
   hist(mod_draws[[paste0("inv_phi[",i,"]")]], 
        col = scales::alpha("red",0.5),add = TRUE)
-  }
+}
+```
+
+```{r}
+
+par(mfrow= c(2,4))
+  hist(rnorm(4000,0,5),xlim = c(0,15),ylim = c(0,1000), #, 
+       breaks = seq(-40,40,1), main = "")
+  hist(mod_draws[[paste0("mu_inv_phi")]], 
+       col = scales::alpha("red",0.5),add = TRUE)
+  
+    hist(rnorm(4000,0,5),xlim = c(0,15),ylim = c(0,1000), #, 
+       breaks = seq(-40,40,1), main = "")
+  hist(mod_draws[[paste0("sd_inv_phi")]], 
+       col = scales::alpha("red",0.5),add = TRUE)
+
+    
 ```

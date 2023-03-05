@@ -27,8 +27,6 @@ Macroinvertebrate specimens were identified to the lowest taxonomic level possib
 
 -   *Offadens* spG2MV1, from @webb_suter_2011.
 
-<!--# Perhaps I should include a statement about exclusion of taxa: e.g. A. small (i.e. likely to pass through a 250 um mesh), likely plankton species such as Copepods, except for Cyclopoids of which large specimens were found abundantly; B. not-truly aquatic species. e.g. Collembola (and some oher taxa I will need to check).  I have, however, included megadrile oligochaetes: "These supposedly terrestrial species have been collected in freshwater often enough to suggest that they might be genuine aquatic or semi-aquatic species rather than incidentals" [@martin2008].-->
-
 ### Taxonomic level for statistical modelling
 
 We made decisions on the level to which groups were identified to balance the dual aims of maximizing taxonomic resolution and accuracy of specimen counts in samples.

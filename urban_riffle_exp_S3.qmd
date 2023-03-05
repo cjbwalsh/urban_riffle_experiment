@@ -52,7 +52,7 @@ We modeled the environmental variables (transformed as necessary and scaled, Tab
 ```{r}
 #| label: tbl-env_vars
 #| echo: false
-#| tbl-cap: "The transformations of the six environmental variables reported in the paper used to model their response to urban riffle construction. Phi is the negative log (base 2) of the smallest diameter of a sediment particle. The correlation coefficient, R, of the relationship between the mean (transformed) observed values of each variable in each sample and the values predicted by the models, and the slope of the regression between observed and predicted, are also indicated."
+#| tbl-cap: "The transformations of the six environmental variables reported in the paper used to model their response to urban riffle construction. Phi is the negative log (base 2) of the smallest diameter of a sediment particle. The R^2^ and slope of the relationship between the mean (transformed) observed values of each variable in each sample and the mean values predicted by the models, and 'Prediction fidelity' (the proportion of observed sample mean that fell within 95% of the posterior predicted distribution for each sample) are also indicated."
 
 gofs <- read.csv("small_data/env_gofs.csv")
 gofs <- gofs[gofs$model != "max_phi",]
@@ -62,7 +62,8 @@ ft <- data.frame(Variable = c("Variance of depth (m)", "Mean of depth (m)",
                  Transformation = c("log(x + 0.00175)", "log(x)", 
                                     "log(x + 0.0007442)", "log(x)","None","None"),
                  R = round(sqrt(gofs$oe_r_squ),3), 
-                 Slope = round(gofs$oe_slope,2))
+                 Slope = round(gofs$oe_slope,2),
+                 `Prediction fidelity` = round(gofs$pred_95,2))
   ft <- flextable::regulartable(ft)
   ft <- flextable::align(ft, align = "left", part = "all")
   ft <- flextable::valign(ft, valign = "top", part = "all")
@@ -647,7 +648,7 @@ mod_draws <- as.data.frame(stanfit_i$draws(format = "df", variables = c("a_s",
 save(mod_draws, file = paste0(model_fit_dir,"fit_riffle_baci_draws.rda"))
 ```
 
-The following uses the posterior distributions of the model parameters to predict mean abundance and of each taxon in each sample, and the mean count in each sample given the subsample fraction (for assessment of model fit), using the unique predictor combinations of all samples in the dataset (`predx`, described above) The resulting objects `predy_draws` (for abundances) and `c_draws` (for counts) are lists of 113 elements (one for each taxon; the name of each element = the relevant taxoncode). Each element is a data.frame with 53 columns (matching predx rows) and 16000 rows (4000 samples times 4 chains): the posterior distribution of the predicted mean abundance of each taxon for each `predx` value. `param_summs` is a list of summary tables of quantiles of each distribution for each taxon, saved as `param_summs.xlsx`, with 113 sheets containing the table for each taxon.
+The following uses the posterior distributions of the model parameters to predict mean abundance and of each taxon in each sample, and the mean count in each sample given the subsample fraction (for assessment of model fit, below), using the unique predictor combinations of all samples in the dataset (`predx`, described above) The resulting objects `predy_draws` (for abundances) and `pred_c_draws` (for counts) are lists of 113 elements (one for each taxon; the name of each element = the relevant taxoncode). Each element is a data.frame with 53 columns (matching predx rows) and 16000 rows (4000 samples times 4 chains): the posterior distribution of the predicted mean abundance of each taxon for each `predx` value. `param_summs` is a list of summary tables of quantiles of the posterior predicted distribution of each fixed parameter for each taxon, saved as `param_summs.xlsx`, with 113 sheets containing the table for each taxon.
 
 ```{r}
 #| label: predy_summary
@@ -658,6 +659,7 @@ The following uses the posterior distributions of the model parameters to predic
 # load(paste0(model_fit_dir,"fit_riffle_baci_draws.rda"))
 predx <- unique(cbind(samples[c("sample","site_no","sample_no","t_no")],u))
 
+# Generate posterior prediction distributions of mu for each sample (mean(log abundance))
 predy_draws <- list()
 system.time({
 for(i in 1:mt_data$n_taxa){
@@ -682,43 +684,31 @@ for(i in 1:mt_data$n_taxa){
 names(predy_draws) <- colnames(mt_data$c)
 save(predy_draws, file = paste0(model_fit_dir,"fit_riffle_baci_predy_draws.rda"))
 
-# # Generate posterior prediction distributions for c: needs to be done at the sample-unit scale to account for variation in s
+# # Generate posterior prediction distributions of c: needs to be done at the sample-unit scale to account for variation in s
 phi_draws <- mod_draws[,substr(names(mod_draws),1,3) == "phi"]
-pred_c_draws_su <- pred_Y_draws_su <- list()
+pred_c_draws_su <- list()
 
 for(i in 1:mt_data$n_taxa){
-  Yi <- data.table::data.table(matrix(nrow = nrow(phi_draws[1]),ncol= mt_data$n_obs))
-  ci <- data.table::data.table(matrix(nrow = nrow(phi_draws[1]),ncol= mt_data$n_obs))
-  names(Yi) <- names(ci) <- samples$smpcode
+  ci <- data.frame(matrix(nrow = nrow(phi_draws[1]),ncol= mt_data$n_obs))
+  names(ci) <- samples$smpcode
   for(j in 1:mt_data$n_obs){
-      Yi[, j] <- yi <- 
-        rnbinom(nrow(phi_draws[i]),
+      Y_ij_draws <- rnbinom(nrow(phi_draws[i]),
                 mu = exp(predy_draws[[colnames(mt_data$c)[i]]][,sample_nos$sample == samples$sample[j]]),
                 size = phi_draws[i][,1])
-      ci[, j] <- 
-        rbinom(nrow(phi_draws[i]), yi, mt_data$s[j,i])
+      ci[,j] <- rbinom(nrow(phi_draws[i]), Y_ij_draws, mt_data$s[j,i])
   }
   pred_c_draws_su[[i]] <- ci
-  pred_Y_draws_su[[i]] <- Yi
- }
-names(pred_c_draws_su) <- names(pred_Y_draws_su) <- names(mt_data$c)
+}
+names(pred_c_draws_su) <- names(mt_data$c)
 
-pred_c_draws <- pred_Y_draws <- list()
+pred_c_draws <- list()
 for(i in 1:mt_data$n_taxa){
-  Yi <- data.table::data.table(t(pred_Y_draws_su[[i]]))
-  system.time({
-  Yi <- Yi[, lapply(.SD, sum), by=list(sample = samples$sample)]
-  })
-  # aggregate quicker than data.table equivalent! (20 s vs 33 s)
-  system.time({
-  Yi <- aggregate(t(pred_Y_draws_su[[i]]), by = list(sample = samples$sample), FUN = sum)
-  })
   ci <- aggregate(t(pred_c_draws_su[[i]]), by = list(sample = samples$sample), FUN = sum)
   pred_c_draws[[i]] <- t(ci[,-1])
 }
 save(pred_c_draws, file = paste0(model_fit_dir,"pred_c_draws.rda"))
-save(pred_y_draws, file = paste0(model_fit_dir,"pred_y_draws.rda"))
 
+# Summarise posterior predicted distribution of each fixed parameter
 params <- c("b_ba1", "b_ba2", "b_ci","b_i","b_spring","b_ba1ci","b_ba2ci","b_ba0cii","b_ba1cii", "b_ba2cii")
 df_empty <- data.frame(shortcode = NA, mean = NA, lo95 = NA, lo90 = NA, median = NA, hi90 = NA, hi95 = NA)[0,]
 mod_draws <- get(load(paste0(model_fit_dir,"fit_riffle_baci_draws.rda")))
@@ -866,6 +856,7 @@ p_cf_mat[[t]] <- 1 - (1 - p_cf_mat[[t]])^4
   # back-transformed abundance per 4 samples
 }
 # }) # ~15 s
+
 names(p_cf_mat) <- colnames(biota_ct)
 tot_rich_cf_mat <- Reduce('+', p_cf_mat)
 # see https://stackoverflow.com/questions/11641701/sum-a-list-of-matrices
@@ -1057,56 +1048,38 @@ write.csv(tops,"small_data/top10taxa.csv",row.names = FALSE)
 
 ## 2. Assessment of model fit
 
-We assessed the predictive performance of our model by comparing model predictions for each sample (combining predictions for the sample_units taken at each site on each occastion) using the full model, including the random effects $\theta_1$, $\theta_2$, and $\theta_3$.  For the multi-taxon model we assessed accuracy of predictions of count and of detection/non-detection of each taxon, and of aggregate estimates of taxon richness in each sample.
+We assessed the predictive performance of our model by comparing model predictions for each sample (combining predictions for the sample_units taken at each site on each occastion) using the full model, including the random effects $\theta_1$, $\theta_2$, and $\theta_3$.  For the multi-taxon model, we assessed accuracy of predictions of count and of detection/non-detection of each taxon, and of aggregate estimates of taxon richness in each sample.  We assessed prediction at the level of sample rather than at the sample-unit level because the model allows prediction at that level, and our primary interest is to predict mean response to riffle construction at the site level.
 
 ### Methods
 
-For the each environmental variable, we compared the mean of observed values for each sampl with the posterior prediction distribution of mean. For the multi-taxon model we compared the mean observed count per sample unit with the posterior prediction of the mean count.
+For the each environmental variable, we compared the mean of observed values for each sample with the posterior prediction distribution of mean. For the multi-taxon model we compared the mean observed count per sample unit with the posterior prediction of the mean count.
 
-We assessed model fit in three ways:
+We assessed model fit for environmental variables and taxon counts in three ways: the R^2^ and slope of the relationship between mean of the posterior predicted distribution and observed value; and the proportion of samples for which the observed value fell outside 95% of the posterior predicted distribution. For R^2^, environmental variables were transformed as they were in the model, and for the multi-taxon model, taxon counts were \[log(x + 1)\]-transformed.
 
-We quantified model accuracy and bias first by calculating the correlation coefficient, *R*, and slope of the linear regression between predicted and observed values of each model. The environmental variables were transformed as they were in the model, and for the multi-taxon model, we used log-mean abundance \[log(x + 1)\] of each taxon in each sample (count in each sample unit estimated as count/subsample fraction). We assessed prediction at the level of sample rather than at the sample-unit level because the model allows prediction at that level, and our primary interest is to predict mean response to riffle construction at the site level.
+We also assessed accuracy of model predictions for occurrence of each taxon (i.e. detection/non-detection) by calculating the proportion of posterior predictions which correctly predicted presence or absence.
 
-We also assessed accuracy of model predictions for occurrence of each taxon (rather than abundance) by assessing the area under the operator curve (AUC) for logistic regressions between mean predicted probability of occurrence and observed presence or absence in each sample, where predicted probability of occurrence in a sample,
+Finally, we assessed the accuracy of the multi-taxon model's estimates of assemblage level metrics, by calculating the *R^2^* of the linear regression between predicted and observed number of taxa in each sample, both total number of taxa, and the number of Ephemeropotera, Plecoptera and Trichoptera taxa (three groups of sensitive species commonly used as a stream health metric). Predicted number of taxa was estimated as the mean summed probabilities of occurrence in each posterior sample. Because observed taxon richness is likely to be affected by subsample size, we interpreted the relationship between predicted and observed numbers of taxa accounting for mean subsample proportion in the subsample units making up each sample. We also calculated *R^2^* of the predicted number of taxa as a function of observed number of taxa + mean subsample proportion.
 
-$$
-p\_s = 1 - \Pi(1 - p\_{su}_i)
-$$ {#eq-s3_ps}
-
-where $p\_su_i$ is the probability of occurrence in the *i*th sample unit comprising the sample, calculated as 1 - negative-binomial probabliity of zero, given predicted $\mu$ and $\phi$.
-
-Finally, we assessed the accuracy of the multi-taxon model's estimates of assemblage level metrics, by calculating the *R^2^* and slope of the linear regression between predicted and observed number of taxa in each sample, both total number of taxa, and the number of Ephemeropotera, Plecoptera and Trichoptera taxa (three groups of sensitive species commonly used as a stream health metric). Predicted number of taxa was estimated as the mean summed probabilities of occurrence in each posterior sample. Because observed taxon richness is likely to be affected by subsample size, we interpreted the relationship between predicted and observed numbers of taxa accounting for mean subsample proportion in the subsample units making up each sample. We also calculated *R^2^* of the predicted number of taxa as a function of observed number of taxa + mean subsample proportion.
-
-### Results
-
-All environmental variables were well predicted by their respective models, with almost perfect correlation between observed and predicted (Table 1).
-
-The abundances of all taxa (estimated as the number counted divided by the subsample fraction) were well predicted by the model. The observed and predicted abundances of all taxa were correlated with R \> 0.65, and all but 2 \>0.8 (@fig-nbinom_me_fit_by_taxon A). Abundance predictions of 42 prevalent and abundant taxa, including all but one of those for which an effect of the experimental riffles was inferred, showed little bias (regression slopes between 0.8 and 1.25), while abundance predictions for most taxa with low prevalence tended to be underestimated (slopes \<0.8, @fig-nbinom_me_fit_by_taxon B). Underestimation or overestimation of slope is to be expected for taxa with many zero or low abundances.
-
-The model also predicted occurrence of all taxa with high certainty (all AUC values of the 111 taxa absent from at least one sample \>0.87, @fig-nbinom_pa_stats). The probabilities of occurrence of all taxa summed to accurate estimates of taxon richness in the 53 samples (@fig-richness_op). The raw correlation between predicted and observed numbers of all taxa was reduced by the effect of subsampling (@fig-richness_op A). The predicted number of taxa was higher than the observed for samples with lower numbers of taxa because more of them had small subsample fractions compared to more taxon-rich samples. The regression of predicted \~ observed + subsample fraction had a higher *R^2^* (0.81). The model predicted EPT richness with high accuracy (*R^2^* 0.94), with a small negative effect of subsample fraction (@fig-richness_op B).
-
-The accurate prediction of the data by all models provide confidence in inferences of the experimental effects of interest.
 
 ```{r}
-#| label: fig-nbinom_me_fit_by_taxon
+#| label: tbl-nbinom_me_fit_by_taxon
 #| echo: false
 #| warning: false
 #| message: false
-#| fig-width: 7
-#| fig-height: 3.5
-#| fig-cap: "a) Correlation coefficients for each taxon of between observed (count in each subsample divided by subsample fraction, log(x + 1)-transformed and averaged for all sample units in each sample) and predicted (P) abundances (mean estimate of log-mean abundances of each taxon in the sample from each site), and b) Slopes of the regression of predicted as a function of observed, both plotted against prevalence of each taxon. Green points indicate taxa for which a non-zero effect of riffle construction was inferred at the 90% confidence level."
-
+#| tbl-cap: "Model fit statistics for all taxa in the multi-taxon model.  R squared and slope of the relationship between mean of the predicted posterior distribution and observed count, prediction fidelity (the proportion of observed sample mean that fell within 95% of the posterior predicted distribution for each sample), and detection accuracy (the proportion of occurrences accurately predicted)."
 
 load(paste0(model_fit_dir,"c_draws.rda"))
 c_obs <- aggregate(mt_data$c, by = list(samples$sample), FUN = sum)
 
+# percentile of posterior predictive distribution equal to observed value 
+# (not used)
 ppd_ppn <- c_obs
 for(i in 1:mt_data$n_taxa){
 for(j in 1:mt_data$n_sample){
-    if(c_obs[j, i + 1] == median(c_draws[[i]])){
-      ppd_ppn[j,i] <- 0.5
+    if(c_obs[j, i + 1] == median(c_draws[[i]][,j])){
+      ppd_ppn[j,i + 1] <- 0.5
       }else{
-      ppd_ppn[j,i] <- ecdf(c_draws[[i]])(c_obs[j, i + 1]) > 0
+      ppd_ppn[j,i + 1] <- ecdf(c_draws[[i]][,j])(c_obs[j, i + 1]) 
         }
 }
 }
@@ -1138,139 +1111,29 @@ oe_stats$abs_det_ppn[i] <- abs_det/(n_abs * nrow(c_draws[[i]]))
 oe_stats$pre_det_ppn[i] <- pre_det/(n_pre * nrow(c_draws[[i]]))
 oe_stats$det_ppn[i] <- det_ppn/(prod(dim(c_draws[[i]])))
 }
-# load object predy_draws, calculated above 
-predy_draws <- get(load(paste0(model_fit_dir,"fit_riffle_baci_predy_draws.rda")))
-
-# Calculate prevalence of each taxon by sample
-prevalence <- apply(biota_ct, 2, FUN = function(x){sum(x > 0)})
-prevalence_by_sample <- data.frame(shortcode = colnames(biota_ct), prev = NA)
-for(i in 1:ncol(biota_ct)){
-  prevalence_by_sample$prev[i] <- 
-    sum(aggregate(biota_ct[,i], by = list(sample_no = samples$sample_no), 
-            FUN = function(x) as.numeric(sum(x) > 0))$x)
-}
-
-# Find those taxa for which a riffle effect is inferred in the paper and highlight on plot
-# (vectors of taxacodes, more_diff_90 and more_sim_90, also used in main paper)
-# load objects: (a list predy_cf; and ) a list of lists delta_post, containing lists
-# delta_baci1_low, delta_baci2_low, delta_baci1_hi, delta_baci1_hi - see S3 chunk pred_cf
-load(paste0(model_fit_dir,"fit_riffle_baci_predy_cf_draws.rda"))
-
-diff_summs <- list()
-for(i in 1:length(delta_posts)){
-  qlsi <- as.data.frame(do.call(rbind,lapply(delta_posts[[i]],FUN = quantile, 
-                                probs = c(0.025,0.05,0.125,0.5,0.875,0.95,0.975))))
-  names(qlsi) = c("lo95","lo90","lo75","median","hi75","hi90","hi95")
-  meani <- unlist(lapply(delta_posts[[i]],FUN = mean))
-  diff_summs[[i]] <- data.frame(shortcode = names(biota_ct), 
-                                 mean = meani,
-                                 qlsi)
-}
-names(diff_summs) <- names(delta_posts)
-more_diff_90 <- more_diff_95 <- more_sim_90 <- more_sim_95 <- vector()
-for(i in 1:length(delta_posts)){
-more_diff_90 <- unique(c(more_diff_90,diff_summs[[i]]$shortcode[diff_summs[[i]]$lo90 > 0]))
-more_sim_90 <- unique(c(more_sim_90,diff_summs[[i]]$shortcode[diff_summs[[i]]$hi90 < 0]))
-}
-
-bgs <- rep(NA, mt_data$n_taxa)
-bgs[names(biota_ct) %in% unique(c(more_diff_90,more_sim_90))] <- "green"
-cols <- bgs; cols[is.na(cols)] <- "black"
-layout(matrix(c(1,2,3,3),2,2,byrow=TRUE), widths = c(12,12), heights = c(12,1))
-par(mar = c(2,4,1,1))
-xpos <- jitter(prevalence_by_sample$prev)
-plot(xpos, oe_stats$cor,
-     xlim = c(0,53), ylim = c(0,1), pch = 21, bg = bgs,
-     axes = FALSE, ylab = "R (O:P)", xlab = "")
-abline(h = 1, lty = 3)
-axis(1); axis(2, las = 1); box(bty = "l")
-title("A.", adj = 0)
-plot(xpos, oe_stats$slope,
-     ylim = c(0,1.45),pch = 21, bg = bgs,
-     axes = FALSE, ylab = "Regression slope (O ~ P)", xlab = "")
-abline(h = 1, lty = 3)
-axis(1); axis(2, las = 1); box(bty = "l")
-title("B.", adj = 0)
-par(mar = c(0,0,0,0))
-plot.new()
-title(xlab = "Prevalence (number of samples with abundance > 0)", line = -1.5)
-
-write.csv(oe_stats, "small_data/riffle_baci_oe_stats.csv", row.names = FALSE)
-```
-
-```{r}
-#| label: fig-nbinom_pa_stats
-#| echo: false
-#| warning: false
-#| message: false
-#| fig-width: 3.5
-#| fig-height: 3.5
-#| fig-cap: "a) Area under the receiver operator characteristic curve (AUC) of predictions of presence-absence from the negative-binomial model for 111 taxa as a function of their prevalence in the 53 samples. AUC could not be calculated for the two taxa that occurred in all samples (Nematoda and Enchytraiedae)."
-
-# Function for calculating probability of occurrence in n sample units, given a vector of probabilities, x, of length n
-p_per_n <- function(x) {1 - prod(1 - x)} # x, a vector of probabilities
-# and for case of all ps being equal
-p_per_n1 <- function(x,n) {1 - (1 - x)^n} # x, a single probability, n the number of replicates of x
-
-# load draws of parameters from model (object mod_draws calculated above)
-load(paste0(model_fit_dir, "fit_riffle_baci_draws.rda"))
-
-phi_draws <- mod_draws[,grep("phi",names(mod_draws))]
-p_mat <- list()
-# system.time({
-for(t in 1:mt_data$n_taxa){
-  # calculate probability of occurrence per sample-unit from estimated N and phi assuming neg-binomial distribution
-p_mat[[t]] <- predy_draws[[colnames(biota_ct)[t]]]
-for(i in 1:ncol(p_mat[[t]]))
-p_mat[[t]][,i] <- 1 - pnbinom(0,mu = exp(predy_draws[[colnames(biota_ct)[t]]][,i]),size = phi_draws[,t])
-}
-# }) # ~15 s
-names(p_mat) <- colnames(biota_ct)
-  # adjust probabilities to P per sample (collection of 3 or 4 sample-units)
-p_per_samp_mat <- p_mat
-for(i in 1:mt_data$n_taxa){
-  for(j in 1:mt_data$n_sample){
-    p_per_samp_mat[[i]][,j] <- p_per_n1(p_mat[[i]][,j],sum(samples$sample_no == j))
-  }
-}
-
-tot_rich_mat <- Reduce("+",p_per_samp_mat)
-ept_rich_mat <- Reduce("+",p_per_samp_mat[substr(names(p_mat),1,2) %in% c("QE","QP","QT")])
-
-# Probability of presence in observed data
-obs_per_sample <- matrix(ncol = mt_data$n_sample, nrow = mt_data$n_taxa)
-for(t in 1:mt_data$n_taxa){
-    obs_per_sample[t,] <- aggregate(biota_ct[,t], 
-                                     list(sample_no = samples$sample_no), 
-                                     FUN = function(y) {sum(y > 0) > 0})$x
-  }
-
-library("PresenceAbsence")
-p_mean <- matrix(nrow = mt_data$n_sample, ncol= mt_data$n_taxa)
-for(t in 1:mt_data$n_taxa){
-  p_mean[,t] <- apply(p_mat[[t]], 2, FUN = mean)
-}
-p_mean_per_sample <- matrix(ncol = mt_data$n_sample, nrow = mt_data$n_taxa)
-for(t in 1:mt_data$n_taxa){
-  for(j in 1:mt_data$n_sample){
-    p_mean_per_sample[t,j] <- p_per_n(rep(p_mean[j,t],sum(samples$sample_no == j)))
-  }}
-pa_stats <- data.frame(shortcode = colnames(biota_ct),
-                       taxon = taxa$taxon[match(colnames(biota_ct),taxa$shortcode)], 
-                       prevalence = prevalence_by_sample$prev[match(prevalence_by_sample$shortcode, colnames(biota_ct))],
-                       PCC = NA,
-                       sensitivity = NA, specificity = NA, Kappa = NA, AUC = NA)
-for(t in 1:mt_data$n_taxa){
-  pa_data <- data.frame(taxon = colnames(biota_ct)[t],
-                        obs_per_sample[t,],p_mean_per_sample[t,])
-  pa_stats[t,-(1:3)] <- presence.absence.accuracy(pa_data)[c("PCC","sensitivity","specificity","Kappa","AUC")] 
-}
-par(mar = c(4,4,1,1),mfrow = c(1,1))
-plot(pa_stats$prevalence, pa_stats$AUC, ylim = c(0.5,1),xlab = "", ylab = "AUC")
-title(xlab = "Prevalence (number of samples with abundance > 0)",)
-
-pa_stats <- pa_stats[,names(pa_stats) != "taxon"]
-write.csv(pa_stats, "small_data/riffle_baci_pa_stats.csv", row.names = FALSE)
+oe_stats$taxoncode <- oe_stats$taxon
+oe_stats$taxon <- taxa$taxon[match(oe_stats$taxon,taxa$taxoncode)]
+oe_stats$higher_taxon <- taxa$higher_taxon[match(oe_stats$taxoncode,taxa$taxoncode)]
+oe_stats$higher_taxon <- higher_taxa$taxon[match(oe_stats$higher_taxon,higher_taxa$higher_taxon)]
+ft <- with(oe_stats, 
+           data.frame(Taxon = taxon, Classification = higher_taxon, 
+                      `R squared` = round(r.squ,2),
+                      `Prediction fidelity`= round(1-(n_outlier/53),2),
+                      `Detection accuracy` = round(det_ppn,2)))
+  ft <- flextable::regulartable(ft)
+  ft <- flextable::set_header_labels(ft, values = list(R.squared = "R squared",
+                                      Prediction.fidelity = "Prediction fidelity",
+                                      Detection.accuracy = "Detection accuracy"))
+  ft <- flextable::align(ft, align = "left", part = "all")
+  ft <- flextable::valign(ft, valign = "top", part = "all")
+  ft <- flextable::font(ft,fontname = "Helvetica", part = "all")
+  ft <- flextable::fontsize(ft, size = 10, part = "all")
+  ft <- flextable::italic(ft, j = 1, 
+                          i = which(taxa$italic[match(oe_stats$taxoncode,taxa$taxoncode)] == 1))
+  ft <- flextable::padding(ft, padding.top = 2,  padding.bottom = 2, part = "all")
+  ft <- flextable::autofit(ft)
+  ft <- flextable::width(ft, width = dim(ft)$widths*6.5 /(flextable_dim(ft)$widths))
+ft
 ```
 
 ```{r}
@@ -1280,45 +1143,78 @@ write.csv(pa_stats, "small_data/riffle_baci_pa_stats.csv", row.names = FALSE)
 #| message: false
 #| fig-width: 7
 #| fig-height: 3.5
-#| fig-cap: "Predicted mean number of taxa (A. total, B. Ephemeroptera, Plecoptera and Trichoptera, EPT) in the 53 samples plotted against observed richness. The solid line indicates the 1:1 relationship, and the dashed line the linear regression of predicted as a function of observed.  The R-squared values indicate the adjusted R-squared of the linear regression of predicted ~ observed, and the values in brackets are for the regression predicted ~ observed + s, where s is the mean subsample proportion of the sample. Points are sized by s."
+#| fig-cap: "Predicted mean number of taxa (A. total, B. Ephemeroptera, Plecoptera and Trichoptera, EPT) in the 53 samples plotted against observed number of taxa per sample. Grey lines indicate the 95% confidence intervales of the predicted means, with red lines indicating the 5 samples for which observed total richness fell outside 95% of the posterior prediciton distribution. The solid line indicates the 1:1 relationship, and the dashed line the linear regression of predicted as a function of observed.  The R-squared values indicate the adjusted R-squared of the linear regression of predicted ~ observed,."
 
+obs_per_sample <- matrix(ncol = mt_data$n_sample, nrow = mt_data$n_taxa)
+for(t in 1:mt_data$n_taxa){
+    obs_per_sample[t,] <- aggregate(biota_ct[,t], 
+                                     list(sample_no = samples$sample_no), 
+                                     FUN = function(y) {sum(y > 0) > 0})$x
+  }
+
+sum_gr0 <- function(x) {y <- sum(x > 0); return(y)}
+pa_draws <- c_draws
+for(i in 1:length(c_draws)) pa_draws[[i]][pa_draws[[i]] > 0] <- 1
+tot_rich_draws <- Reduce("+",pa_draws)
+outl <- 0
 par(mfrow = c(1,2))
 par(mar = c(4,4,1,1))
 sample_p <- vector("numeric",length = mt_data$n_sample)
 for(i in 1:mt_data$n_sample){
   sample_p[i] <- mean(0.01* samples$subsample_perc[samples$sample_no == i])
 }
-
 x <- apply(obs_per_sample,2, FUN = sum)
-y <- apply(tot_rich_mat,2,FUN = mean)
+y <- apply(tot_rich_draws,2,FUN = mean)
+yqtl <- apply(tot_rich_draws,2,FUN = quantile, probs = c(0.025,0.975))
      # this is a better fit than if FUN = sum with which R2 = 0.64 (0.72))
-plot(x, y, cex = sample_p + 0.5, axes = FALSE, ylim = c(15,50), xlim = c(15,50),
+plot(x, y, cex = 1, axes = FALSE, ylim = c(10,45), xlim = c(10,45),
      xlab = "Observed no. taxa", ylab = "Predicted no. taxa")
+for(i in 1:length(x)){
+  qtli <- t(yqtl[,i])
+  outl <- outl+ as.numeric(x[i] > max(qtli) | x[i] < min(qtli))
+  lines(rep(x[i],2), qtli, col = ifelse(x[i] > max(qtli) | x[i] < min(qtli),"red", "gray"))
+}
 axis(1); axis(2, las = 1); box(bty = 'l')
 abline(0,1)
 abline(lm(y ~ x), lty = 3)
 r21 <- round(summary(lm(y ~ x))$adj.r.squared,2)
-r22 <- round(summary(lm(y ~ x + sample_p))$adj.r.squared,2)
 title(main = "A.", adj = 0)
-title(main = paste0("  R-sq = ", r21, " (", r22, ")"), 
+title(main = paste0("  R-sq = ", r21), 
       adj = 0, line = -1, font.main = 1, cex.main = 1)
 
-x <- apply(obs_per_sample[substr(names(p_mat),1,2) %in% c("QE","QP","QT"),],2, FUN = sum)
-y <- apply(ept_rich_mat,2,FUN = mean)
+x <- apply(obs_per_sample[substr(colnames(mt_data$c),1,2) %in% c("QE","QP","QT"),],2, FUN = sum)
+ept_rich_draws <- Reduce("+",
+                         pa_draws[substr(colnames(mt_data$c),1,2) %in% c("QE","QP","QT")])
+y <- apply(ept_rich_draws,2,FUN = mean)
      # this is a better fit than if FUN = sum with which R2 = 0.92 (0.92))
-plot(x, y, cex = sample_p + 0.5, axes = FALSE, ylim = c(0,8), xlim = c(0,8),
+yqtl <- apply(ept_rich_draws,2,FUN = quantile, probs = c(0.025,0.975))
+     # this is a better fit than if FUN = sum with which R2 = 0.64 (0.72))
+plot(x, y, cex = 1, axes = FALSE, ylim = c(0,8), xlim = c(0,8),
      xlab = "Observed no. EPT taxa", ylab = "Predicted no. EPT taxa")
+for(i in 1:length(x)){
+  qtli <- t(yqtl[,i])
+  lines(rep(x[i],2), qtli, col = ifelse(x[i] > max(qtli) | x[i] < min(qtli),"red", "gray"))
+}
 axis(1); axis(2, las = 1); box(bty = 'l')
-legend("bottomright", pch = 1, pt.cex = c(0.6,1.0,1.5), 
-       legend = c(0.1,0.5,1.0),title = "s")
 abline(0,1)
 abline(lm(y ~ x), lty = 3)
 r21 <- round(summary(lm(y ~ x))$adj.r.squared,2)
 r22 <- round(summary(lm(y ~ x + sample_p))$adj.r.squared,2)
 title(main = "B.", adj = 0)
-title(main = paste0("  R-sq = ", r21, " (", r22, ")"), 
+title(main = paste0("  R-sq = ", r21), 
       adj = 0, line = -1, font.main = 1, cex.main = 1)
 
 ```
+
+### Results
+
+All environmental variables were well predicted by their respective models, with almost perfect correlation between observed values and means of the posterior prediction distributions, and with observed values falling within 95% of the posterior predicted distribution for >89% of samples (Table 1).
+
+The counts of all taxa were well predicted by the model. Counts in all samples fell within 95% of the posterior predicted distribution (prediction fidelity = 1, Table 2) for all but 3 taxa, for which one sample fell outside (prediction fidelity = 0.98). Mean *R^2^* of predicted vs observed relationships taxon counts was `r round(mean(oe_stats$r.squ),2)`, with *R^2^* for all but 3 species >0.7.  The model also predicted taxon occurrence well, with a mean detection accuracy of `r round(mean(oe_stats$det_ppn),2)` (minimum `r round(min(oe_stats$det_ppn),2)`, with all but 10 taxa > `r sum(oe_stats$det_ppn < 0.8)`).
+
+The predictions of occurrence summed to predictions of taxon richness that matched the observed data well (@fig-richness_op). R^2^ for the relationship between observed total richness and mean predicted total richness was 0.8, with observed richness for `r round(100*(1 -outl/53))`% of samples falling within 95% of the posterior predicted distribution (@fig-richness_op A). The relationship for predicted EPT richness was stronger (@fig-richness_op A).
+
+The accurate prediction of the data by all models provide confidence in inferences of the experimental effects of interest.
+
 
 ## References
