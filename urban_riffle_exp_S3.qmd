@@ -647,7 +647,7 @@ mod_draws <- as.data.frame(stanfit_i$draws(format = "df", variables = c("a_s",
 save(mod_draws, file = paste0(model_fit_dir,"fit_riffle_baci_draws.rda"))
 ```
 
-The following uses the posterior distributions of the model parameters to predict mean abundance for each taxon in each sample (for assessment of model fit), using the unique predictor combinations of all samples in the dataset (`predx`, described above) The resulting object `predy_draws` is a list of 113 elements (one for each taxon; the name of each element = the relevant taxoncode). Each element is a data.frame with 53 columns (matching predx rows) and 16000 rows (4000 samples times 4 chains): the posterior distribution of the predicted mean abundance of each taxon for each `predx` value. `param_summs` is a list of summary tables of quantiles of each distribution for each taxon, saved as `param_summs.xlsx`, with 113 sheets containing the table for each taxon.
+The following uses the posterior distributions of the model parameters to predict mean abundance and of each taxon in each sample, and the mean count in each sample given the subsample fraction (for assessment of model fit), using the unique predictor combinations of all samples in the dataset (`predx`, described above) The resulting objects `predy_draws` (for abundances) and `c_draws` (for counts) are lists of 113 elements (one for each taxon; the name of each element = the relevant taxoncode). Each element is a data.frame with 53 columns (matching predx rows) and 16000 rows (4000 samples times 4 chains): the posterior distribution of the predicted mean abundance of each taxon for each `predx` value. `param_summs` is a list of summary tables of quantiles of each distribution for each taxon, saved as `param_summs.xlsx`, with 113 sheets containing the table for each taxon.
 
 ```{r}
 #| label: predy_summary
@@ -681,6 +681,43 @@ for(i in 1:mt_data$n_taxa){
 })  # 1 min
 names(predy_draws) <- colnames(mt_data$c)
 save(predy_draws, file = paste0(model_fit_dir,"fit_riffle_baci_predy_draws.rda"))
+
+# # Generate posterior prediction distributions for c: needs to be done at the sample-unit scale to account for variation in s
+phi_draws <- mod_draws[,substr(names(mod_draws),1,3) == "phi"]
+pred_c_draws_su <- pred_Y_draws_su <- list()
+
+for(i in 1:mt_data$n_taxa){
+  Yi <- data.table::data.table(matrix(nrow = nrow(phi_draws[1]),ncol= mt_data$n_obs))
+  ci <- data.table::data.table(matrix(nrow = nrow(phi_draws[1]),ncol= mt_data$n_obs))
+  names(Yi) <- names(ci) <- samples$smpcode
+  for(j in 1:mt_data$n_obs){
+      Yi[, j] <- yi <- 
+        rnbinom(nrow(phi_draws[i]),
+                mu = exp(predy_draws[[colnames(mt_data$c)[i]]][,sample_nos$sample == samples$sample[j]]),
+                size = phi_draws[i][,1])
+      ci[, j] <- 
+        rbinom(nrow(phi_draws[i]), yi, mt_data$s[j,i])
+  }
+  pred_c_draws_su[[i]] <- ci
+  pred_Y_draws_su[[i]] <- Yi
+ }
+names(pred_c_draws_su) <- names(pred_Y_draws_su) <- names(mt_data$c)
+
+pred_c_draws <- pred_Y_draws <- list()
+for(i in 1:mt_data$n_taxa){
+  Yi <- data.table::data.table(t(pred_Y_draws_su[[i]]))
+  system.time({
+  Yi <- Yi[, lapply(.SD, sum), by=list(sample = samples$sample)]
+  })
+  # aggregate quicker than data.table equivalent! (20 s vs 33 s)
+  system.time({
+  Yi <- aggregate(t(pred_Y_draws_su[[i]]), by = list(sample = samples$sample), FUN = sum)
+  })
+  ci <- aggregate(t(pred_c_draws_su[[i]]), by = list(sample = samples$sample), FUN = sum)
+  pred_c_draws[[i]] <- t(ci[,-1])
+}
+save(pred_c_draws, file = paste0(model_fit_dir,"pred_c_draws.rda"))
+save(pred_y_draws, file = paste0(model_fit_dir,"pred_y_draws.rda"))
 
 params <- c("b_ba1", "b_ba2", "b_ci","b_i","b_spring","b_ba1ci","b_ba2ci","b_ba0cii","b_ba1cii", "b_ba2cii")
 df_empty <- data.frame(shortcode = NA, mean = NA, lo95 = NA, lo90 = NA, median = NA, hi90 = NA, hi95 = NA)[0,]
@@ -1020,9 +1057,13 @@ write.csv(tops,"small_data/top10taxa.csv",row.names = FALSE)
 
 ## 2. Assessment of model fit
 
-We assessed the predictive performance of our model by comparing model predictions of abundance to observed abundance at each site including the random site, stream and time effects.
+We assessed the predictive performance of our model by comparing model predictions for each sample (combining predictions for the sample_units taken at each site on each occastion) using the full model, including the random effects $\theta_1$, $\theta_2$, and $\theta_3$.  For the multi-taxon model we assessed accuracy of predictions of count and of detection/non-detection of each taxon, and of aggregate estimates of taxon richness in each sample.
 
 ### Methods
+
+For the each environmental variable, we compared the mean of observed values for each sampl with the posterior prediction distribution of mean. For the multi-taxon model we compared the mean observed count per sample unit with the posterior prediction of the mean count.
+
+We assessed model fit in three ways:
 
 We quantified model accuracy and bias first by calculating the correlation coefficient, *R*, and slope of the linear regression between predicted and observed values of each model. The environmental variables were transformed as they were in the model, and for the multi-taxon model, we used log-mean abundance \[log(x + 1)\] of each taxon in each sample (count in each sample unit estimated as count/subsample fraction). We assessed prediction at the level of sample rather than at the sample-unit level because the model allows prediction at that level, and our primary interest is to predict mean response to riffle construction at the site level.
 
@@ -1055,28 +1096,6 @@ The accurate prediction of the data by all models provide confidence in inferenc
 #| fig-height: 3.5
 #| fig-cap: "a) Correlation coefficients for each taxon of between observed (count in each subsample divided by subsample fraction, log(x + 1)-transformed and averaged for all sample units in each sample) and predicted (P) abundances (mean estimate of log-mean abundances of each taxon in the sample from each site), and b) Slopes of the regression of predicted as a function of observed, both plotted against prevalence of each taxon. Green points indicate taxa for which a non-zero effect of riffle construction was inferred at the 90% confidence level."
 
-  # Generate posterior prediction distributions for Y and c: needs to be done at the sample-unit scale to 
-  # account for variation in s
-# c_draws_obs <- list()
-# for(i in 1:mt_data$n_taxa){
-#   ci <- data.frame(matrix(nrow = nrow(phi_draws[1]),ncol= mt_data$n_obs))
-#   names(ci) <- samples$smpcode
-#   for(j in 1:mt_data$n_obs){
-#       Y_ij_draws <- rnbinom(nrow(phi_draws[i]),
-#                 mu = exp(predy_draws[[colnames(mt_data$c)[i]]][,sample_nos$sample == samples$sample[j]]),
-#                 size = phi_draws[i][,1])
-#       ci[,j] <- rbinom(nrow(phi_draws[i]), Y_ij_draws, mt_data$s[j,i])
-#   }
-#   c_draws_obs[[i]] <- ci
-# }
-# names(c_draws_obs) <- names(mt_data$c)
-#   
-# c_draws <- list()
-# for(i in 1:mt_data$n_taxa){
-#   ci <- aggregate(t(c_draws_obs[[i]]), by = list(sample = samples$sample), FUN = sum)
-#   c_draws[[i]] <- t(ci[,-1])
-# }
-# save(c_draws, file = paste0(model_fit_dir,"c_draws.rda"))
 
 load(paste0(model_fit_dir,"c_draws.rda"))
 c_obs <- aggregate(mt_data$c, by = list(samples$sample), FUN = sum)
