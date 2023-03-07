@@ -24,7 +24,9 @@ parameters {
   vector<lower=0>[n_taxa] sigma_s; //rsd of hyperdistribution of a_ss among taxa
   vector<lower=0>[n_taxa] sigma_t; //sd of hyperdistribution of a_ts among taxa
   vector<lower=0>[n_taxa] sigma_st;//sd of hyperdistribution of a_sts among taxa
-  vector<lower=0>[n_taxa] inv_phi;  //inverse-square of dispersion parameter for neg-binomial distn
+  vector<lower=0>[n_taxa] inv_phi; //inverse-square of dispersion parameter for neg-binomial distn
+  real<lower=0> mu_inv_phi;        // see phi, below
+  real<lower=0> sd_inv_phi;        // see phi, below
   corr_matrix[n_pred] Omega;       // Hyperprior correlation matrix among taxa
   vector<lower=0>[n_pred] tau;     // Scale for correlation matrix
 }
@@ -44,7 +46,7 @@ transformed parameters {
 // with (e.g.) a_s_raw ~ std_normal(), this implies a_s ~ normal(0, sigma_s)
 // See https://mc-stan.org/docs/stan-users-guide/reparameterization.html
 
-   phi = pow(1/inv_phi,2);
+   phi = pow(1/inv_phi,2);         
 // see https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations
 
   for(i in 1:n_obs){
@@ -65,7 +67,9 @@ model {
    sigma_s ~ normal(0,3);
    sigma_t ~ normal(0,3);
    sigma_st ~ normal(0,3);
-   inv_phi ~ normal(0,3);
+   inv_phi ~ normal(mu_inv_phi, sd_inv_phi);
+   mu_inv_phi ~ normal(0,5);
+   sd_inv_phi ~ normal(0,5);
    tau ~ exponential(1);
    Omega ~ lkj_corr( 2 );  
    

@@ -1,11 +1,13 @@
 ---
-title: "Appendix S2: Notes on biological data preparation"
+title: "Appendix S2 for 'Constructed rock riffles increase habitat heterogeneity but not biodiversity in streams constrained by urban impacts.'"
 author: "Christopher J Walsh, J Angus Webb, Daniel C Gwinn, and Peter F Breen"
 format: docx
 editor: visual
 bibliography: references.bib
 csl: ecological-applications.csl
 ---
+
+## Notes on biological data preparation
 
 This document provides further detail on the assembly of biological data used in the study. It also includes explanatory notes for non-standard taxonomic names used.
 
