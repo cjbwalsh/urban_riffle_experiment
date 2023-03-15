@@ -1,6 +1,5 @@
 ---
 title: "Constructed rock riffles increase habitat heterogeneity but not biodiversity in streams constrained by urban impacts"
-author: "Christopher J Walsh, J Angus Webb, Daniel C Gwinn, and Peter F Breen."
 format: docx
 editor: visual
 editor_options: 
@@ -9,6 +8,26 @@ bibliography: references.bib
 csl: ecological-applications.csl
 ---
 
+Christopher J Walsh^1^, J Angus Webb^2^, Daniel C Gwinn^3^, and Peter F Breen^4^
+
+^1^School of Ecosystem and Forest Sciences, The University of Melbourne, Burnley 3121, Australia
+
+^2^Department of Infrastructure Engineering, The University of Melbourne, Parkville 3010, Australia
+
+^3^Ooid Scientific, North Lake 6163, Australia
+
+^4^E2DesignLab, Melbourne 3000, Australia
+
+Correspondence Christopher J Walsh Email: cwalsh\@unimelb.edu.au
+
+### Open Research Statement
+
+Data and code are provided for peer review via the following link: https://osf.io/cms84/. We will request a DOI on acceptance of the manuscript.
+
+### Key words
+
+Before-after-control-impact, community assembly, field of dreams hypothesis, hierarchical multi-species model, measurement error, river restoration, subsampling error, stream macroinvertebrates, urban stormwater runoff
+  
 ```{r}
 #| echo: false
 #| message: false
@@ -108,13 +127,13 @@ pa_stats <- read.csv("small_data/riffle_baci_pa_stats.csv")
 
 ## Abstract
 
-Riffles are heterogeneous habitats that support diverse assemblages in natural streams. They are often constructed as part of stream restoration practice, including in degraded urban stream ecosystems, despite larger-scale limits to ecological state. Such restoration practices fail to consider ecological theory, and their outcomes have rarely been robustly monitored and assessed. We assessed the effects of constructed rock riffles on habitat heterogeneity and on macroinvertebrate assemblages in 6 urban streams (4--32% effective imperviousness). We compared taxon abundance and richness of the 6 streams before and (1-y and 5-y) after riffle construction and in 3 control streams without riffles. Riffles increased habitat heterogeneity. Macroinvertebrate assemblages in all streams were dominated by tolerant, cosmopolitan and invasive taxa before and after riffle construction. Riffles reduced the abundance and richness of tolerant taxa in less urbanized streams and increased their richness in more urban streams. These changes had no effect on measures of biodiversity. Urban stormwater runoff can affect the degree to which rock riffles increase habitat heterogeneity through sediment transport and increased physical disturbance. In highly urban streams, increased habitat heterogeneity is likely to primarily favour cosmopolitan species that can tolerate frequent chemical and physical disturbance. Riffle construction may reduce abundance of cosmopolitan species and increase abundance of more sensitive species, but only if catchment-scale impacts of urban stormwater runoff are adequately controlled. Robust experiments such as this add to general understanding of the effectiveness of restoration practice, reducing the need for routine monitoring of restoration projects.
+Riffles are heterogeneous habitats that support diverse assemblages in natural streams. They are often constructed as part of stream restoration practice, including in degraded urban stream ecosystems, despite larger-scale limits to ecological state. Such restoration practices fail to consider ecological theory, and their outcomes have rarely been robustly monitored and assessed. We assessed the effects of constructed rock riffles on habitat heterogeneity and on macroinvertebrate assemblages in 6 urban streams (4--32% effective imperviousness). We compared habitat heterogeneity, and taxon abundance and richness of the 6 streams before and after (1-y and 5-y) riffle construction and in 3 control streams without riffles. Riffles increased habitat heterogeneity. In contrast, macroinvertebrate assemblages in all streams were dominated by tolerant, cosmopolitan and invasive taxa before and after riffle construction. Riffles reduced the abundance and richness of tolerant taxa in less urbanized streams and increased their richness in more urban streams. These changes had no effect on measures of biodiversity. Urban stormwater runoff can affect the degree to which rock riffles increase habitat heterogeneity through sediment transport and increased physical disturbance. In highly urban streams, increased habitat heterogeneity is likely to primarily favour cosmopolitan species that can tolerate frequent chemical and physical disturbance. Riffle construction may reduce abundance of cosmopolitan species and increase abundance of more sensitive species, but only if catchment-scale impacts of urban stormwater runoff are adequately controlled. Robust experiments such as this add to general understanding of the effectiveness of restoration practice, reducing the need for ubiquitous monitoring of restoration projects.
 
 ## Introduction
 
 Most rivers and streams in agricultural and urban landscapes are ecologically degraded [@allan_2004; @walsh_etal_2005]. A common contributor to their degradation is channelization; straightening and grading of the channel to remove heterogeneous channel elements such as riffle-pool sequences and meanders [@brookes_1994]. In urban catchments in particular, the altered flow regime and increased volumes of runoff makes stream channels deeper, wider and simpler [@vietz_etal_2016], and these morphologic changes in turn have often contributed to decisions to channelize or concrete urban streams, or even convert them to underground pipes [@brookes_1994; @elmore_kaushal_2008].
 
-Despite channel simplification and channelization usually being driven by catchment-scale changes to flow and sediment dynamics, the most common stream management response to addressing dissatisfaction with engineered channels remains re-engineering channels to accommodate altered flow and sediment regimes [@palmer_etal_2014a]. The objectives for such engineering projects can be diverse, but commonly include provision of habitat for stream flora and fauna [e.g. @wild_etal_2011; @melbournewater_2019]. In the absence of other limitations, restoring stuctural heterogeneity to simplified stream channels should, in theory, permit colonization by a greater diversity and abundance of in-stream species by permitting greater niche partitioning [@willis_etal_2005] or providing refugia from disturbance or predation [@dean_connell_1987]. However, where the simplified channel has resulted from changes to flow and sediment dynamics, biotic response to channel engineering is likely to be limited by larger-scale factors [@bernhardt_palmer_2011].
+Despite channel simplification and channelization usually being driven by catchment-scale changes to flow and sediment dynamics, the most common stream management response to addressing dissatisfaction with engineered channels remains re-engineering channels to accommodate altered flow and sediment regimes [@palmer_etal_2014a]. The objectives for such engineering projects can be diverse, but commonly include provision of habitat for stream flora and fauna [e.g. @wild_etal_2011; @melbournewater_2019]. In the absence of other limitations, restoring structural heterogeneity to simplified stream channels should, in theory, permit colonization by a greater diversity and abundance of in-stream species by permitting greater niche partitioning [@willis_etal_2005] or providing refugia from disturbance or predation [@dean_connell_1987]. However, where the simplified channel has resulted from changes to flow and sediment dynamics, biotic response to channel engineering is likely to be limited by larger-scale factors [@bernhardt_palmer_2011].
 
 Re-introduction of riffle-pool sequences is a common element of channel engineering projects [@palmer_etal_2010]. Rock riffles provide shallower, faster and more variable flow conditions than channelized runs, and thus add heterogeneity to simplified channels at the reach scale. Within riffles, more variable flow, depth and substrate can provide habitat variability for stream invertebrates [e.g. @statzner_etal_1988] and fish [e.g. @kessler_thorp_1993]. Emergent rocks, which are common features of riffles, can be important sites for oviposition of many insect species with stream-dependent larvae [@lancaster_etal_2010].
 
@@ -122,17 +141,274 @@ However, observed biotic responses to restoration of habitat heterogeneity in ri
 
 The ongoing mismatch between restoration practice and ecological evidence underlines the need to incorporate ecological theory in restoration planning [@palmer_etal_1997; @lake_etal_2007], and the need for more robust evidence of the effects of restoration projects. @rubin_etal_2017 critiqued the reviews of @palmer_etal_2010 and @miller_etal_2010, noting that only a minority of the studies considered were robustly designed with features such as before-after monitoring (and very few with \>1 y after monitoring), comparisons between restored and control or reference sites, or with assessment of the degree of change in heterogeneity. They also pointed to the limitations of simple metrics of richness and diversity as criteria for restoration success. Growing public interest in restoring urban stream corridors [@scoggins_etal_2022] strengthens the need for robust evidence of likely effects of channel engineering projects on urban instream biota, to inform expectations and prioritization of the diverse objectives and management actions that might be part of such projects [e.g. @usher_etal_2021].
 
-Here we aim to answer three questions: 1) Do constructed riffles increase habitat heterogeneity? 2) Does habitat heterogeneity alter assemblage composition? 3) Do the answers depend on catchment-scale urban impacts? We answer these questions with a management experiment that involved construction of rock riffles in degraded urban streams of Melbourne, Australia, and addressed the criticisms identified by @rubin_etal_2017 with three aspects of our research design: 1) we applied a replicated BACI experimental design with three time periods, including 1 y and 5\--6-y after riffle installation. This tested for potential lags in colonization of new habitat; 2) we evaluated changes in substrate and water velocity characteristics at the sites to resolve uncertainty about the influence of riffle construction on environmental heterogeneity; and 3) we applied a hierarchical multi-taxon modelling approach to draw inference on the experimental outcomes of multiple taxa and community metrics of management interest.
+Here we aim to answer three questions: 1) Do constructed riffles increase habitat heterogeneity? 2) Does habitat heterogeneity alter assemblage composition? 3) Do the answers depend on catchment-scale urban impacts? We answer these questions with a management experiment that involved construction of rock riffles in degraded urban streams of Melbourne, Australia, and addressed the criticisms identified by @rubin_etal_2017 with three aspects of our research design: 1) we applied a replicated Before-After-Control-Impact (BACI) experimental design with three time periods, including 1 y and 5\--6-y after riffle installation. This tested for potential lags in colonization of new habitat; 2) we evaluated changes in substrate and water velocity characteristics at the sites to resolve uncertainty about the influence of riffle construction on environmental heterogeneity; and 3) we applied a hierarchical multi-taxon modelling approach to draw inference on the experimental outcomes of multiple taxa and community metrics of management interest.
 
 ## Methods
 
 ### Study area and experimental design
 
-The experiment used a BACI design with three replicate control and 6 replicate impact sites and three time periods when sampling occurred twice for a total of six sampling occasions. The time periods were: in the year before (B), in the first year after (A1) and 5--6 years after (A2) the construction of rock riffles at the impact sites.
+The experiment used a BACI design with three replicate control and 6 replicate impact sites and three time periods when sampling occurred twice for a total of six sampling occasions. The time periods were in the year before (B), in the first year after (A1) and 5--6 years after (A2) the construction of rock riffles at the impact sites.
 
-We selected a site on each of nine streams draining separate catchments in the eastern suburbs of Melbourne, Victoria, Australia (@fig-experiment_map), assigned each to control (n=3) or impact (n=6). The sites' catchments all included conventionally drained [sensu @burns_etal_2012] urban land with effective imperviousness (EI) ranging from 4 to 32% (@fig-experiment_map : total imperviousness ranged from 10-45% see Table S1-1). EI was estimated from 2004 imagery [@grace_gis_2012]: there was little urban growth since the study began. The reaches of all sites were low-gradient, channelized (or at least straight) and incised, with little or no riparian vegetation, and no differentiation of riffle or pool.
+We selected a site on each of nine streams draining separate catchments in the eastern suburbs of Melbourne, Victoria, Australia (@fig-experiment_map), and assigned each to control (n=3) or impact (n=6). The sites' catchments all included conventionally drained [sensu @burns_etal_2012] urban land with effective imperviousness (EI) ranging from 4 to 32% (@fig-experiment_map : total imperviousness ranged from 10-45% see Appendix S1: Table S1). EI was estimated from 2004 imagery [@grace_gis_2012]: there was little urban growth since the study began. The reaches of all sites were low-gradient, channelized (or at least straight) and incised, with little or no riparian vegetation, and no differentiation of riffle or pool.
 
 We surveyed the 9 sites to estimate tractive force in each channel for rock-size selection, and to select the most suitable section of the reach for each riffle. We consulted with an engineer who designed and supervised the construction of riffles in these segments on the six 'impact' streams in May 1996. The riffles were 9--22-m long, with 4:1 upstream and 40:1 downstream slopes, and made of angular rocks with mean diameters 15--40 cm (Appendix S1). The original study design called for two rock-size treatments [graded and large: @walsh_breen_2001], but the grade of rocks delivered did not differ strongly between sites, and are considered a single treatment in this analysis. The minimum diameter was larger than the diameter of material at incipient motion for all streams, based on calculations of tractive force from the reach surveys. This riffle design is typical of river management practice in Melbourne's urban streams [@melbournewater_2019]. The control sites were left unchanged.
+
+### Macroinvertebrate assemblage sampling and identification
+
+Data were collected at the nine sites on six occasions; twice prior to the installation of riffles (Nov 1995, Feb 1996), and four times after riffle installation (Nov 1996, Feb 1997, Dec 1999, Feb 2001). On each occasion, we collected replicate macroinvertebrate sample units (4 on occasions 1--4, 3 on occasions 5--6) at each site using a 0.04-m^2^ suction sampler [@boulton_1985]: the replicate sample units collectively making a sample in each site on each occasion. To collect a sample unit, one operator disturbed sediments in the sample quadrat with a spatula and scrubbed larger surfaces with a small brush while the second operator pumped out the sampler contents into a 250-$\mu$m net.
+
+We processed sample units separately and preserved them in 2% formaldehyde. In the laboratory, many sample units were subsampled to reduce processing time. Initially, some sample units were fully processed to develop the subsampling protocol reported by [@walsh_1997], which was followed in processing all subsequent sample units. The protocol requires a 10% subsample to be sorted, followed, if necessary, by additional subsamples until 300 specimens have been collected, with the final subsample fraction recorded. Sample units were scanned for large specimens before subsampling, and such 'coarse-pick' specimens were recorded as having a subsample fraction, *s*, of 1. Macroinvertebrates were identified to lowest practicable taxonomic level and counted (See Appendix S2 for more detail).
+
+### Environmental variable determination
+
+After each macroinvertebrate sample unit was collected, the sampler was removed from the stream bed, and water depth and velocity at the bed surface were measured at the four corners of the sampled area and the centre point. We measured velocity with a CMC 20 current meter counter, fitted with a 1-94.22 propeller, for 10 s at each point, 4 cm above the bottom (the lowest possible setting). From these five measurements, we calculated the mean and variance of velocity for each sample unit.
+
+We recorded the proportions of sediment particle sizes classed by the Wentworth scale [@allan_etal_2021], and used these data to estimate minimum, median, and maximum $\Phi$ (-log~2~ smallest diameter) of the sediments in each sample unit. Lastly, we compiled these data into seven environmental variables to assess the effect of riffles on habitat heterogeneity at the scale of sample units: mean velocity, variance of velocity, mean depth, variance of depth, and minimum, median and maximum $\Phi$.
+
+### Statistical models
+
+We used a similar model structure to assess the effect of the riffles on environmental variables, and on the abundances of macroinvertebrate taxa collected in each sample unit. The models followed the typical BACI design, expanded to include two 'after' time periods (A1, in the first year after construction; and A2, 5--6 y after construction) and to account for the potential moderating effects of EI, we included the covariate I (scaled, log\[x + 0.1\] % EI). The experimental effects were coded as combinations of five binary variables: B (= 1 before construction), A1, A2, and R (= 1 for sites in which riffles were constructed, 0 for control sites). For the environmental variables, the model was expressed as:
+
+$$
+\begin{align}
+\mu_{(i)} = \ &\alpha + \beta_1 \cdot I_i + \beta_2 \cdot A1_i + \beta_3 \cdot A2_i + \beta_4 \cdot R_i +\\
+& \beta_5 \cdot A1_i \cdot R_i +  \beta_6 \cdot A2_i \cdot R_i +\\
+& \beta_7 \cdot B_i \cdot R_i \cdot I_i +  \beta_8 \cdot A1_i \cdot R_i \cdot I_i +  \beta_9 \cdot A2_i \cdot R_i \cdot I_i + \\
+& \theta_{1(s[i])} + \theta_{2(t[i])} + \theta_{3(s[i],t[i])}
+\end{align}
+$$ {#eq-env_var_linear_model}
+
+where $\mu_{(i)}$ is the expected value of the environmental variable in sample unit *i* given the values of predictors $I_i$, $A1_i$, $A2_i$, $R_i$ for the sample unit and its site (s\[i\]) and sampling occasion (t\[i\]). $\alpha$ is the model intercept, $\beta_1$ describes the effect of I, $\beta_2$ and $\beta_3$ describe changes in *A1* and *A2* compared to *B*. $\beta_4$ describes the difference between control and reference sites. The interaction effects $\beta_5$--$\beta_9$ were of primary interest. $\beta_5$ and $\beta_6$ describe how differently measures from riffle sites changed compared to those from control sites in the 'after' time periods A1 and A2, and thus represent the experimental effect of riffle construction. $\beta_7$--$\beta_9$ model the influence of *I* on the effect of riffles. We included $\theta_{1}$--$\theta_{3}$ as a set of random effects to account for variation in the dependent variables among sites ($\theta_{1}$) and through time that are both common ($\theta_{2}$) and unique among sites ($\theta_{3}$), thus, accounting for potential dependencies in the model error structure.
+
+The likelihood of the environmental models assumed Normal residual error structures expressed as; $y_i \sim \textrm{Normal} (\mu_i,\sigma_i)$, where $\sigma_i$ is the standard deviation of the residual. All environmental variables, except minimum and median $\Phi$, were log-transformed (see Appendix S3: Table S1).
+
+The macroinvertebrate model was similar to the environmental variables models with three differences. Firstly, we adopted a hierarchical covariate structure common for multi-taxon models [e.g. @ovaskainen_etal_2017]. This structure specifies all $\beta$ parameters as random effects across taxa, allowing for inference at both the taxon and assemblage scales. Furthermore, the random effect structure induces parameter shrinkage towards the assemblage mean that can increase statistical power and reduce the likelihood of spurious results, particularly for species with sparse data [@link_sauer_1996]. Second, we included the effect of seasonal timing of sampling to account for seasonal differences in macroinvertebrate abundances. Third, we specified the likelihood of the model with an additional hierarchical structure to correct for expected biases arising from differences in subsampling proportions among sites and sampling occasions [@buonaccorsi_2010; @kery_schaub_2011].
+
+We modeled the expected abundance of each macroinvertebrate taxa as a linear model with a log link as:
+
+$$
+\begin{align}
+log(\mu_{(i,j)}) = \ &\alpha_j + \beta_{1(j)} \cdot I_i + \beta_{10(j)} \cdot S_i + \beta_{2(j)} \cdot A1_i + \beta_{3(j)} \cdot A2_i + \beta_{4(j)} \cdot R_i +\\
+& \beta_{5(j)} \cdot A1_i \cdot R_i +  \beta_{6(j)} \cdot A2_i \cdot R_i +\\
+& \beta_{7(j)} \cdot B_i \cdot R_i \cdot I_i +  \beta_{8(j)} \cdot A1_i \cdot R_i \cdot I_i +  \beta_{9(j)} \cdot A2_i \cdot R_i \cdot I_i + \\
+& \theta_{1(s[i],j)} + \theta_{2(t[i],j)} + \theta_{3(s[i],t[i],j)}
+\end{align}
+$$ {#eq-multi_taxon_linear_model}
+
+where $\mu_{(i,j)}$ is the expected abundance of taxa *j* in sample unit *i* and $\beta_{10(j)}$ models the variation in abundance between seasons ($S_i$ autumn = 0, spring = 1). All other parameters and variables have equivalent meaning as the environmental variable models (@eq-env_var_linear_model).
+
+All $\beta$ parameters in the multi-taxon model were formulated as random effects drawn from a common assemblage-level multivariate-Normal hyper-distribution as $\beta_{(k,j)} \sim \textrm{MVNormal}(\mu_k,\Omega)$, where $\mu_k$ is the estimated assemblage mean for the *k*^th^ $\beta$ parameter and $\Omega$ is the estimated variance-covariance matrix. This specification formalizes the assumption that responses of taxa to model variables are neither equivalent nor independent but related according to assemblage means and a covariance structure.
+
+We specified the likelihood of the macroinvertebrate model as a hierarchical binomial-negative binomial mixture. This likelihood structure is analogous to the binomial-mixture model for estimating site-level abundances while accounting for incomplete sampling probability [@royle_2004]. We adapted that model to estimate abundances per sample unit while accounting for incomplete sampling probability due to subsampling. The first component of the likelihood describes the unobserved total abundance of each taxon in the sample unit prior to subsampling as a latent random variable drawn from a negative binomial distribution as; $Y_{(i,j)} \sim \textrm{Neg. Binomial} (\mu_{(i,j)},\phi_j)$, where $Y_{(i,j)}$ is the latent abundance of taxon *j* in sample unit *i*, $\mu_{(i,j)}$ is the expected abundance (equation 2), and $\phi_j$ is the taxon-specific dispersion parameter. The second component of the likelihood describes the observed sub-sample counts as outcomes of a binomial sampling process as, $c_{(i,j)} \sim \textrm{Binomial} (s_{(i,j)}, Y_{(i,j)})$, where $c_{(i,j)}$ is the observed count of taxon *j* in sample unit *i*, and $s_{(i,j)}$ is the proportion of the sample unit that was subsampled and counted. It is indexed by *j* to allow s = 1 for coarse-pick taxa.
+
+We estimated model parameters in a Bayesian framework using Stan [@carpenter_etal_2017], sampling the posterior distributions of all parameters using four chains with sufficient iterations to ensure convergence and minimum effective samples size \>400. We specified weakly informative prior distributions for all parameters. See Appendix S3 for full details.
+
+We evaluated the fit of the models of environmental variables by deriving *R^2^* for a least-squares regression of the predicted and observed mean values in each sample, and prediction fidelity, the proportion of observed values that fell within 95% of the posterior predicted distribution for each sample. We used the same measures to assess the fit of the multi-taxon model, using the mean log(x+1)-transformed observed and predicted counts of each taxon in sub-sampled sample units. We also assessed accuracy of model predictions for  detection of each taxon (i.e. detection/non-detection) by calculating detection fidelity, the proportion of posterior predictions which correctly predicted presence or absence. Finally, we assessed the accuracy of the multi-taxon model's estimates of assemblage level metrics, by calculating *R^2^* and prediction fidelity for observed and predicted total number of taxa, and the number of Ephemeropotera, Plecoptera and Trichoptera taxa (three groups of sensitive species commonly used as a stream health metric). See Appendix S3 for more details.
+
+### Model interpretation
+
+To interpret interactions between the effects of riffle construction and degree of catchment urbanization on environmental variables and the biotic assemblage, we compared predictions under 12 scenarios comprising four site types (control and impact sites with high and low effective imperviousness (4% and 32% EI, the maximum and mimimum EI values in the study sites, respectively), in the three states of the *BA* effect (*B*, before; *A1*, in the first year after riffle construction; and *A2*, 5-6 years after).
+
+For taxon abundances, we focused on taxa for which the *BA:CI* or *BA:CI:I* interactions were non-zero with at least 90% confidence to identify dominant taxa associated with assemblage-level differences. We also derived predictions of responses of assemblage-level metrics from the model for each of the 12 scenarios. Responses of diversity measures such as richness are of intrinsic community ecological interest, but they and biotic metrics focusing on taxa of differing sensitivity to human disturbance are used by stream managers as measures of ecological condition and targets for responses to management actions [e.g. @vic_gov_2018]. We used predicted abundances and  detections for each scenario to calculate posterior distributions of:
+
+-   Total macroinvertebrate abundance, of a) EPT taxa [insect orders dominated by taxa sensitive to human disturbance, @resh_jackson_1993], and b) of Diptera and Oligochaeta [QDLO, groups dominated by taxa tolerant to human disturbance; @gooderham_tsyrlin_2002; @martin_etal_2008];
+
+-   Total taxon richness (i.e., taxon density, the number per sample comprising 4 sample units), also EPT and QDLO richness;
+
+-   Shannon's H' (i.e., the Shannon-Weaver index) and Pielou's evenness index, measures of diversity accounting for relative abundance of taxa;
+
+-   SIGNAL, a biotic index which averages grades of sensitivity to human disturbance (between 1 and 10) of families present in a sample [@chessman_1995].
+
+Abundance measures were calculated by adding predicted mean abundances per sample unit of the relevant taxa. Richness measures were derived by first calculating predicted probability of  detection in a sample,
+
+$$
+p\_s = 1 - \Pi(1 - p\_{su}_i)
+$$ {#eq-predict_pa}
+
+where $p\_su_i$ is the probability of  detection in the *i*th sample unit comprising the sample, calculated as 1 - negative-binomial probabliity of zero, given predicted $\mu$ and $\phi$. Number of taxa in each sample was calculated as the sum of probabilities of  detection (see Appendix S3 for more detail).
+
+To assess the probability of an effect of riffle construction on environmental variables, assemblage metrics and taxon abundances, we calculated the following four differences between the posterior distributions of metrics and abundances given the 12 scenarios:
+
+-   $\Delta A1 \, (\textrm{4%} \, EI)$, (control minus impact before, *B*) - (control minus impact in first year after, *A1*) for low *I*
+
+-   $\Delta A2 \, (\textrm{4%} \, EI)$, (control minus impact before, *B*) - (control minus impact 5-6 y after, *A2*) for low *I*
+
+-   $\Delta A1 \, (\textrm{32%} \, EI)$, (control minus impact before, *B*) - (control minus impact in first year after, *A1*) for high *I*
+
+-   $\Delta A2 \, (\textrm{32%} \, EI)$, (control minus impact before, *B*) - (control minus impact 5-6 y after, *A2*) for high *I*
+
+We inferred a likely effect of riffle construction on each measure if \>90% of the posterior distribution of any one of the differences was greater than zero (indicating that the measure in impact sites increased relative to control sites following riffle construction) or less than zero (indicating a decline in impact sites relative to control sites). For each variable we report the posterior predictive distributions of the four differences to illustrate the experimental effect, and we present the posterior predictive distributions of the 12 scenarios to illustrate the spatial and temporal patterns that resulted in the effect.
+
+## Results
+
+### Model fit
+
+All models converged and all had adequate fit to the data. All environmental variables were well predicted by their respective models: *R^2^* \>0.86 for observed:predicted for all models, and observed values falling within 95% of the posterior predicted distribution for \>89% of samples. The counts of all taxa were well predicted by the model. Counts in all samples fell within 95% of the posterior predicted distribution (prediction fidelity = 1, Table 2) for all but 3 taxa, for which one sample fell outside (prediction fidelity = 0.98). Mean *R^2^* of predicted vs observed relationships taxon counts was 0.9, with *R^2^* for all but 3 species \>0.7. The model also predicted taxon  detection well, with a mean detection accuracy of 0.91 (minimum 0.64, with all but 10 taxa \>0.8). The predictions of  detection summed to predictions of taxon richness that also matched the observed data well. See Appendix S3 for more detail. The good fit of the models to the data provides confidence in inferences of the *BA*, *CI* and *I* effects, which are the focus of this study.
+
+### Responses of environmental variables
+
+The constructed riffles altered the available substrates in the study reaches, increasing surface and hydraulic heterogeneity. Riffles resulted in shallower water (@fig-cf_env_vars c, d, although no change in variability in depth at the sample-unit scale: @fig-cf_env_vars a, b), and increased mean velocity, and variance of velocity (@fig-cf_env_vars e--h), indicating increased heterogeneity of the hydraulic environment.
+
+Before riffle construction, and in control sites throughout the study, median $\Phi$ in samples was 1 to 6 (sand to clay). Riffles reduced median $\Phi$ to -6 to -7 (small to large cobbles) in sites with low EI, and this change persisted for 6 years (A2, @fig-cf_env_vars l). In sites with high EI, riffles had a smaller effect on median $\Phi$, reducing in the first year to -2 (gravel), but increasing to 1 (coarse sand) after 6 years, as sand deposited among the riffles (@fig-cf_env_vars\k, l). The trends in maximum $\Phi$ (not reported) were similar to those of median $\Phi$. Riffles more consistently reduced minimum $\Phi$ (i.e. introduced larger particles) to -6 to -7 in all impact sites. However, the effect of riffle construction on minimum $\Phi$ was small in sites with low EI, which contained some large pebbles before riffle construction (@fig-cf_env_vars i, j). An effect of the riffles not quantified by these measurements was an increase in the availability of large emergent rocks (See Appendix S1: Figures S2--10).
+
+### Responses of macroinvertebrate taxa
+
+113 taxa were identified in the study. 17 of these constituted \>90% of assemblages in high EI sites, and 23 constituted 70-90% of assemblages in low EI sites (Table 1). All but three of these most abundant taxa were tolerant of human disturbance: only Hydropsychidae, *Paratanytarsus/Rheotanytarsus*, and *Notriolus* were negatively associated with EI (Figure 3). Thus, the macroinvertebrate assemblages of all sites were numerically dominated by cosmopolitan taxa, tolerant of human disturbance, but in sites with lower EI, the most abundant taxa tended to be less abundant, and constituted a lower proportion of the assemblage (Table 1). *Potamopyrgus antipodarum*, *Physa acuta*, *Lumbriculus variegatus*, and likely members of other taxa, are invasive species. Thus, despite the sites spanning a gradient of EI from 4 to 32%, the biotas of all sites were dominated by taxa typical of degraded urban streams, and this general state was consistent across before and after periods.
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+
+# Load summary statistics for the fixed parameters (created in predy_summary chunk in `urban_riffle_exp_S3.qmd`)
+param_summs <- rio::import_list("small_data/param_summs.xlsx")
+
+# load summary statistics for the 4 contrasts (created in pred_cf chunk in `urban_riffle_exp_S3.qmd`)
+diff_summs <- rio::import_list("small_data/diff_summs.xlsx")
+
+# Identify those taxa for which a difference resulting from riffle construction can be inferred
+# (with 90% and 95% confidence)
+more_diff_90 <- more_diff_95 <- more_sim_90 <- more_sim_95 <- vector()
+for(i in 1:length(diff_summs)){
+more_diff_90 <- unique(c(more_diff_90,diff_summs[[i]]$shortcode[diff_summs[[i]]$lo90 > 0]))
+more_diff_95 <- unique(c(more_diff_95,diff_summs[[i]]$shortcode[diff_summs[[i]]$lo95 > 0]))
+more_sim_90 <- unique(c(more_sim_90,diff_summs[[i]]$shortcode[diff_summs[[i]]$hi90 < 0]))
+more_sim_95 <- unique(c(more_sim_95,diff_summs[[i]]$shortcode[diff_summs[[i]]$hi95 < 0]))
+}
+
+# Collect taxa of interest (effected by riffles or by EI) 
+taxa_to_plot <- unique(c(more_diff_90,more_sim_90,
+                         param_summs$b_i$shortcode[param_summs$b_i$lo90 > 0],
+                         param_summs$b_i$shortcode[param_summs$b_i$hi90 < 0]))
+# Prepare taxon text for figures
+higher_taxa_in_plot <- higher_taxa[higher_taxa$higher_taxon %in% 
+                                     unique(taxa$higher_taxon[taxa$taxoncode %in% taxa_to_plot]),]
+# R results for inclusion in figure caption:
+ht_string <- paste(paste0(higher_taxa_in_plot$taxon, " (", higher_taxa_in_plot$higher_taxon, ")"), collapse = "; ")
+```
+
+`r length(unique(c(more_diff_90,more_sim_90)))` taxa responded to riffle construction (non-zero *BA-CI* differences with 90% confidence; `r length(unique(c(more_diff_95,more_sim_95)))` of those with 95% confidence: @fig-coeff_plot_alt). Only two of those species were negatively associated with EI (i.e. sensitive to human disturbance; @fig-coeff_plot_alt). One of those, Hydropsychidae, filter-feeding caddis flies that build nets on rocks, increased in abundance after riffle construction, in sites with low EI, but was largely absent from sites with high EI (@fig-cf_taxon_abunds a, Table 1). The other, a chironomid, *Thiennemaniella*, decreased in abundance in sites with low EI 5-6 y after riffle construction (and were largely absent from sites with high EI before and after: @fig-cf_taxon_abunds b).
+
+Simuliidae, with similar habitat requirements to Hydropsychidae, but more tolerant of human impacts, increased in abundance in high EI sites but not low EI sites (@fig-cf_taxon_abunds c), as did Ceratopogonidae and *Dicrotendipes* in the first year, and Glossiphonidae, *Cura pinguis*, and *Pisidium* after 5--6 y (@fig-coeff_plot_alt).
+
+Most taxa that were positively associated with EI (i.e. tolerant of human disturbance) decreased in abundance after riffle construction in low EI sites, with declines more common after 5--6 years than in the first year (@fig-coeff_plot_alt). Nematoda, Cyclopoida, oligochaetes *Lumbriculus variegatus* (e.g., @fig-cf_taxon_abunds d), *Chaetogaster diaphanus*, Megadrili, Tubificinae groups A and B, and the chironomid *Chironomus* (@fig-cf_taxon_abunds e) decreased in abundance in low EI sites, but not in high EI sites. Enchytraeidae oligochaetes decreased in both high and low EI sites.
+
+Chironomids *Procladius* (@fig-cf_taxon_abunds f), *Polypedilum*, *Parakiefferiella* (@fig-cf_taxon_abunds g), *Cricotopus*, and *Cryptochironomus* decreased in low EI sites over the 6 years, but increased in high EI sites in year 1 (@fig-coeff_plot_alt).
+
+The common trend of reduced abundance of tolerant taxa following riffle construction in sites with low EI resulted in a reduction in total richness and, more weakly, abundance in those sites (@fig-assemb_diffs_dists a, e; @fig-assemb_trends a, e), driven largely by reduced QDLO richness (@fig-assemb_diffs_dists c; @fig-assemb_trends c) and abundance (@fig-assemb_diffs_dists g; @fig-assemb_trends g). Conversely, total and QDLO richness (but not abundance) increased in sites with high EI (@fig-assemb_diffs_dists c; @fig-assemb_trends c).
+
+EPT richness did not change following riffle construction (@fig-assemb_diffs_dists b; @fig-assemb_trends b), although the increased abundance of Hydropsychidae (@fig-cf_taxon_abunds a, Table 1) in sites with low EI drove an increase in EPT abundance in those sites (@fig-assemb_diffs_dists f; @fig-assemb_trends f).
+
+Overall, the changes in abundance and richness of tolerant taxa following riffle construction did not alter the dominance of the macroinvertebrate assemblages by tolerant, cosmopolitan and invasive species (Table 1), with no change in the diversity measures Shannon's H' (@fig-assemb_diffs_dists d) or Pielou's evenness (not illustrated). We found no evidence of colonization by less tolerant species, other than a few isolated  detections (see Discussion). As a result the low-moderate SIGNAL scores for these sites were unchanged over the study period @fig-assemb_diffs_dists h; @fig-assemb_trends d).
+
+## Discussion
+
+Our experiment provides robust evidence that ecological response to restoration of in-stream habitat heterogeneity is limited in the presence of catchment-scale stressors such as urban stormwater runoff. The experimental design, incorporating multiple control and reference sites, and monitoring extending \>5 y after restoration, provides strong, general inference lacking in many previous stream restoration assessments [@bernhardt_etal_2005; @rubin_etal_2017]. Our use of multi-taxon modelling to assess change allows interpretation of community assemblage responses in terms of responses of individual taxa, placing the responses in the context of ecological theory of community assembly and 'the field of dreams' hypothesis [@palmer_etal_1997]. A value of such experiments is that the generality of the results, if replicated sufficiently across physiographic contexts and restoration approaches, reduces the need to monitor outcomes of the many restoration projects that are required to redress past degradation. Here we use inferences from the models to discuss the three questions we posed in the introduction: do riffles increase habitat heterogeneity? does increased habitat heterogeneity alter assemblage composition? and does the answer to either question depend on catchment-scale urban impacts? Our findings strengthen guidance for setting priorities for managing urban streams and setting expectations of communities who want to see them restored.
+
+### Constructed riffles increased habitat heterogeneity
+
+The experimental riffles introduced a new habitat to simplified channels, thus increasing heterogeneity (i.e. the diversity of qualitatively different habitat structures) at the reach scale. The cobbles of the riffles introduced a substrate type largely absent from the reaches before riffle construction, and we demonstrated increased variability in flow, depth, and substrate size following riffle construction. While the cobble surfaces themselves were not highly complex, and thus did not directly provide diverse microenvironments through their surface complexity, the alteration of reach slope and hydraulic variability, and addition of new surface types increased diversity of microenvironments in the study reaches.
+
+Over time, however, the riffles in more urban reaches had a greater tendency to infill with sand, as evidenced by the smaller effect on median $\Phi$ in sites with higher EI (Fig 2l). This suggests catchment-scale alterations to flow and sediment regimes affect the extent and longevity of the physical changes achieved by the riffles.
+
+### Assemblage composition changes were small, but largest in least urban sites
+
+The assemblages of all sites across the gradient of EI in our study were dominated by cosmopolitan and invasive species, although cosmopolitan infaunal taxa associated with fine sediments, such as tubificid oligochaetes and *Chironomus* [@martin_etal_2008; @berg1995], were less abundant in sites with lower EI. Such taxa became even less abundant in those sites after riffle construction (Table 1, @fig-coeff_plot_alt). We identified three invasive species that were abundant in the dataset: the snails *Potamopyrgus antipodarum* [@ponder_1988] and *Physa acuta* [@zukowski_walker_2009]*,* and the Californian black worm *Lumbriculus variegatus* [@pinder_2010]. It is likely that other abundant oligochaete and chironomid taxa that we grouped because of taxonomic uncertainty included invasive species [@failla_etal_2015; @brinkhurst_gelder_1991]. *P. acuta* and *L. variegatus* were more abundant in higher EI streams, while *P. antipodarum* was abundant across the urban gradient. Only *L. variegatus* declined in abundance after riffle construction, and then only in less urban reaches.
+
+The macroinvertebrate assemblages of all study reaches were thus typical of degraded urban streams, even those in catchments with as little as 4% EI. The dominance of cosmopolitan and invasive species suggests these reaches were subject to the regime of chemical and physical disturbances that arise from catchment urban stormwater runoff [@walsh_etal_2005]. Our study design did not include reference sites, often suggested as an important element of robust design [@rubin_etal_2017]. However, other studies of similar streams in the study region confirm that assemblage composition in these sites differed strongly from streams of forested catchments, where diverse assemblages of sensitive macroinvertebrate taxa are the norm [@walsh_2004; @white_walsh_2020]. Importantly, some forested catchments of the region have similar urban density to the least urban catchments of this study, flowing to streams that retain diverse in-stream assemblages. For instance, Sassafras Creek has 8% TI and \<1% EI [@walsh_etal_2012] compared to 10% TI and 4% EI for the two least urban streams in this study (@fig-experiment_map, Appendix S1: Table S1), and its macroinvertebrate assemblages are dominated by sensitive taxa [@walsh_2004]. Such urban streams that lack conventional urban stormwater drainage and retain diverse assemblages arguably present an achievable target for restoration. However, the assemblages of the study sites remained little changed after riffle construction, remaining typical of degraded urban streams distinct from the assemblages of less impacted urban streams such as Sassafras Creek.
+
+This conclusion of little change in assemblage composition is supported by the lack of change in the biotic index SIGNAL (@fig-assemb_diffs_dists h), an increase in which would have indicated the loss of tolerant taxa or colonization by sensitive taxa. Similarly, diversity as measured by Shannon's H' and Pielou's evenness did not change after riffle construction (@fig-assemb_diffs_dists h). @sundermann_etal_2011 concluded that lack of colonizers can be a limitation to post-restoration recovery. We collected one or a few individuals of several sensitive taxa that could colonize riffles (Plecoptera, the hydrobiosid *Taschorema* and Leptoceridae) in our study sites post-riffle construction, as well as a record of Hydropsychidae in a high EI stream where it did not persist. Thus, like @white_walsh_2020, who conducted a colonization experiment in some of the same streams, we conclude that the rarity of sensitive taxa in the riffles is less likely a result of a lack of colonizers than of a lack of persistence under the physical and chemical disturbances of urban stormwater flows. Therefore, our study provides some support for the 'field of dreams' hypothesis [@palmer_etal_1997], which states that, if instream habitat heterogeneity is increased in a landscape with sources of colonizers, the habitat will be colonized. Colonizers were detected on the experimental riffles, but did not persist. Realization of the field of dreams thus requires habitat quality, degraded in this case on catchment urban stormwater drainage, as well as habitat heterogeneity.
+
+However, some changes in assemblage composition were evident, and these differed between the most urban and least urban reaches of our study. In sites with high EI, taxon richness increased by \~5 taxa per sample unit (95% CLs 1 to 12) in the first year, reducing to a more uncertain increase (95% CLs -2 to 9) after 5-6 years (@fig-assemb_diffs_dists a). Most of this increase was explained by increased abundances of dipteran and oligochaete taxa (@fig-assemb_diffs_dists c), but also glossosiphonid leeches, the bivalve *Pisidium*, and ceratopogonid biting midges, none of which were negatively associated with EI (i.e they were all tolerant of urban impacts). These increases may be explained by the increased heterogeneity afforded by fine sediments accumulating among the riffle cobbles that provided new large substrata, however the identities of the taxa that increased in abundance as urban tolerant points to ongoing limitations of urban-stormwater-driven water quality and flow disturbances.
+
+In contrast, in sites with low EI, taxon richness decreased by \~12 (95% CLs 0-20) taxa per sample unit 5-6 years after riffle construction (after a smaller decrease in the first year, @fig-assemb_diffs_dists a). This decrease was mostly explained by a reduction in dipteran and oligochaete taxa (@fig-assemb_diffs_dists c). This decrease in abundance of tolerant, cosmopolitan taxa together with the increased abundance of a single sensitive taxon, Hydropsychidae, in low EI sites suggests a small step toward reference condition in low EI streams. Hydropsychids are net-spinning caddisflies that use rock substrates to build filter-feeding nets. Their increase in abundance in low EI sites was not accompanied by increases in other filter-feeding species: abundances of Simuliids and *Paratanytarsus/Rheotanytarsus* chironomids did not change. The complexities of these responses to riffle construction underlying the reduction in taxon richness underline the limitations of richness and diversity metrics as indicators of success [@rubin_etal_2017].
+
+Nevertheless, the reduction in abundances of cosmopolitan species and increased abundance of sensitive species in low EI sites can be interpreted as a small improvement in diversity, and thus a positive effect of the constructed riffles. This small improvement and the absence of improvement in high EI sites is consistent with the conclusion of @miller_etal_2010, who found reduced response in more urban sites. But the small size of the response in our lowest EI sites, with 4% EI, confirms that even a very small degree of catchment stormwater impacts can limit instream community assembly [@walsh_webb_2016; @king_baker_2011]. Larger responses to restoration of instream habitat heterogeneity are only likely to be achieved in streams without urban impacts, or with high-performing urban stormwater control measures that intercept runoff from nearly all upstream impervious surfaces [e.g. @walsh_etal_2022].
+
+### Setting expectations and priorities for urban stream management
+
+While macroinvertebrate assemblage composition as a measure of restoration success might be considered primarily of interest to ecologists as a measure of restoration success [@scoggins_etal_2022], communication of what macroinvertebrate assemblage composition tells us can be a potent tool in informing public desire for stream restoration. Our focus on taxonomic identity in this study, to interpret responses of assemblage metrics, provides a clear picture that the state of streams in urban catchments is a long way from what they could be with alternative catchment practices. It shows that provision of greater habitat heterogeneity in degraded urban streams will primarily provide habitat for cosmopolitan, invasive species that can tolerate the flashy, polluted flows of urban stormwater. It suggests a redirection of priorities in two primary directions. First, in-stream works should be targeted to catchments without larger-scale limitations such as urban or agricultural impacts [@miller_etal_2010]. Second, in urban catchments, management of catchment processes should be a priority to provide water quality and flow regimes to streams that a) reduce the risk of heterogeneous habitat being swamped by stormwater flows [@larson_etal_2001; @white_walsh_2020], and b) can provide habitat quality and flow disturbance frequency that permit sensitive colonising species to persist.
+
+There is growing evidence that effective catchment urban stormwater control can reduce impacts on water quality and flow to levels at which sensitive in-stream biota can be supported. The primary evidence comes from streams that have at least in part been protected from catchment urbanization by informal stormwater drainage [@walsh_2004] or by extensive dispersed stormwater control [@hopkins_etal_2022]. We are not aware of robust studies that have demonstrated restoration of biotic assemblages through catchment stormwater control, but restoration of water quality and hydrology after stormwater retrofit brings hope that this may be effective [@walsh_etal_2022]. However, in existing urban landscapes, the availability of appropriately located land for stormwater control measures and the lack of demand for stormwater harvesting to reduce runoff volumes remain challenging problems in most existing policy settings.
+
+Nevertheless, the appetite for restoring urban stream corridors is likely to continue and grow [@scoggins_etal_2022]. We are not suggesting that projects aiming to provide amenity, recreation, and biodiversity in urban floodplains are without merit. But often such projects are described as urban stream restoration, and include channel reconfiguration as part of works. We hope that our study will help to moderate expectations of the in-stream changes that can be achieved without addressing larger catchment-scale limitations.
+
+## Acknowledgments
+
+This study was funded by the CRC for Freshwater Ecology and Melbourne Water. We thank Graham Rooney and Scott Seymour for arranging funding for the works; Neil Craigie who designed and supervised riffle construction; Sharyn Rossrakesh for conducting the reach surveys; and the team who assisted with field collections and lab processing: Jim Longworth, Elaine Bayes, Jason Sonneman, Andrew Sharpe, Claire Sellens, Sue Witteveen, Melissa Aalbers, Rhys Coleman, John Gooderham, Jessica Miller, Edward Tsyrlin, and Kristy Brooke. During the writing of this paper, CJW was funded by the Melbourne Water Research-Practice Partnership between Melbourne Water and the University of Melbourne.
+
+## Author contributions
+
+Conceptualization: Christopher J. Walsh and Peter F. Breen.
+
+Data curation: Christopher J. Walsh.
+
+Formal analysis: Christopher J. Walsh, J. Angus Webb, and Daniel C. Gwinn.
+
+Funding acquisition: Christopher J. Walsh and Peter F. Breen.
+
+Investigation: Christopher J. Walsh.
+
+Methodology: Christopher J. Walsh, Daniel C. Gwinn, and Peter F. Breen.
+
+Project administration: Christopher J. Walsh and Peter F. Breen.
+
+Resources: Christopher J. Walsh and Peter F. Breen.
+
+Validation: Christopher J. Walsh, J. Angus Webb, and Daniel C. Gwinn.
+
+Visualization: Christopher J. Walsh.
+
+Writing - original draft: Christopher J. Walsh and J. Angus Webb.
+
+Writing - review & editing: Christopher J. Walsh, J. Angus Webb, Daniel C. Gwinn, and Peter F. Breen.
+
+## Conflict of interest
+
+The authors have no conflict of interest to declare.
+
+
+## Table
+
+Table 1: Predicted mean abundance (N per 0.04-m^2^ sample unit) of the 18 taxa that were among the 10 most abundant taxa in at least one scenario, and the percentage of the total count of all taxa in each scenario that the 18 taxa constitute, under 12 scenarios.  
+
+```{r}
+#| echo: false
+
+top10taxa <- read.csv("small_data/top10taxa.csv")
+  ft <- flextable::regulartable(top10taxa[,-1])
+  ft <- ftExtra::span_header(ft, sep = "_")
+  ft <- flextable::align(ft, align = "center", part = "header")
+  ft <- flextable::italic(ft, i = which(top10taxa$taxoncode %in% taxa$taxoncode[taxa$italic == 1]), j = 1)
+  ft <- flextable::bold(ft, i = nrow(top10taxa))
+  ft <- flextable::hline(ft, i = nrow(top10taxa)-1)
+  ft <- flextable::font(ft,fontname = "Helvetica", part = "all")
+  ft <- flextable::fontsize(ft, size = 10, part = "all")
+  ft <- flextable::padding(ft, padding.top = 2,  padding.bottom = 2, part = "all")
+  ft <- flextable::autofit(ft)
+  ft <- flextable::width(ft, width = dim(ft)$widths*6.69 /(flextable_dim(ft)$widths))
+ft
+```
+
+^1^See Appendix S2 for explanation of Tubificinae taxa
+  
+Abbreviations: EI, Effective imperviousness; B, Before; A1, in the first year after; A2, 5-6 years after riffle construction. 
+
+
+## Figure captions
+
+Figure 1. Map of experimental sites (6 sites in which riffles were constructed and 3 control sites) and their catchments. The extent of impervious coverage (in 2004, gray basemap), piped sections of streams (dark grey stream lines), and the percentage effective imperviousness of each catchment indicate the range of urban impacts among the sites.
+
+Figure 2. Posterior distributions of the differences in abundance for the four contrasts illustrating the effect of riffle construction (a, c, e, g, i, k) and trends from before to after riffle construction (b, d, f, h, j, l) in 6 environmental variables. a, b. Mean water depth, c, d. Variance of water depth within each 0.04 m^2^ sample unit, e, f, Mean velocity, g, h. Variance of velocity, i, j. Minimum $\Phi$ [-log~2~(smallest diameter in mm) of diameter of sediment particles in the sample unit]. k, l. Median $\Phi$. For the distribution plots, 95th, 90th, and 75th percentiles are indicated by increasingly thick bars. Coefficients with >90% less than zero are red, and >90% greater than zero blue. The four lines in each trend plot connect mean (±95% confidence intervals) metric values  before (B) and at two times after (A1, in the first year, and A2, 5-6 years later) construction of the experimental riffles for control sites and impact (i.e. site in which riffles were placed) with 4% and 32% effective imperviousness (EI).
+
+Figure 3. Posterior distributions of the effect (b_I) of imperviousness (EI), and of differences in abundance for the four contrasts illustrating the effect of riffle construction. Each contrast estimates the change in difference between control and reference sites from before riffle construction to one of two periods after construction. The four contrasts are: ΔA1 4%, before to the first year after for sites with 4% EI; ΔA2 4%, before to the 5th/6th year after for sites with 4% EI; ΔA1 32%, before to the first year after for sites with 32% EI; ΔA2 32%, before to the 5th/6th year after for sites with 32% EI. For each contrast, a positive trend indicates that the control and reference sites became more different, and a negative trend indicates they became more similar. For each distribution, 95th, 90th, and 75th percentiles are indicated by increasingly thick bars. Coefficients with >90% of the probability distribution being less than zero are red, and >90% greater than zero blue. Taxa are ordered by mean of b_I. Only the 41 taxa with at least one of the five distributions greater than or less than zero with >90% confidence are shown. Taxonomic affiliations are indicated parenthetically: `r ht_string`.
+
+Figure 4. Trends in abundance of 8 taxa as examples of the main trend patterns observed in taxa for which an effect of riffle was inferred with >90% confidence. The four lines in each plot connect mean (±95% confidence intervals) metric values  before (B) and at two times after (A1, in the first year, and A2, 5-6 years later) construction of the experimental riffles for control sites and impact (i.e., sites in which riffles were placed) with 4% and 32% effective imperviousness (EI).
+
+Figure 5. Posterior distributions of the differences in abundance for the four contrasts illustrating the effect of riffle construction for seven assemblage metrics. A. Total richness, B. Ephemeroptera, Plecoptera and Trichoptera (EPT) richness C. Dipteran and Oligochaete (QDLO) richness, D. Shannon's H', E. total abundance, F. EPT abundance G. QDLO abundance, H. SIGNAL score. Contrasts and other conventions are as in Figure 2.
+
+Figure 6. Trends in assemblage metrics (A. total richness, B. Ephemeroptera, Plecoptera and Trichoptera [EPT] richness C. Dipteran and Oligochaete [QDLO] richness D. SIGNAL score, E. total abundance, F. EPT abundance, G. QDLO abundance) in a sample of 4 sample units) before and at two times after construction of the experimental riffles.  The four lines in each plot connect mean (±95% confidence intervals) metric values over the three times for control sites and impact (i.e. site in which riffles were placed) with 4% and 32% effective imperviousness (EI).  
+
 
 ```{r}
 #| label: fig-experiment_map
@@ -141,8 +417,8 @@ We surveyed the 9 sites to estimate tractive force in each channel for rock-size
 #| fig-height: 6.5
 #| warning: false
 #| message: false
-#| fig-cap: "Map of experimental sites (6 sites in which riffles were constructed and 3 control sites) and their catchments. The extent of impervious coverage (in 2004, gray basemap), piped sections of streams (dark grey stream lines), and the percentage effective imperviousness of each catchment indicate the range of urban impacts among the sites."
 
+# tiff("images/figure1.tiff", width = 5*600, height = 6.5*600, res = 600, compression = 'lzw')
 streams <- sf::st_read("data/urban_riffle_experiment_map.gpkg", layer = "streams", quiet = TRUE)
 pipes <- sf::st_read("data/urban_riffle_experiment_map.gpkg", layer = "pipes", quiet = TRUE)
 cats <- sf::st_read("data/urban_riffle_experiment_map.gpkg", layer = "cats", quiet = TRUE)
@@ -214,107 +490,10 @@ plot(rngPoly$geom, col = scales::alpha(gray(0.5),0.5), add = TRUE)
 title(main = "Central Victoria ", 
       adj = 1, font.main = 1, line = -1, cex.main = 1)
 box(lwd = 1)
+#dev.off()
 ```
 
-### Macroinvertebrate assemblage sampling and identification
-
-Data were collected at the nine sites on six occasions; twice prior to the installation of riffles (Nov 1995, Feb 1996), and four times after riffle installation (Nov 1996, Feb 1997, Dec 1999, Feb 2001). On each occasion, we collected replicate macroinvertebrate sample units (4 on occasions 1--4, 3 on occasions 5--6) at each site using a 0.04-m^2^ suction sampler [@boulton_1985]: the replicate sample units collectively making a sample in each site on each occasion. To collect a sample unit, one operator disturbed sediments in the sample quadrat with a spatula and scrubbed larger surfaces with a small brush while the second operator pumped out the sampler contents into a 250 $\mu$m net.
-
-We processed sample units separately and preserved them in 2% formaldehyde. In the laboratory, many sample units were subsampled to reduce processing time. Initially, some samples were fully processed to develop the subsampling protocol reported by [@walsh_1997], which was followed in processing all subsequent samples. The protocol requires a 10% subsample to be sorted, followed, if necessary, by additional subsamples until 300 specimens have been collected, with the final subsample fraction recorded. Samples were scanned for large specimens before subsampling, and such 'coarse-pick' specimens were recorded as having a subsample fraction, *s*, of 1. Macroinvertebrates were identified to lowest practicable taxonomic level and counted (See Appendix S2 for more detail).
-
-### Environmental variable determination
-
-After each macroinvertebrate sample unit was collected, the sampler was removed from the stream bed, and water depth and velocity at the bed surface were measured at the four corners of the sampled area and the centre point. We measured velocity with a CMC 20 current meter counter, fitted with a 1-94.22 propeller, for 10 s at each point, 4 cm above the bottom (the lowest possible setting). From these five measurements, we calculated the mean and variance of velocity for each sample unit.
-
-We recorded the proportions of sediment particle sizes classed by the Wentworth scale [@allan_etal_2021], and used these data to estimate minimum, median, and maximum $\Phi$ (-log~2~ smallest diameter) of the sediments in each sample unit. Lastly, we compiled these data into six environmental variables to assess the effect of riffles on habitat heterogeneity at the scale of sample units: mean velocity, variance of velocity, mean depth, variance of depth, and minimum and median $\Phi$.
-
-### Statistical models
-
-We used a similar model structure to assess the effect of the riffles on environmental variables, and on the abundances of macroinvertebrate taxa collected in each sample unitabundances. The models followed the typical BACI design, expanded to include two 'after' time periods (A1, in the first year after construction; and A2, 5--6 y after construction) and to account for the potential moderating effects of effective imperviousness I (scaled, log\[x + 0.1\] % catchment EI). The experimental effects were coded as combinations of five binary variables: B (= 1 before construction), A1, A2, C (control sites) and R (sites in which riffles were constructed). For the environmental variables, the model was expressed as:
-
-$$
-\begin{align}
-\mu_{(i)} = \ &\alpha + \beta_1 \cdot I_i + \beta_2 \cdot A1_i + \beta_3 \cdot A2_i + \beta_4 \cdot R_i +\\
-& \beta_5 \cdot A1_i \cdot R_i +  \beta_6 \cdot A2_i \cdot R_i +\\
-& \beta_7 \cdot B_i \cdot R_i \cdot I_i +  \beta_8 \cdot A1_i \cdot R_i \cdot I_i +  \beta_9 \cdot A2_i \cdot R_i \cdot I_i + \\
-& \theta_{1(s[i])} + \theta_{2(t[i])} + \theta_{3(s[i],t[i])}
-\end{align}
-$$ {#eq-env_var_linear_model}
-
-where $\mu_{(i)}$ is the expected value of the environmental variable in sample unit *i* given the values of predictors $I_i$, $A1_i$, $A2_i$, $R_i$ for the sample unit and its site (s\[i\]) and sampling occasion (t\[i\]). $\alpha$ is the model intercept (*B* = 1 and *C* = 1 and *I* = 0), $\beta_1$ describes the effect of I, $\beta_2$ and $\beta_3$ describe changes in *A1* and *A2* compared to *B*. $\beta_4$ describes the difference between *C* and *R*. The interaction effects $\beta_5$--$\beta_9$ were of primary interest. $\beta_5$ and $\beta_6$ describe how differently measures from riffle sites changed compared to those from control sites in the 'after' time periods A1 and A2, and thus represent the experimental effect of riffle construction. $\beta_7$--$\beta_9$ model the influence of *I* on the effect of riffles. We included $\theta_{1}$--$\theta_{3}$ as a set of random effects to account for variation in the dependent variables among sites ($\theta_{1}$) and through time that are both common ($\theta_{2}$) and unique among sites ($\theta_{3}$), thus, accounting for potential dependencies in the model error structure.
-
-The likelihood of the environmental models assumed Normal residual error structures expressed as; $y_i \sim \textrm{Normal} (\mu_i,\sigma_i)$, where \sigma\_i is the standard deviation of the residual. All environmental variables, except minimum and median $\Phi$, were log-transformed (see Table 1 S3).
-
-The macroinvertebrate model was similar to the environmental variables models with three differences. Firstly, we adopted a hierarchical covariate structure common for multi-taxon models [e.g. @ovaskainen_etal_2017]. This structure specifies all $\beta$ parameters as random effects across taxa, allowing for inference at both the taxon and assemblage scales. Furthermore, the random effect structure induces parameter shrinkage towards the assemblage mean that can increase statistical power and reduce the likelihood of spurious results, particularly for species with sparse data [@link_sauer_1996]. Second, we included the effect of seasonal timing of sampling to account for seasonal differences in macroinvertebrate abundances. Third, we specified the likelihood of the model with an additional hierarchical structure to correct for expected biases arising from differences in subsampling proportions among sites and sampling occasions [@buonaccorsi_2010; @kery_schaub_2011].
-
-We modeled the expected abundance of each macroinvertebrate taxa as a linear model with a log link as:
-
-$$
-\begin{align}
-log(\mu_{(i,j)}) = \ &\alpha_j + \beta_{1(j)} \cdot I_i + \beta_{10(j)} \cdot S_i + \beta_{2(j)} \cdot A1_i + \beta_{3(j)} \cdot A2_i + \beta_{4(j)} \cdot R_i +\\
-& \beta_{5(j)} \cdot A1_i \cdot R_i +  \beta_{6(j)} \cdot A2_i \cdot R_i +\\
-& \beta_{7(j)} \cdot B_i \cdot R_i \cdot I_i +  \beta_{8(j)} \cdot A1_i \cdot R_i \cdot I_i +  \beta_{9(j)} \cdot A2_i \cdot R_i \cdot I_i + \\
-& \theta_{1(s[i],j)} + \theta_{2(t[i],j)} + \theta_{3(s[i],t[i],j)}
-\end{align}
-$$ {#eq-multi_taxon_linear_model}
-
-where $\mu_{(i,j)}$ is the expected abundance of taxa *j* in sample unit *i* and $\beta_{10(j)}$ models the variation in abundance between seasons ($S_i$ autumn = 0, spring = 1). All other parameters and variables have equivalent meaning as the environmental variables models (@eq-env_var_linear_model).
-
-All $\beta$ parameters in the multi-taxon model were formulated as random effects drawn from a common assemblage-level multivariate-Normal hyper-distribution as $\beta_{(k,j)} \sim \textrm{MVNormal}(\mu_k,\Omega)$, where $\mu_k$ is the estimated assemblage mean for the *k*^th^ $\beta$ parameter and $\Omega$ is the estimated variance-covariance matrix. This specification formalizes the assumption that responses of taxa to model variables are neither equivalent nor independent but related according to assemblage means and a covariance structure.
-
-We specified the likelihood of the macroinvertebrate model as a hierarchical binomial-negative binomial mixture. This likelihood structure is analogous to the binomial-mixture model for estimating site-level abundances while accounting for incomplete sampling probability (@royle_2004). We adapted that model to estimate abundances per sample unit while accounting for incomplete sampling probability due to subsampling. The first component of the likelihood describes the unobserved total abundance of each taxon in the sample unit prior to subsampling as a latent random variable drawn from a negative binomial distribution as; $Y_{(i,j)} \sim \textrm{Neg. Binomial} (\mu_{(i,j)},\phi_j)$, where $Y_{(i,j)}$ is the latent abundance of taxon *j* in sample unit *i*, $\mu_{(i,j)}$ is the expected abundance (equation 2), and $\phi_j$ is the taxon-specific dispersion parameter. The second component of the likelihood describes the observed sub-sample counts as outcomes of a binomial sampling process as, $c_{(i,j)} \sim \textrm{Binomial} (s_{(i,j)}, Y_{(i,j)})$, where $c_{(i,j)}$ is the observed count of taxon *j* in sample unit *i*, and $s_{(i,j)}$ is the proportion of the sample unit that was subsampled and counted. It is indexed by *j* to allow s = 1 for coarse-pick taxa.
-
-We estimated model parameters in a Bayesian framework using Stan [@carpenter_etal_2017], sampling the posterior distributions of all parameters using four chains with sufficient iterations to ensure convergence and minimum effective samples size \>400 . We specified weakly informative prior distributions for all parameters. See Appendix S3 for full details.
-
-We evaluated the fit of the models of environmental variables by deriving *R^2^* for a least-squares regression of the predicted and observed mean values in each sample, and prediction fidelity, the proportion of observed values that fell with 95% of the posterior predicted distribution for each sample. We used the same measures to assess the fit of the multi-taxon model, using the mean log(x+1)-transformed observed and predicted counts of each taxon in sub-sampled sample units. We also assessed accuracy of model predictions for occurrence of each taxon (i.e. detection/non-detection) by calculating detection fidelity, the proportion of posterior predictions which correctly predicted presence or absence. Finally, we assessed the accuracy of the multi-taxon model's estimates of assemblage level metrics, by calculating *R^2^* and prediction fidelity for observed and predicted total number of taxa, and the number of Ephemeropotera, Plecoptera and Trichoptera taxa (three groups of sensitive species commonly used as a stream health metric). See Appendix S3 for more details.
-
-### Model interpretation
-
-To interpret interactions between the effects of riffle construction and degree of catchment urbanization on environmental variables and the biotic assemblage, we compared predictions under 12 scenarios comprising four site types (control and impact sites with high and low effective imperviousness (4% and 32% EI, the maximum and mimimum EI values in the study sites, respectively), in the three states of the BA effect (*B*, before; *A1*, in the first year after riffle construction; and *A2*, 5-6 years after).
-
-For taxon abundances, we focused on taxa for which the *BA:CI* or *BA:CI:I* interactions were non-zero with at least 90% confidence to identify dominant taxa associated with assemblage-level differences. We also derived predictions of responses of assemblage-level metrics from the model for each of the 12 scenarios. Responses of diversity measures such as richness are of intrinsic community ecological interest, but they and biotic metrics focusing on taxa of differing sensitivity to human disturbance are used by stream managers as measures of ecological condition and targets for responses to management actions [e.g. @vic_gov_2018]. We used predicted abundances and occurrences for each scenario to calculate posterior distributions of:
-
--   Total macroinvertebrate abundance, of a) EPT taxa [insect orders dominated by taxa sensitive to human disturbance, @resh_jackson_1993], and b) of Diptera and Oligochaeta [QDLO, groups dominated by taxa tolerant to human disturbance; @gooderham_tsyrlin_2002; @martin_etal_2008];
-
--   Total taxon richness (i.e., taxon density, the number per sample comprising 4 sample units), also EPT and QDLO richness;
-
--   Shannon's H' (i.e., the Shannon-Weaver index) and Pielou's evenness index, measures of diversity accounting for relative abundance of taxa;
-
--   SIGNAL, a biotic index which averages grades of sensitivity to human disturbance (between 1 and 10) of families present in a sample [@chessman_1995].
-
-Abundance measures were calculated by adding predicted mean abundances per sample unit of the relevant taxa. Richness measures were derived by first calculating predicted probability of occurrence in a sample,
-
-$$
-p\_s = 1 - \Pi(1 - p\_{su}_i)
-$$ {#eq-predict_pa}
-
-where $p\_su_i$ is the probability of occurrence in the *i*th sample unit comprising the sample, calculated as 1 - negative-binomial probabliity of zero, given predicted $\mu$ and $\phi$. Number of taxa in each sample was calculated as the sum of probabilities of occurrence (see Appendix S3 for more detail).
-
-To assess the probability of an effect of riffle construction on environmental variables, assemblage metrics and taxon abundances, we calculated the following four differences between the posterior distributions of metrics and abundances given the 12 scenarios:
-
--   $\Delta A1 \, (\textrm{4%} \, EI)$, (control minus impact before, *B*) - (control minus impact in first year after, *A1*) for low *I*
-
--   $\Delta A2 \, (\textrm{4%} \, EI)$, (control minus impact before, *B*) - (control minus impact 5-6 y after, *A2*) for low *I*
-
--   $\Delta A1 \, (\textrm{32%} \, EI)$, (control minus impact before, *B*) - (control minus impact in first year after, *A1*) for high *I*
-
--   $\Delta A2 \, (\textrm{32%} \, EI)$, (control minus impact before, *B*) - (control minus impact 5-6 y after, *A2*) for high *I*
-
-We inferred a likely effect of riffle construction on each measure if \>90% of the posterior distribution of any one of the differences was greater than zero (indicating that the measure in impact sites increased relative to control sites following riffle construction) or less than zero (indicating a decline in impact sites relative to control sites). For each variable we report the posterior predictive distributions of the four differences to illustrate the experimental effect, and we present the posterior predictive distributions of the 12 scenarios to illustrate the spatial and temporal patterns that resulted in the effect.
-
-## Results
-
-### Model fit
-
-All models converged and all had adequate fit to the data. All environmental variables were well predicted by their respective models: *R^2^* \>0.86 for observed:predicted for all models, and observed values falling within 95% of the posterior predicted distribution for \>89% of samples. The counts of all taxa were well predicted by the model. Counts in all samples fell within 95% of the posterior predicted distribution (prediction fidelity = 1, Table 2) for all but 3 taxa, for which one sample fell outside (prediction fidelity = 0.98). Mean *R^2^* of predicted vs observed relationships taxon counts was 0.9, with *R^2^* for all but 3 species \>0.7. The model also predicted taxon occurrence well, with a mean detection accuracy of 0.91 (minimum 0.64, with all but 10 taxa \>0.8). The predictions of occurrence summed to predictions of taxon richness that also matched the observed data well. See Appendix S3 for more detail. The good fit of the models to the data provides confidence in inferences of the *BA*, *CI* and *I* effects, which are the focus of this study.
-
-### Responses of environmental variables
-
-The constructed riffles altered the available substrates in the study reaches, increasing surface and hydraulic heterogeneity.
-
-Riffles resulted in shallower water (@fig-cf_env_vars C, D, although no change in variability in depth at the sample-unit scale: @fig-cf_env_vars A, B), and increased mean velocity, and variance of velocity (@fig-cf_env_vars E--H), indicating increased heterogeneity of the hydraulic environment.
-
-Before riffle construction, and in control sites throughout the study, median $\Phi$ in samples was 1 to 6 (sand to clay). Riffles reduced median $\Phi$ to -6 to -7 (small to large cobbles) in sites with low EI, and this change persisted for 6 years (A2, @fig-cf_env_vars\L). In sites with high EI, riffles had a smaller effect on median $\Phi$, reducing in the first year to -2 (gravel), but increasing to 1 (coarse sand) after 6 years, as sand deposited among the riffles (@fig-cf_env_vars\K, L). The trends in maximum $\Phi$ (not reported) were similar to those of median $\Phi$. Riffles more consistently reduced minimum $\Phi$ (i.e. introduced larger particles) to -6 to -7 in all impact sites. However, the effect of riffle construction on minimum $\Phi$ was small in sites with low EI, which contained some large pebbles before riffle construction (@fig-cf_env_vars I, J). An effect of the riffles not quantified by these measurements was an increase in the availability of large emergent rocks (See Appendix S1, Figures S1-2 to 10).
+Figure 1
 
 ```{r}
 #| label: fig-cf_env_vars
@@ -323,8 +502,8 @@ Before riffle construction, and in control sites throughout the study, median $\
 #| message: false
 #| fig-width: 7
 #| fig-height: 6
-#| fig-cap: "Posterior distributions of the differences in abundance for the four contrasts illustrating the effect of riffle construction (A, C, E, G, I, K) and trends from before to after riffle construction (B, D, F, H, J, L) in 6 environmental variables. A, B. Mean water depth, C, D. Variance of water depth within each 0.04 m^2^ sample unit, E, F, Mean velocity, G, H. Variance of velocity, I, J. Minimum $\\Phi$ (the negative log of diameter of sediment particles in the sample unit). K, L. Median $\\Phi$. For the distribution plots, 95th, 90th, and 75th percentiles are indicated by increasingly thick bars. Coefficients with >90% less than zero are red, and >90% greater than zero blue. The four lines in each trend plot connect mean (± 95% confidence intervals) metric values  before (B) and at two times after (A1, in the first year, and A2, 5-6 years later) construction of the experimental riffles for control sites and impact (i.e. site in which riffles were placed) with 4% and 32% effective imperviousness (EI)."
 
+# tiff("images/figure2.tiff", width = 7*600, height = 6*600, res = 600, compression = 'lzw')
 # load cfs, list of 12 data frames (one for each environmental variable), with
 # percentile statistics of posterior distributions for 60 counterfactual scenarios
 # including the 12 plotted here
@@ -345,7 +524,6 @@ ylabs1 = c("Variance of log(depth [m])", "Mean depth (m)","Variance of log(veloc
 # spell them out so that they are displayed in Rstudio
 cols <- c( "#CD534CFF","#EFC000FF","#868686FF","#0073C2FF")
 
-# tiff("images/fig2.tiff"), width = 7*300, height = 6*300, res = 300, compress = "lzw")
 layout(matrix(c(1:12,rep(13,4)),4,4,byrow=TRUE), widths = c(10,10,10,10),heights = c(10,10,10,2))
 for(i in 1:6){
   panel_index <- which(1:6 == i)
@@ -370,7 +548,7 @@ for(i in 1:6){
   axis(2, at = 1:4, labels = ylabs, las = 1) 
   box(bty = 'l')
   abline(v = 0, lty = 3)
-  title(main = paste0(LETTERS[(panel_index-1)*2 + 1],". "), adj = 0)
+  title(main = paste0("(",letters[(panel_index-1)*2 + 1],")"), adj = 0)
 
 # Trend plot
   cfi <- cfs[[i]]
@@ -416,81 +594,17 @@ for(i in 1:6){
   axis(2, las = 1)
     }}
   box(bty = "l")
-  title(main = paste0(LETTERS[(panel_index-1)*2 + 2],"."), adj = 0)
+  title(main = paste0("(",letters[(panel_index-1)*2 + 2],")"), adj = 0)
 }
   par(mar = c(0,0,0,0))
   plot.new()
   legend("center", pch = 16, col = cols, horiz = TRUE,
    legend = c("Control, 32% EI", "Impact, 32% EI", "Control 4% EI","Impact 4% EI"),
    cex = 1)
-#dev.off()
+# dev.off()
 ```
 
-### Responses of macroinvertebrate taxa
-
-```{r}
-#| echo: false
-#| label: tbl-top10taxa
-#| tbl-cap: "Predicted mean abundance (N per 0.04-m^2^ sample unit) under the 12 scenarios of the 22 taxa that were among the 10 most abundant taxa in at least one scenario, and the percentage of the total count of all taxa in each scenario that the 19 taxa constitute.  Low and High I, 4% and 32% effective imperviousness, respectively; B, Before; A1, in the first year after; A2, 5-6 years after riffle construction. See Appendix S2 for explanation of Tubificinae taxa."
-
-top10taxa <- read.csv("small_data/top10taxa.csv")
-  ft <- flextable::regulartable(top10taxa[,-1])
-  ft <- ftExtra::span_header(ft, sep = "_")
-  ft <- flextable::align(ft, align = "center", part = "header")
-  ft <- flextable::italic(ft, i = which(top10taxa$taxoncode %in% taxa$taxoncode[taxa$italic == 1]), j = 1)
-  ft <- flextable::bold(ft, i = nrow(top10taxa))
-  ft <- flextable::hline(ft, i = nrow(top10taxa)-1)
-  ft <- flextable::font(ft,fontname = "Helvetica", part = "all")
-  ft <- flextable::fontsize(ft, size = 10, part = "all")
-  ft <- flextable::padding(ft, padding.top = 2,  padding.bottom = 2, part = "all")
-  ft <- flextable::autofit(ft)
-  ft <- flextable::width(ft, width = dim(ft)$widths*6.69 /(flextable_dim(ft)$widths))
-ft
-```
-
-113 taxa were identified in the study. 17 of these constituted \>90% of assemblages in high EI sites, and 23 constituted 70-90% of assemblages in low EI sites (Table 1). All but three of these most abundant taxa were tolerant of human disturbance: only Hydropsychidae, *Paratanytarsus/Rheotanytarsus*, and *Notriolus* were negatively associated with EI (Figure 3). Thus, the macroinvertebrate assemblages of all sites were numerically dominated by cosmopolitan taxa, tolerant of human disturbance, but in sites with lower EI, the most abundant taxa tended to be less abundant, and constituted a lower proportion of the assemblage (Table 1). *Potamopyrgus antipodarum*, *Physa acuta*, *Lumbriculus variegatus*, and likely members of other taxa, are invasive species. Thus, despite the sites spanning a gradient of EI from 4 to 32%, the biotas of all sites were dominated by taxa typical of degraded urban streams, and this general state was consistent across before and after periods.
-
-```{r}
-#| echo: false
-#| warning: false
-#| message: false
-
-# Load summary statistics for the fixed parameters (created in predy_summary chunk in `urban_riffle_exp_S3.qmd`)
-param_summs <- rio::import_list("small_data/param_summs.xlsx")
-
-# load summary statistics for the 4 contrasts (created in pred_cf chunk in `urban_riffle_exp_S3.qmd`)
-diff_summs <- rio::import_list("small_data/diff_summs.xlsx")
-
-# Identify those taxa for which a difference resulting from riffle construction can be inferred
-# (with 90% and 95% confidence)
-more_diff_90 <- more_diff_95 <- more_sim_90 <- more_sim_95 <- vector()
-for(i in 1:length(diff_summs)){
-more_diff_90 <- unique(c(more_diff_90,diff_summs[[i]]$shortcode[diff_summs[[i]]$lo90 > 0]))
-more_diff_95 <- unique(c(more_diff_95,diff_summs[[i]]$shortcode[diff_summs[[i]]$lo95 > 0]))
-more_sim_90 <- unique(c(more_sim_90,diff_summs[[i]]$shortcode[diff_summs[[i]]$hi90 < 0]))
-more_sim_95 <- unique(c(more_sim_95,diff_summs[[i]]$shortcode[diff_summs[[i]]$hi95 < 0]))
-}
-
-# Collect taxa of interest (effected by riffles or by EI) 
-taxa_to_plot <- unique(c(more_diff_90,more_sim_90,
-                         param_summs$b_i$shortcode[param_summs$b_i$lo90 > 0],
-                         param_summs$b_i$shortcode[param_summs$b_i$hi90 < 0]))
-# Prepare taxon text for figures
-higher_taxa_in_plot <- higher_taxa[higher_taxa$higher_taxon %in% 
-                                     unique(taxa$higher_taxon[taxa$taxoncode %in% taxa_to_plot]),]
-# R results for inclusion in figure caption:
-ht_string <- paste(paste0(higher_taxa_in_plot$taxon, " (", higher_taxa_in_plot$higher_taxon, ")"), collapse = "; ")
-# Annelida (A); Pelecypoda (B); Coleoptera (C); Diptera (D); Ephemeroptera (E); Turbellaria (F); Gastropoda (G); Lepidoptera (L); Acarina (M); Odonata (O); Plecoptera (P); Trichoptera (T); Crustacea (Z); Cnidaria (I); Nematoda (J)
-# length(taxa_to_plot) # 41 taxa to plot in @fig-coeff_plot_alt
-```
-
-`r length(unique(c(more_diff_90,more_sim_90)))` taxa responded to riffle construction (non-zero *BA-CI* differences with 90% confidence; `r length(unique(c(more_diff_95,more_sim_95)))` of those with 95% confidence: @fig-coeff_plot_alt). Only two of those species were negatively associated with EI (i.e. sensitive to human disturbance; @fig-coeff_plot_alt). One of those, Hydropsychidae, filter-feeding caddis flies that build nets on rocks, increased in abundance after riffle construction, in sites with low EI, but was largely absent from sites with high EI (@fig-cf_taxon_abunds A, Table 1). The other, a chironomid, *Thiennemaniella*, decreased in abundance in sites with low EI 5-6 y after riffle construction (and were largely absent from sites with high EI before and after: @fig-cf_taxon_abunds B).
-
-Simuliidae, with similar habitat requirements to Hydropsychidae, but more tolerant of human impacts, increased in abundance in high EI sites but not low EI sites (@fig-cf_taxon_abunds C), as did Ceratopogonidae and *Dicrotendipes* in the first year, and Glossiphonidae, *Cura pinguis*, and *Pisidium* after 5--6 y (@fig-coeff_plot_alt).
-
-Most taxa that were positively associated with EI (i.e. tolerant of human disturbance) decreased in abundance after riffle construction in low EI sites, with declines more common after 5--6 years than in the first year (@fig-coeff_plot_alt). Nematoda, Cyclopoida, oligochaetes *Lumbriculus variegatus* (e.g., @fig-cf_taxon_abunds D), *Chaetogaster diaphanus*, Megadrili, Tubificinae groups A and B, and the chironomid *Chironomus* (@fig-cf_taxon_abunds E) decreased in abundance in low EI sites, but not in high EI sites. Enchytraeidae oligochaetes decreased in both high and low EI sites.
-
-Chironomids *Parakiefferiella* (@fig-cf_taxon_abunds F), *Polypedilum*, *Procladius* (@fig-cf_taxon_abunds G), *Cricotopus*, and *Cryptochironomus* decreased in low EI sites over the 6 years, but increased in high EI sites in year 1 (@fig-coeff_plot_alt).
+Figure 2
 
 ```{r}
 #| label: fig-coeff_plot_alt
@@ -499,8 +613,8 @@ Chironomids *Parakiefferiella* (@fig-cf_taxon_abunds F), *Polypedilum*, *Proclad
 #| message: false
 #| fig-width: 7
 #| fig-height: 5
-#| fig-cap: "Posterior distributions of the effect (b_I) of imperviousness (EI), and of differences in abundance for the four contrasts illustrating the effect of riffle construction. Each contrast estimates the change in difference between control and reference sites from before riffle construction to one of two periods after construction. The four contrasts are: ΔA1 4%, before to the first year after for sites with 4% EI; ΔA2 4%, before to the 5th/6th year after in sites for sites with 4% EI; ΔA1 32%, before to the first year after for sites with 32% EI; ΔA2 32%, before to the 5th/6th year after in sites for sites with 32% EI. For each contrast a positive trend indicates that the control and reference sites became more different, and a negative trend indicates they became more similar. For each distribution, 95th, 90th, and 75th percentiles are indicated by increasingly thick bars. Coefficients with >90% of the probability distribution being less than zero are red, and >90% greater than zero blue. Taxa are ordered by mean of b_I. Only the 41 taxa with at least one of the five distributions greater than or less than zero with >90% confidence are shown. Taxonomic affiliations are indicated parenthetically: Annelida (A); Pelecypoda (B); Coleoptera (C); Diptera (D); Ephemeroptera (E); Turbellaria (F); Gastropoda (G); Lepidoptera (L); Acarina (M); Plecoptera (P); Trichoptera (T); Crustacea (Z); Nematoda (J)."
 
+# tiff("images/figure3.tiff", width = 7*600, height = 5*600, res = 600, compression = 'lzw')
 lo <- layout(matrix(c(1:5,0,rep(6,4)),2,5,byrow = TRUE),widths = c(25,rep(10,4)),heights = c(60,2))
 taxa$labs <- paste0(taxa$taxon," (", taxa$higher_taxon,")")
 taxa_to_plot_df <- taxa[taxa$taxoncode %in% taxa_to_plot,]
@@ -545,7 +659,10 @@ title(main = nms[p])
 par(mar = c(0,0,0,0))
 plot.new()
 title(xlab = "Coefficient", line=-1, cex.lab = 1.25)
+# dev.off()
 ```
+
+Figure 3
 
 ```{r}
 #| label: fig-cf_taxon_abunds
@@ -554,8 +671,8 @@ title(xlab = "Coefficient", line=-1, cex.lab = 1.25)
 #| message: false
 #| fig-width: 7
 #| fig-height: 4
-#| fig-cap: "Trends in abundance of 8 taxa as examples of the main trend patterns observed in taxa for which an effect of riffle was inferred with >90% confidence. The four lines in each plot connect mean (± 95% confidence intervals) metric values  before (B) and at two times after (A1, in the first year, and A2, 5-6 years later) construction of the experimental riffles for control sites and impact (i.e., sites in which riffles were placed) with 4% and 32% effective imperviousness (EI)."
 
+# tiff("images/figure4.tiff", width = 7*600, height = 4*600, res = 600, compression = 'lzw')
 # (Plot examples: 
 example_taxa <- c("QT06","QDAF07","QD10","LO060101","QDAI04","QDAE08","QDAF03")
 # 7 examples referred to in text: Hydropsychidae,  Thienemanniella, Simuliidae, 
@@ -624,12 +741,10 @@ axis(2, las = 1, at = log(c(0.00001,0.0001,0.001,0.01,0.1,1,10,100,1000,10000)),
 labels = ylabs)
 box(bty = "l")
 if(taxa$italic[taxa$taxoncode == taxa_set[i]] == 1){
-title(main = bquote(paste(.(LETTERS[i]), # taxa$taxoncode[taxa$taxoncode == ba0cii_taxa[i]],
-   ". ", italic(.(taxa$taxon[taxa$taxoncode == taxa_set[i]])))),
+title(main = bquote(paste("(",.(letters[i]),") ", italic(.(taxa$taxon[taxa$taxoncode == taxa_set[i]])))),
 adj = 0, cex.main = 1)
 }else{
-title(main = bquote(paste(.(LETTERS[i]), # taxa$taxoncode[taxa$taxoncode == ba0cii_taxa[i]],
-   ". ", .(taxa$taxon[taxa$taxoncode == taxa_set[i]]))),
+title(main = bquote(paste("(",.(letters[i]),") ", .(taxa$taxon[taxa$taxoncode == taxa_set[i]]))),
 adj = 0, cex.main = 1)
 }
 }
@@ -643,13 +758,9 @@ title(ylab = "Abundance per sample unit", line = -1, cex = 1.25)
 plot.new()
 title(xlab = "Occasion", line =2, cex = 1.25)
 par(mar = c(4,4,1,1))
+# dev.off()
 ```
-
-The common trend of reduced abundance of tolerant taxa following riffle construction in sites with low EI resulted in a reduction in total richness and, more weakly, abundance in those sites (@fig-assemb_diffs_dists A, E; @fig-assemb_trends A, E), driven largely by reduced QDLO richness (@fig-assemb_diffs_dists C; @fig-assemb_trends C) and abundance (@fig-assemb_diffs_dists G; @fig-assemb_trends G). Conversely, total and QDLO richness (but not abundance) increased in sites with high EI (@fig-assemb_diffs_dists C; @fig-assemb_trends C).
-
-EPT richness did not change following riffle construction (@fig-assemb_diffs_dists B; @fig-assemb_trends B), although the increased abundance of Hydropsychidae (@fig-cf_taxon_abunds A, Table 1) in sites with low EI drove an increase in EPT abundance in those sites (@fig-assemb_diffs_dists F; @fig-assemb_trends F).
-
-Overall, the changes in abundance and richness of tolerant taxa following riffle construction did not alter the dominance of the macroinvertebrate assemblages by tolerant, cosmopolitan and invasive species (Table 1), with no change in the diversity measures Shannon's H' (@fig-assemb_diffs_dists D) or Pielou's evenness (not illustrated). We found no evidence of colonization by less tolerant species, other than a few isolated occurrences (see Discussion). As a result the low-moderate SIGNAL scores for these sites were unchanged over the study period @fig-assemb_diffs_dists H; @fig-assemb_trends D).
+Figure 4
 
 ```{r}
 #| label: fig-assemb_diffs_dists
@@ -658,8 +769,8 @@ Overall, the changes in abundance and richness of tolerant taxa following riffle
 #| message: false
 #| fig-width: 7
 #| fig-height: 4
-#| fig-cap: "Posterior distributions of the differences in abundance for the four contrasts illustrating the effect of riffle construction for seven assemblage metrics. A. Total richness, B. Ephemeroptera, Plecoptera and Trichoptera (EPT) richness C. Dipteran and Oligochaete (QDLO) richness, D. Shannon's H', E. total abundance, F. EPT abundance G. QDLO abundance, H. SIGNAL score. Contrasts and other conventions are as in Figure 2."
 
+# tiff("images/figure5.tiff", width = 7*600, height = 4*600, res = 600, compression = 'lzw')
 assemb_stat_summs <- readxl::read_excel("small_data/assemb_stat_diff_summs.xlsx")
 # Leave out evenness, which, like SIGNAL and H, did not differ with riffle construction
 assemb_stat_summs <- assemb_stat_summs[!assemb_stat_summs$stat %in% c("evenness"),]
@@ -667,8 +778,9 @@ lab_names <- c("Total richness", "EPT richness", "QDLO richness",
                "Shannon's H'", "Total abundance", "EPT abundance", 
                "QDLO abundance","SIGNAL score")
 stat_names <- c("tot_rich","ept_rich","do_rich","H","tot_n","ept_n","do_n","signal")
-xlabs = c("Delta No. taxa", "Delta No. tax", "Delta No. taxa", "Delta SIGNAL",
-          "Delta N", "Delta, N", "Delta N", "Delta H")
+xlabs = c(bquote(Delta~"No. taxa"), bquote(Delta~"No. taxa"), bquote(Delta~"No. taxa"), 
+          bquote(Delta~"H'"),bquote(Delta~"N"),bquote(Delta~"N"),bquote(Delta~"N"),
+          bquote(Delta~"SIGNAL"))
   
 lo <- layout(matrix(c(1:8),2,4,byrow = TRUE),
 widths = c(14,10,10,10),heights = c(10,10))
@@ -681,7 +793,8 @@ for(j in 1:8){
   summp <- summp[match(diffs,summp$diff),]
 par(mar = c(4,ifelse(j %in% c(1,5), 5, 1),1,0))
 xrange <- c(min(summp$lo95),max(summp$hi95))
-  plot(xrange,c(miny,maxy),type = 'n', axes = FALSE, xlab = xlabs[j],ylab = "")
+  plot(xrange,c(miny,maxy),type = 'n', axes = FALSE, xlab = "",ylab = "")
+title(xlab = xlabs[j], line = 2)
 for(i in 1:4){
   lines(c(summp$lo95[i],summp$hi95[i]),rep(miny+maxy-i,2),lend = 2,
         col = ifelse(summp$hi90[i] < 0,"red",ifelse(summp$lo90[i] > 0, "blue","grey")))
@@ -702,11 +815,13 @@ axis(2, at = 1:4,
      labels = ylabs, las = 1) 
 box(bty = 'l')
 abline(v = 0, lty = 3)
-title(main = paste0(LETTERS[j],". ",lab_names[j]), adj = 0)
+title(main = paste0("(",letters[j],") ",lab_names[j]), adj = 0)
   }
 par(mar = c(0,0,0,0))
-
+# dev.off()
 ```
+
+Figure 5
 
 ```{r}
 #| label: fig-assemb_trends
@@ -715,8 +830,8 @@ par(mar = c(0,0,0,0))
 #| message: false
 #| fig-width: 7
 #| fig-height: 4
-#| fig-cap: "Trends in assemblage metrics (A. total richness, B. Ephemeroptera, Plecoptera and Trichoptera [EPT] richness C. Dipteran and Oligochaete [QDLO] richness D. SIGNAL score, E. total abundance, F. EPT abundance, G. QDLO abundance) in a sample of 4 sample units) before and at two times after construction of the experimental riffles.  The four lines in each plot connect mean (± 95% confidence intervals) metric values over the three times for control sites and impact (i.e. site in which riffles were placed) with 4% and 32% effective imperviousness (EI)."
 
+# tiff("images/figure6.tiff", width = 7*600, height = 4*600, res = 600, compression = 'lzw')
 assemb_stat_summs <- rio::import_list("small_data/assemb_stat_summs.xlsx")
 ylabs = c("Total richness", "EPT richness", "DO richness",
           "SIGNAL score", "log(total abundance)", "log(EPT abundance)","log(QDLO abundance)")
@@ -757,49 +872,17 @@ axis(1, at = 0:2, labels = c("B","A1","A2"))
   }
 axis(2, las = 1); 
 box(bty = "l")
-title(main = paste0(LETTERS[i],"."), adj = 0)
+title(main = paste0("(",letters[i],")"), adj = 0)
 }
 par(mar = c(0,0,0,0))
 plot.new()
 legend("center", pch = 16, col = cols, 
        legend = c("Control, 32% EI", "Impact 32% EI","Control 4% EI", "Impact 4% EI"),
        cex =1)
+# dev.off()
 ```
 
-## Discussion
+Figure 6
 
-Our experiment provides robust evidence that ecological response to restoration of in-stream habitat heterogeneity is limited in the presence of catchment-scale stressors such as urban stormwater runoff. The experimental design incorporating multiple control and reference sites, with monitoring extending \>5 y after restoration, provides strong, general inference lacking in many previous stream restoration assessments [@bernhardt_etal_2005; @rubin_etal_2017]. Our use of multi-taxon modelling to assess change allows interpretation of community assemblage responses in terms of responses of individual taxa, placing the responses in the context of ecological theory of community assembly and 'the field of dreams' hypothesis [@palmer_etal_1997]. A value of such experiments is that the generality of the results, if replicated sufficiently across physiographic contexts and restoration approaches, reduces the need to monitor outcomes of the many restoration projects that are required to redress past degradation. Here we use inferences from the models to discuss the three questions we posed in the introduction: do riffles increase habitat heterogeneity? does increased habitat heterogeneity alter assemblage composition? and does the answer to either question depend on catchment-scale urban impacts? Our findings strengthen guidance for setting priorities for managing urban streams and setting expectations of communities who want to see them restored.
-
-### Constructed increased habitat heterogeneity
-
-The experimental riffles we constructed introduced a new habitat to simplified channels, thus increasing heterogeneity (i.e. the diversity of qualitatively different habitat structures) at the reach scale. The cobbles of the riffles introduced a substrate type largely absent from the reaches before riffle construction, and we demonstrated increased variability in flow, depth, and substrate size following riffle construction. While the cobble surfaces themselves were not highly complex, and thus did not directly provide diverse microenvironments through their surface complexity, the alteration of reach slope, hydraulic and addition of new ssurface types increased diversity of microenvironments in the study reaches.
-
-Over time, however, the riffles in more urban reaches had a greater tendency to infill with sand, as evidenced by the smaller effect on median $\Phi$ in sites with higher EI (Fig 2L). This suggests catchment-scale alterations to flow and sediment regimes affect the nature of the physical changes achieved by the riffles.
-
-### Assemblage composition changes were small, but largest in least urban sites
-
-The assemblages of all sites across the gradient of EI in our study were dominated by cosmopolitan and invasive species, although cosmopolitan infaunal taxa associated with fine sediments, such as tubificid oligochaetes and *Chironomus* [@martin_etal_2008; @berg1995], were less abundant in sites with lower EI. Such taxa became even less abundant in those sites after riffle construction (Table 1, @fig-coeff_plot_alt). We identified three invasive species that were abundant in the dataset: the snails *Potamopyrgus antipodarum* [@ponder_1988] and *Physa acuta* [@zukowski_walker_2009]*,* and the Californian black worm *Lumbriculus variegatus* [@pinder_2010]. It is likely that other abundant oligochaete and chironomid taxa that we grouped because of taxonomic uncertainty included invasive species [@failla_etal_2015; @brinkhurst_gelder_1991]. *P. acuta* and *L. variegatus* were more abundant in higher EI streams, while *P. antipodarum* was abundant across the urban gradient. Only *L. variegatus* declined in abundance after riffle construction, and then only in less urban reaches.
-
-The macroinvertebrate assemblages of all study reaches were thus typical of degraded urban streams, even those in catchments with as little as 4% EI. The dominance of cosmopolitan and invasive species suggest these reaches were subject to the regime of chemical and physical disturbances that arise from catchment urban stormwater runoff [@walsh_etal_2005]. Our study design did not include reference sites, often suggested as an important element of robust design [@rubin_etal_2017]. However, other studies of similar streams in the study region confirm that assemblage composition in these sites differed strongly from streams of forested catchments, where diverse assemblages of sensitive macroinvertebrate taxa are the norm [@walsh_2004; @white_walsh_2020]. Importantly, some forested catchments of the region have similar urban density to the least urban catchments of this study, flowing to streams that retain diverse in-stream assemblages. For instance, Sassafras Creek has 8% TI and \<1% EI [@walsh_etal_2012] compared to 10% TI and 4% EI for the two least urban streams in this study, @fig-experiment_map, Table S1-1\], and its macroinvertebrate assemblages are dominated by sensitive taxa [@walsh_2004]. Such urban streams that lack conventional urban stormwater drainage and retain diverse assemblages arguably present an achievable target for restoration. However, the assemblages of the study sites remained little changed after riffle construction, remaining typical of degraded urban streams distinct from the assemblages of less impacted urban streams such as Sassafras Creek.
-
-This conclusion of little change in assemblage composition is supported by the lack of change in the biotic index SIGNAL (@fig-assemb_diffs_dists H), an increase in which would indicate the loss of tolerant taxa or colonization by sensitive taxa. Similarly, diversity as measured by Shannon's H' and Pielou's evenness did not change after riffle construction (@fig-assemb_diffs_dists H). @sundermann_etal_2011 concluded that lack of colonizers can be a limitation to post-restoration recovery. We collected one or a few individuals of several sensitive taxa that could colonize riffles (Plecoptera, the hydrobiosid *Taschorema* and Leptoceridae) in our study sites post-riffle construction, as well as a record of Hydropsychidae in a high EI stream where it did not persist. Thus, like @white_walsh_2020, who conducted a colonization experiment in some of the same streams, we conclude that the rarity of sensitive taxa in the riffles is less likely a result of a lack of colonizers than of a lack of persistence under the physical and chemical disturbances of urban stormwater flows. Therefore, our study provides some support for the 'field of dreams' hypothesis [@palmer_etal_1997], which states that, if instream habitat heterogeneity is increased in a landscape with sources of colonizers, the habitat will be colonized. Colonizers were detected on the experimental riffles, but did not persist. Realization of the field of dreams thus requires habitat quality, degraded in this case on catchment urban stormwater drainage, as well as habitat heterogeneity.
-
-However, some changes in assemblage composition were evident, and these differed between the most urban and least urban reaches of our study. In sites with high EI, taxon richness increased by \~5 taxa per sample unit (95% CLs 1 to 12) in the first year, reducing to a more uncertain increase (95% CLs -2 to 9) after 5-6 years (@fig-assemb_diffs_dists A). Most of this increase was explained by increased abundances of dipteran and oligochaete taxa (@fig-assemb_diffs_dists C), but also glossosiphonid leeches, the bivalve *Pisidium*, and ceratopogonid biting midges, none of which were negatively associated with EI (i.e they were all tolerant of urban impacts). These increases may be explained by the increased heterogeneity afforded by fine sediments accumulating among the riffle cobbles that provided new large substrata, however the identities of the taxa that increased in abundance as urban tolerant points to ongoing limitations of urban-stormwater-driven water quality and flow disturbances.
-
-In contrast, in sites with low EI, taxon richness decreased by \~12 (95% CLs 0-20) taxa per sample unit 5-6 years after riffle construction (after a smaller decrease in the first year, @fig-assemb_diffs_dists A). This decrease was mostly explained by a reduction in dipteran and oligochaete taxa (@fig-assemb_diffs_dists C). This decrease in abundance of tolerant, cosmopolitan taxa together with the increased abundance of a single sensitive taxon, Hydropsychidae, in low EI sites suggests a small step toward reference condition in low EI streams. Hydropsychids are net-spinning caddisflies that use rock substrates to build filter-feeding nets. Their increase in abundance in low EI sites was not accompanied by increases in other filter-feeding species: abundances of Simuliids did not change, and *Paratanytarsus/Rheotanytarsus* chironomids reduced in abundance, perhaps suggesting competitive displacement. The complexities of these responses to riffle construction underlying the reduction in taxon richness underline the limitations of richness and diversity metrics as indicators of success [@rubin_etal_2017].
-
-Nevertheless, the reduction in abundances of cosmopolitan species and increased abundance of sensitive species in low EI sites can be interpreted as a small improvement in diversity, and thus a positive effect of the constructed riffles. This small improvement and the absence of improvement in high EI sites is consistent with the conclusion of @miller_etal_2010, who found reduced response in more urban sites. But the small size of the response in our lowest EI sites, with 4% EI, confirms that even a very small degree of catchment stormwater impacts can limit instream community assembly [@walsh_webb_2016; @king_baker_2011]. Larger responses to restoration of instream habitat heterogeneity are only likely to be achieved in streams without urban impacts, or with high-performing urban stormwater control measures that intercept runoff from nearly all upstream impervious surfaces [e.g. @walsh_etal_2022].
-
-### Setting expectations and priorities for urban stream management
-
-While macroinvertebrate assemblage composition as a measure of restoration success might be considered primarily of interest to ecologists as a measure of restoration success [@scoggins_etal_2022], communication of what macroinvertebrate assemblage composition tells us can be a potent tool in informing public desire for stream restoration. Our focus on taxonomic identity in this study, to interpret responses of assemblage metrics, provides a clear picture that the state of streams in urban catchments is a long way from what they could be with alternative catchment practices. It shows that provision of greater habitat heterogeneity in degraded urban streams will primarily provide habitat for cosmopolitan, invasive species that can tolerate the flashy, polluted flows of urban stormwater. It suggests a redirection of priorities in two primary directions. First, in-stream works should be targeted to catchments without larger-scale limitations such as urban or agricultural impacts [@miller_etal_2010]. Second, in urban catchments, management of catchment processes should be a priority to provide water quality and flow regimes to streams that a) reduce the risk of heterogeneous habitat being swamped by stormwater flows [@larson_etal_2001; @white_walsh_2020], and b) can provide habitat quality and flow disturbance frequency that permit sensitive colonising species to persist.
-
-There is growing evidence that effective catchment urban stormwater control can reduce impacts on water quality and flow to levels at which sensitive in-stream biota can be supported. The primary evidence comes from streams that have at least in part been protected from catchment urbanization by informal stormwater drainage [@walsh_2004] or by extensive dispersed stormwater control [@hopkins_etal_2022]. We are not aware of robust studies that have demonstrated restoration of biotic assemblages through catchment stormwater control, but restoration of water quality and hydrology after stormwater retrofit brings hope [@walsh_etal_2022]. However, in existing urban landscapes, the availability of appropriately located land for stormwater control measures and the lack of demand for stormwater harvesting to reduce runoff volumes remain challenging problems in most existing policy settings.
-
-Nevertheless, the appetite for restoring urban stream corridors is likely to continue and grow [@scoggins_etal_2022]. We are not suggesting that projects aiming to provide amenity, recreation, and biodiversity in urban floodplains are without merit. But often such projects are described as urban stream restoration, and include channel reconfiguration as part of works. We hope that our study will help to moderate expectations of the in-stream changes that can be achieved without addressing larger catchment-scale limitations.
-
-## Acknowledgements
-
-This study was funded by the CRC for Freshwater Ecology and Melbourne Water. We thank Graham Rooney and Scott Seymour for arranging funding for the works; Neil Craigie who designed and supervised riffle construction; Sharyn Rossrakesh for conducting the reach surveys; and the team who assisted with field collections and lab processing: Jim Longworth, Elaine Bayes, Jason Sonneman, Andrew Sharpe, Claire Sellens, Sue Witteveen, Melissa Aalbers, Rhys Coleman, John Gooderham, Jessica Miller, Edward Tsyrlin, and Kristy Brooke. During the writing of this paper, CJW was funded by the Melbourne Water Research-Practice Partnership between Melbourne Water and the University of Melbourne.
 
 ## References

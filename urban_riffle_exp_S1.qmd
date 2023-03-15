@@ -4,6 +4,8 @@ author: "Christopher J Walsh, J Angus Webb, Daniel C Gwinn, and Peter F Breen"
 format: docx
 editor: visual
 bibliography: references.bib
+crossref:
+  fig-title: Figure S     # (default is "Figure")
 csl: ecological-applications.csl
 nocite: |
   @kunapo_etal_2020
@@ -81,7 +83,7 @@ box(lwd=2)
 
 library("dplyr")
 survey_data_list <- rio::import_list("data/urban_riffle_exp_survey_data_combined.xlsx")
-list2env(dat_list,globalenv())
+list2env(survey_data_list,globalenv())
 
 #Correct erroneous data points identified from plots
 # Most upstream point in Ferny elevation/water-level too low to be credible
