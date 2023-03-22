@@ -45,7 +45,7 @@ The first part of this document details the specifications and code used to esti
 
 ## 1. Model specification
 
-The models followed the typical BACI design, expanded to include two ‘after’ time periods (A1, in the first year after construction; and A2, 5–6 y after construction) and to account for the potential moderating effects of effective imperviousness I(scaled, log(x + 0.1) % catchment EI). The experimental effects were coded as combinations of 5 binary variables:  B (= 1 before construction), A1, A2, C (control sites) and R (sites in which riffles were constructed).
+The models followed the typical BACI design, expanded to include two 'after' time periods (A1, in the first year after construction; and A2, 5--6 y after construction) and to account for the potential moderating effects of effective imperviousness I(scaled, log(x + 0.1) % catchment EI). The experimental effects were coded as combinations of 5 binary variables: B (= 1 before construction), A1, A2, C (control sites) and R (sites in which riffles were constructed).
 
 We estimated the posterior distributions of parameters in the multi-taxon model of taxon abundances and the models of environmental variables (depth, velocity and $\Phi$, particle size) in the sample units using the Markov chain Monte-Carlo (MCMC) sampler of Stan [@carpenter_etal_2017], calling Stan from R using the library `cmdstanr` [@gabry_cesnovar_2022].
 
@@ -146,10 +146,10 @@ model {
    a_t_raw ~ std_normal();  
    a_st_raw ~ std_normal();
    to_vector(gamma) ~ normal(0,5);
-   sigma_s ~ normal(0,2);  
-   sigma_t ~ normal(0,2); 
-   sigma_st ~ normal(0,2);
-   sigma ~ normal(0,2);
+   sigma_s ~ normal(0,3);  
+   sigma_t ~ normal(0,3); 
+   sigma_st ~ normal(0,3);
+   sigma ~ normal(0,3);
 
  // Likelihood
   for (i in 1 : n_obs) {
@@ -383,7 +383,7 @@ The following code extracts the posterior distribution of mean abundance for eac
 
 4.  (control minus impact before \[B\]) - (control minus impact 5-6 y after \[A2\]) for high *I*
 
-Note that, in the code, the fixed effects are assembled using R's model.matrix function, such that B = ba0, A1 = ba1, A2 = ba2, R = ci.  The code saves a table `env_diff_summs.csv` used to plot Figure 2 in the paper.
+Note that, in the code, the fixed effects are assembled using R's model.matrix function, such that B = ba0, A1 = ba1, A2 = ba2, R = ci. The code saves a table `env_diff_summs.csv` used to plot Figure 2 in the paper.
 
 ```{r}
 #| label: env_diff_summs
@@ -570,7 +570,7 @@ model {
 //  }
 //  }
 //  }
- 
+
 ```
 
 #### Assembling data and model sampling: R code
@@ -1052,7 +1052,7 @@ write.csv(tops,"small_data/top10taxa.csv",row.names = FALSE)
 
 ## 2. Assessment of model fit
 
-We assessed the predictive performance of our model by comparing model predictions for each sample (combining predictions for the sample_units taken at each site on each occasion) using the full model, including the random effects $\theta_1$, $\theta_2$, and $\theta_3$.  For the multi-taxon model, we assessed accuracy of predictions of count and of detection/non-detection of each taxon, and of aggregate estimates of taxon richness in each sample.  We assessed prediction at the level of sample rather than at the sample-unit level because the model allows prediction at that level, and our primary interest is to predict mean response to riffle construction at the site level.
+We assessed the predictive performance of our model by comparing model predictions for each sample (combining predictions for the sample_units taken at each site on each occasion) using the full model, including the random effects $\theta_1$, $\theta_2$, and $\theta_3$. For the multi-taxon model, we assessed accuracy of predictions of count and of detection/non-detection of each taxon, and of aggregate estimates of taxon richness in each sample. We assessed prediction at the level of sample rather than at the sample-unit level because the model allows prediction at that level, and our primary interest is to predict mean response to riffle construction at the site level.
 
 ### Methods
 
@@ -1062,8 +1062,7 @@ We assessed model fit for environmental variables and taxon counts in three ways
 
 We also assessed accuracy of model predictions for occurrence of each taxon (i.e. detection/non-detection) by calculating detection fidelity, the proportion of posterior predictions which correctly predicted presence or absence.
 
-Finally, we assessed the accuracy of the multi-taxon model's estimates of assemblage level metrics, by calculating the *R^2^* of the linear regression between predicted and observed number of taxa in each sample, both total number of taxa, and the number of Ephemeropotera, Plecoptera and Trichoptera taxa (three groups of sensitive species commonly used as a stream health metric). The posterior prediction distribution of number of taxa in each sample was calculated by summing the predictions of presence (i.e. non-zero counts) of taxa. 
-
+Finally, we assessed the accuracy of the multi-taxon model's estimates of assemblage level metrics, by calculating the *R^2^* of the linear regression between predicted and observed number of taxa in each sample, both total number of taxa, and the number of Ephemeropotera, Plecoptera and Trichoptera taxa (three groups of sensitive species commonly used as a stream health metric). The posterior prediction distribution of number of taxa in each sample was calculated by summing the predictions of presence (i.e. non-zero counts) of taxa.
 
 ```{r}
 #| label: tbl-nbinom_me_fit_by_taxon
@@ -1139,7 +1138,6 @@ ft <- with(oe_stats,
   ft <- flextable::width(ft, width = dim(ft)$widths*6.5 /(flextable_dim(ft)$widths))
 ft
 ```
-  
 
 ```{r}
 #| label: fig-richness_op
@@ -1213,13 +1211,12 @@ title(main = paste0("  R-sq = ", r21),
 
 ### Results
 
-All environmental variables were well predicted by their respective models: R^2^ >0.86 for observed: predicted for all models, and observed values falling within 95% of the posterior predicted distribution for >89% of samples (Table 1).
+All environmental variables were well predicted by their respective models: R^2^ \>0.86 for observed: predicted for all models, and observed values falling within 95% of the posterior predicted distribution for \>89% of samples (Table 1).
 
-The counts of all taxa were well predicted by the model. Counts in all samples fell within 95% of the posterior predicted distribution (prediction fidelity = 1, Table 2) for all but 3 taxa, for which one sample fell outside (prediction fidelity = 0.98). Mean *R^2^* of predicted vs observed relationships taxon counts was `r round(mean(oe_stats$r.squ),2)`, with *R^2^* for all but 3 species >0.7.  The model also predicted taxon occurrence well, with a mean detection accuracy of `r round(mean(oe_stats$det_ppn),2)` (minimum `r round(min(oe_stats$det_ppn),2)`, with all but `r sum(oe_stats$det_ppn < 0.8)` taxa >0.8).
+The counts of all taxa were well predicted by the model. Counts in all samples fell within 95% of the posterior predicted distribution (prediction fidelity = 1, Table 2) for all but 3 taxa, for which one sample fell outside (prediction fidelity = 0.98). Mean *R^2^* of predicted vs observed relationships taxon counts was `r round(mean(oe_stats$r.squ),2)`, with *R^2^* for all but 3 species \>0.7. The model also predicted taxon occurrence well, with a mean detection accuracy of `r round(mean(oe_stats$det_ppn),2)` (minimum `r round(min(oe_stats$det_ppn),2)`, with all but `r sum(oe_stats$det_ppn < 0.8)` taxa \>0.8).
 
 The predictions of occurrence summed to predictions of taxon richness that matched the observed data well (@fig-richness_op). *R^2^* for the relationship between observed total richness and mean predicted total richness was 0.8, with observed richness for `r round(100*(1 -outl/53))`% of samples falling within 95% of the posterior predicted distribution (@fig-richness_op A). The relationship for predicted EPT richness was stronger (@fig-richness_op B).
 
 The accurate prediction of the data by all models provide confidence in inferences of the experimental effects of interest.
-
 
 ## References
