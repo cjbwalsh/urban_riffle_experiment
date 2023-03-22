@@ -27,7 +27,7 @@ Data and code are provided for peer review via the following link: https://osf.i
 ### Key words
 
 Before-after-control-impact, community assembly, field of dreams hypothesis, hierarchical multi-species model, measurement error, river restoration, subsampling error, stream macroinvertebrates, urban stormwater runoff
-  
+
 ```{r}
 #| echo: false
 #| message: false
@@ -203,13 +203,13 @@ We specified the likelihood of the macroinvertebrate model as a hierarchical bin
 
 We estimated model parameters in a Bayesian framework using Stan [@carpenter_etal_2017], sampling the posterior distributions of all parameters using four chains with sufficient iterations to ensure convergence and minimum effective samples size \>400. We specified weakly informative prior distributions for all parameters. See Appendix S3 for full details.
 
-We evaluated the fit of the models of environmental variables by deriving *R^2^* for a least-squares regression of the predicted and observed mean values in each sample, and prediction fidelity, the proportion of observed values that fell within 95% of the posterior predicted distribution for each sample. We used the same measures to assess the fit of the multi-taxon model, using the mean log(x+1)-transformed observed and predicted counts of each taxon in sub-sampled sample units. We also assessed accuracy of model predictions for  detection of each taxon (i.e. detection/non-detection) by calculating detection fidelity, the proportion of posterior predictions which correctly predicted presence or absence. Finally, we assessed the accuracy of the multi-taxon model's estimates of assemblage level metrics, by calculating *R^2^* and prediction fidelity for observed and predicted total number of taxa, and the number of Ephemeropotera, Plecoptera and Trichoptera taxa (three groups of sensitive species commonly used as a stream health metric). See Appendix S3 for more details.
+We evaluated the fit of the models of environmental variables by deriving *R^2^* for a least-squares regression of the predicted and observed mean values in each sample, and prediction fidelity, the proportion of observed values that fell within 95% of the posterior predicted distribution for each sample. We used the same measures to assess the fit of the multi-taxon model, using the mean log(x+1)-transformed observed and predicted counts of each taxon in sub-sampled sample units. We also assessed accuracy of model predictions for detection of each taxon (i.e. detection/non-detection) by calculating detection fidelity, the proportion of posterior predictions which correctly predicted presence or absence. Finally, we assessed the accuracy of the multi-taxon model's estimates of assemblage level metrics, by calculating *R^2^* and prediction fidelity for observed and predicted total number of taxa, and the number of Ephemeropotera, Plecoptera and Trichoptera taxa (three groups of sensitive species commonly used as a stream health metric). See Appendix S3 for more details.
 
 ### Model interpretation
 
 To interpret interactions between the effects of riffle construction and degree of catchment urbanization on environmental variables and the biotic assemblage, we compared predictions under 12 scenarios comprising four site types (control and impact sites with high and low effective imperviousness (4% and 32% EI, the maximum and mimimum EI values in the study sites, respectively), in the three states of the *BA* effect (*B*, before; *A1*, in the first year after riffle construction; and *A2*, 5-6 years after).
 
-For taxon abundances, we focused on taxa for which the *BA:CI* or *BA:CI:I* interactions were non-zero with at least 90% confidence to identify dominant taxa associated with assemblage-level differences. We also derived predictions of responses of assemblage-level metrics from the model for each of the 12 scenarios. Responses of diversity measures such as richness are of intrinsic community ecological interest, but they and biotic metrics focusing on taxa of differing sensitivity to human disturbance are used by stream managers as measures of ecological condition and targets for responses to management actions [e.g. @vic_gov_2018]. We used predicted abundances and  detections for each scenario to calculate posterior distributions of:
+For taxon abundances, we focused on taxa for which the *BA:CI* or *BA:CI:I* interactions were non-zero with at least 90% confidence to identify dominant taxa associated with assemblage-level differences. We also derived predictions of responses of assemblage-level metrics from the model for each of the 12 scenarios. Responses of diversity measures such as richness are of intrinsic community ecological interest, but they and biotic metrics focusing on taxa of differing sensitivity to human disturbance are used by stream managers as measures of ecological condition and targets for responses to management actions [e.g. @vic_gov_2018]. We used predicted abundances and detections for each scenario to calculate posterior distributions of:
 
 -   Total macroinvertebrate abundance, of a) EPT taxa [insect orders dominated by taxa sensitive to human disturbance, @resh_jackson_1993], and b) of Diptera and Oligochaeta [QDLO, groups dominated by taxa tolerant to human disturbance; @gooderham_tsyrlin_2002; @martin_etal_2008];
 
@@ -219,13 +219,13 @@ For taxon abundances, we focused on taxa for which the *BA:CI* or *BA:CI:I* inte
 
 -   SIGNAL, a biotic index which averages grades of sensitivity to human disturbance (between 1 and 10) of families present in a sample [@chessman_1995].
 
-Abundance measures were calculated by adding predicted mean abundances per sample unit of the relevant taxa. Richness measures were derived by first calculating predicted probability of  detection in a sample,
+Abundance measures were calculated by adding predicted mean abundances per sample unit of the relevant taxa. Richness measures were derived by first calculating predicted probability of detection in a sample,
 
 $$
 p\_s = 1 - \Pi(1 - p\_{su}_i)
 $$ {#eq-predict_pa}
 
-where $p\_su_i$ is the probability of  detection in the *i*th sample unit comprising the sample, calculated as 1 - negative-binomial probabliity of zero, given predicted $\mu$ and $\phi$. Number of taxa in each sample was calculated as the sum of probabilities of  detection (see Appendix S3 for more detail).
+where $p\_su_i$ is the probability of detection in the *i*th sample unit comprising the sample, calculated as 1 - negative-binomial probabliity of zero, given predicted $\mu$ and $\phi$. Number of taxa in each sample was calculated as the sum of probabilities of detection (see Appendix S3 for more detail).
 
 To assess the probability of an effect of riffle construction on environmental variables, assemblage metrics and taxon abundances, we calculated the following four differences between the posterior distributions of metrics and abundances given the 12 scenarios:
 
@@ -243,7 +243,7 @@ We inferred a likely effect of riffle construction on each measure if \>90% of t
 
 ### Model fit
 
-All models converged and all had adequate fit to the data. All environmental variables were well predicted by their respective models: *R^2^* \>0.86 for observed:predicted for all models, and observed values falling within 95% of the posterior predicted distribution for \>89% of samples. The counts of all taxa were well predicted by the model. Counts in all samples fell within 95% of the posterior predicted distribution (prediction fidelity = 1, Table 2) for all but 3 taxa, for which one sample fell outside (prediction fidelity = 0.98). Mean *R^2^* of predicted vs observed relationships taxon counts was 0.9, with *R^2^* for all but 3 species \>0.7. The model also predicted taxon  detection well, with a mean detection accuracy of 0.91 (minimum 0.64, with all but 10 taxa \>0.8). The predictions of  detection summed to predictions of taxon richness that also matched the observed data well. See Appendix S3 for more detail. The good fit of the models to the data provides confidence in inferences of the *BA*, *CI* and *I* effects, which are the focus of this study.
+All models converged and all had adequate fit to the data. All environmental variables were well predicted by their respective models: *R^2^* \>0.86 for observed:predicted for all models, and observed values falling within 95% of the posterior predicted distribution for \>89% of samples. The counts of all taxa were well predicted by the model. Counts in all samples fell within 95% of the posterior predicted distribution (prediction fidelity = 1, Table 2) for all but 3 taxa, for which one sample fell outside (prediction fidelity = 0.98). Mean *R^2^* of predicted vs observed relationships taxon counts was 0.9, with *R^2^* for all but 3 species \>0.7. The model also predicted taxon detection well, with a mean detection accuracy of 0.91 (minimum 0.64, with all but 10 taxa \>0.8). The predictions of detection summed to predictions of taxon richness that also matched the observed data well. See Appendix S3 for more detail. The good fit of the models to the data provides confidence in inferences of the *BA*, *CI* and *I* effects, which are the focus of this study.
 
 ### Responses of environmental variables
 
@@ -299,7 +299,7 @@ The common trend of reduced abundance of tolerant taxa following riffle construc
 
 EPT richness did not change following riffle construction (@fig-assemb_diffs_dists b; @fig-assemb_trends b), although the increased abundance of Hydropsychidae (@fig-cf_taxon_abunds a, Table 1) in sites with low EI drove an increase in EPT abundance in those sites (@fig-assemb_diffs_dists f; @fig-assemb_trends f).
 
-Overall, the changes in abundance and richness of tolerant taxa following riffle construction did not alter the dominance of the macroinvertebrate assemblages by tolerant, cosmopolitan and invasive species (Table 1), with no change in the diversity measures Shannon's H' (@fig-assemb_diffs_dists d) or Pielou's evenness (not illustrated). We found no evidence of colonization by less tolerant species, other than a few isolated  detections (see Discussion). As a result the low-moderate SIGNAL scores for these sites were unchanged over the study period @fig-assemb_diffs_dists h; @fig-assemb_trends d).
+Overall, the changes in abundance and richness of tolerant taxa following riffle construction did not alter the dominance of the macroinvertebrate assemblages by tolerant, cosmopolitan and invasive species (Table 1), with no change in the diversity measures Shannon's H' (@fig-assemb_diffs_dists d) or Pielou's evenness (not illustrated). We found no evidence of colonization by less tolerant species, other than a few isolated detections (see Discussion). As a result the low-moderate SIGNAL scores for these sites were unchanged over the study period @fig-assemb_diffs_dists h; @fig-assemb_trends d).
 
 ## Discussion
 
@@ -367,10 +367,9 @@ Writing - review & editing: Christopher J. Walsh, J. Angus Webb, Daniel C. Gwinn
 
 The authors have no conflict of interest to declare.
 
-
 ## Table
 
-Table 1: Predicted mean abundance (N per 0.04-m^2^ sample unit) of the 18 taxa that were among the 10 most abundant taxa in at least one scenario, and the percentage of the total count of all taxa in each scenario that the 18 taxa constitute, under 12 scenarios.  
+Table 1: Predicted mean abundance (N per 0.04-m^2^ sample unit) of the 18 taxa that were among the 10 most abundant taxa in at least one scenario, and the percentage of the total count of all taxa in each scenario that the 18 taxa constitute, under 12 scenarios.
 
 ```{r}
 #| echo: false
@@ -391,24 +390,22 @@ ft
 ```
 
 ^1^See Appendix S2 for explanation of Tubificinae taxa
-  
-Abbreviations: EI, Effective imperviousness; B, Before; A1, in the first year after; A2, 5-6 years after riffle construction. 
 
+Abbreviations: EI, Effective imperviousness; B, Before; A1, in the first year after; A2, 5-6 years after riffle construction.
 
 ## Figure captions
 
 Figure 1. Map of experimental sites (6 sites in which riffles were constructed and 3 control sites) and their catchments. The extent of impervious coverage (in 2004, gray basemap), piped sections of streams (dark grey stream lines), and the percentage effective imperviousness of each catchment indicate the range of urban impacts among the sites.
 
-Figure 2. Posterior distributions of the differences in abundance for the four contrasts illustrating the effect of riffle construction (a, c, e, g, i, k) and trends from before to after riffle construction (b, d, f, h, j, l) in 6 environmental variables. a, b. Mean water depth, c, d. Variance of water depth within each 0.04 m^2^ sample unit, e, f, Mean velocity, g, h. Variance of velocity, i, j. Minimum $\Phi$ [-log~2~(smallest diameter in mm) of diameter of sediment particles in the sample unit]. k, l. Median $\Phi$. For the distribution plots, 95th, 90th, and 75th percentiles are indicated by increasingly thick bars. Coefficients with >90% less than zero are red, and >90% greater than zero blue. The four lines in each trend plot connect mean (±95% confidence intervals) metric values  before (B) and at two times after (A1, in the first year, and A2, 5-6 years later) construction of the experimental riffles for control sites and impact (i.e. site in which riffles were placed) with 4% and 32% effective imperviousness (EI).
+Figure 2. Posterior distributions of the differences in abundance for the four contrasts illustrating the effect of riffle construction (a, c, e, g, i, k) and trends from before to after riffle construction (b, d, f, h, j, l) in 6 environmental variables. a, b. Mean water depth, c, d. Variance of water depth within each 0.04 m^2^ sample unit, e, f, Mean velocity, g, h. Variance of velocity, i, j. Minimum $\Phi$ \[-log~2~(smallest diameter in mm) of diameter of sediment particles in the sample unit\]. k, l. Median $\Phi$. For the distribution plots, 95th, 90th, and 75th percentiles are indicated by increasingly thick bars. Coefficients with \>90% less than zero are red, and \>90% greater than zero blue. The four lines in each trend plot connect mean (±95% confidence intervals) metric values before (B) and at two times after (A1, in the first year, and A2, 5-6 years later) construction of the experimental riffles for control sites and impact (i.e. site in which riffles were placed) with 4% and 32% effective imperviousness (EI).
 
-Figure 3. Posterior distributions of the effect (b_I) of imperviousness (EI), and of differences in abundance for the four contrasts illustrating the effect of riffle construction. Each contrast estimates the change in difference between control and reference sites from before riffle construction to one of two periods after construction. The four contrasts are: ΔA1 4%, before to the first year after for sites with 4% EI; ΔA2 4%, before to the 5th/6th year after for sites with 4% EI; ΔA1 32%, before to the first year after for sites with 32% EI; ΔA2 32%, before to the 5th/6th year after for sites with 32% EI. For each contrast, a positive trend indicates that the control and reference sites became more different, and a negative trend indicates they became more similar. For each distribution, 95th, 90th, and 75th percentiles are indicated by increasingly thick bars. Coefficients with >90% of the probability distribution being less than zero are red, and >90% greater than zero blue. Taxa are ordered by mean of b_I. Only the 41 taxa with at least one of the five distributions greater than or less than zero with >90% confidence are shown. Taxonomic affiliations are indicated parenthetically: `r ht_string`.
+Figure 3. Posterior distributions of the effect (b_I) of imperviousness (EI), and of differences in abundance for the four contrasts illustrating the effect of riffle construction. Each contrast estimates the change in difference between control and reference sites from before riffle construction to one of two periods after construction. The four contrasts are: ΔA1 4%, before to the first year after for sites with 4% EI; ΔA2 4%, before to the 5th/6th year after for sites with 4% EI; ΔA1 32%, before to the first year after for sites with 32% EI; ΔA2 32%, before to the 5th/6th year after for sites with 32% EI. For each contrast, a positive trend indicates that the control and reference sites became more different, and a negative trend indicates they became more similar. For each distribution, 95th, 90th, and 75th percentiles are indicated by increasingly thick bars. Coefficients with \>90% of the probability distribution being less than zero are red, and \>90% greater than zero blue. Taxa are ordered by mean of b_I. Only the 41 taxa with at least one of the five distributions greater than or less than zero with \>90% confidence are shown. Taxonomic affiliations are indicated parenthetically: `r ht_string`.
 
-Figure 4. Trends in abundance of 8 taxa as examples of the main trend patterns observed in taxa for which an effect of riffle was inferred with >90% confidence. The four lines in each plot connect mean (±95% confidence intervals) metric values  before (B) and at two times after (A1, in the first year, and A2, 5-6 years later) construction of the experimental riffles for control sites and impact (i.e., sites in which riffles were placed) with 4% and 32% effective imperviousness (EI).
+Figure 4. Trends in abundance of 8 taxa as examples of the main trend patterns observed in taxa for which an effect of riffle was inferred with \>90% confidence. The four lines in each plot connect mean (±95% confidence intervals) metric values before (B) and at two times after (A1, in the first year, and A2, 5-6 years later) construction of the experimental riffles for control sites and impact (i.e., sites in which riffles were placed) with 4% and 32% effective imperviousness (EI).
 
 Figure 5. Posterior distributions of the differences in abundance for the four contrasts illustrating the effect of riffle construction for seven assemblage metrics. A. Total richness, B. Ephemeroptera, Plecoptera and Trichoptera (EPT) richness C. Dipteran and Oligochaete (QDLO) richness, D. Shannon's H', E. total abundance, F. EPT abundance G. QDLO abundance, H. SIGNAL score. Contrasts and other conventions are as in Figure 2.
 
-Figure 6. Trends in assemblage metrics (A. total richness, B. Ephemeroptera, Plecoptera and Trichoptera [EPT] richness C. Dipteran and Oligochaete [QDLO] richness D. SIGNAL score, E. total abundance, F. EPT abundance, G. QDLO abundance) in a sample of 4 sample units) before and at two times after construction of the experimental riffles.  The four lines in each plot connect mean (±95% confidence intervals) metric values over the three times for control sites and impact (i.e. site in which riffles were placed) with 4% and 32% effective imperviousness (EI).  
-
+Figure 6. Trends in assemblage metrics (A. total richness, B. Ephemeroptera, Plecoptera and Trichoptera \[EPT\] richness C. Dipteran and Oligochaete \[QDLO\] richness D. SIGNAL score, E. total abundance, F. EPT abundance, G. QDLO abundance) in a sample of 4 sample units) before and at two times after construction of the experimental riffles. The four lines in each plot connect mean (±95% confidence intervals) metric values over the three times for control sites and impact (i.e. site in which riffles were placed) with 4% and 32% effective imperviousness (EI).
 
 ```{r}
 #| label: fig-experiment_map
@@ -760,6 +757,7 @@ title(xlab = "Occasion", line =2, cex = 1.25)
 par(mar = c(4,4,1,1))
 # dev.off()
 ```
+
 Figure 4
 
 ```{r}
@@ -883,6 +881,5 @@ legend("center", pch = 16, col = cols,
 ```
 
 Figure 6
-
 
 ## References
