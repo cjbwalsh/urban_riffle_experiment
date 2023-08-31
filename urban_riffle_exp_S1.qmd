@@ -8,7 +8,7 @@ crossref:
   fig-title: Figure S     # (default is "Figure")
 csl: ecological-applications.csl
 nocite: |
-  @kunapo_etal_2020
+  @walsh_2023
 ---
 
 ```{r}
@@ -276,7 +276,7 @@ site_stats <- rbind(site_stats,
 ```{r}
 #| label: tbl-site_details
 #| echo: false
-#| tbl-cap: "Study site locations and attributes. The site code, effective and total imperviousness, elevation, and catchment area were derived from Kunapo et al. 2020.  Reach slope and channel width were measured in surveys of the reach of the sampled reach before riffle construction."
+#| tbl-cap: "Study site locations and attributes. The site code, effective and total imperviousness, elevation, and catchment area were derived from Walsh (2023).  Reach slope and channel width were measured in surveys of the reach of the sampled reach before riffle construction."
 
 dat_file <- "data/urban_riffle_experiment_data_for_model.xlsx"
 sites <- data.frame(readxl::read_excel(dat_file, sheet = "sites"), 

@@ -841,7 +841,7 @@ WriteXLS::WriteXLS(diff_summs, "small_data/diff_summs.xlsx")
 # load(paste0(model_fit_dir,"fit_riffle_baci_draws.rda"))
 # load taxon abundance predictions for 60 counter-factual scenarios (from above) if necessary
 load(paste0(model_fit_dir,"fit_riffle_baci_predy_cf_draws.rda"))
-
+mod_draws <- get(load(paste0(model_fit_dir,"fit_riffle_baci_draws.rda")))
 phi_draws <- mod_draws[,substr(names(mod_draws),1,3) == "phi"]
 pa_cf_mat <- p_cf_mat <- n_cf_mat <- list()
 
@@ -887,6 +887,9 @@ H_mat[i,] <- diversity(sapply(relab_cf_mat,function(x, n) x[n,],i))
 
 # Pielou's Evenness
 evenness_cf_mat <- H_mat/log(tot_rich_cf_mat)
+
+# Convert Shannon's entropy to diversity (according to Jost 2006)
+H_mat <- exp(H_mat)
 
 # Reduce set to family-presence absence for SIGNAL calculation
 biotic_indices<- 

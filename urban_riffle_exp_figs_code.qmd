@@ -1,0 +1,611 @@
+---
+title: "Constructed rock riffles increase habitat heterogeneity but not biodiversity in streams constrained by urban impacts: Code for plotting figures"
+output: html
+---
+
+
+```{r}
+#| label: setup
+#| echo: true
+#| message: false
+#| error: false
+#| include: false
+
+source("misc_functions.R") # for ct function
+## Packages required for code to run
+requiredPackages <- c("osfr","dplyr","readxl","rio","flextable","ftExtra","rgdal",
+                      "sf","prettymapr","terra","RColorBrewer","scales","glue")
+lapply(requiredPackages, require, character.only = TRUE, quietly = TRUE)
+
+## Check if there is a 'data' directory. If not make one
+if(!"data" %in% dir()){dir.create("data")}
+## Check for large data files. If absent download them 
+# ## from the OSF repository to the data directory
+big_files <- c("ia_5m_raster.tif","urban_riffle_exp_survey_data_combined.xlsx",
+               "urban_riffle_experiment_data_for_model.xlsx",
+               "urban_riffle_experiment_map.gpkg")
+missing <- big_files[!big_files %in% dir("data")]
+if(length(missing) > 0){
+ dl_files <- osf_retrieve_node("cms84") %>% osf_ls_files()
+ osf_download(dl_files, path = "data", conflicts = "skip")
+}
+
+# Load observed data as in S3
+dat_list <- rio::import_list("data/urban_riffle_experiment_data_for_model.xlsx")
+list2env(dat_list,globalenv())
+sites <- sf::st_as_sf(sites, coords = c("mgae","mgan"), crs = 28355)
+
+samples$seg <- substr(samples$old_samplecode,nchar(samples$old_samplecode)-1,
+                      nchar(samples$old_samplecode)-1)
+# The dataset contains samples from the segments upstream and downstream of the 
+# riffle (putative or real) in each site for trip 1-4 (out of 6).  Given the 
+# small effects in the 'riffle' segments (M), theu U and L segments were not 
+# included in the analysis.
+samples <- samples[samples$seg == "M",]
+# Reduce biota table to match reduced samples table
+biota <- biota[biota$smpcode %in% samples$smpcode,]
+# Convert long-form biota table into a wide taxon-by-sample table of counts 
+# in subsamples
+biota_ct <- as.data.frame(ct(biota$smpcode, biota$shortcode, biota$count))
+biota_ct <- biota_ct[match(samples$smpcode,row.names(biota_ct)),]
+# Create a table of the same dimensions as biota_ct, with the subsample proportion
+# for each observation (for coarsepick specimens, subsample ppn = 1)
+ss_ct <- biota_ct
+for(i in 1:nrow(samples)){
+  ss_ct[i,] <- samples$subsample_perc[i]/100
+}
+for(i in which(biota$coarsepick == 1)){
+  ss_ct[row.names(ss_ct) == biota$smpcode[i], biota$shortcode[i]] <- 1
+}
+
+# Assemble random predictors (site_no, sample_no, t)
+sites <- sites[order(sites$exp_treatment,sites$ai),]
+sites$site_no <- 1:nrow(sites)
+samples$site_no <- sites$site_no[match(samples$sitecode,sites$sitecode)]
+samples$sample <- substr(samples$old_samplecode,1,nchar(samples$old_samplecode)-1)
+sample_nos <- data.frame(sample = unique(samples$sample))
+sample_nos$sample_no <- 1:nrow(sample_nos)
+samples$sample_no <- sample_nos$sample_no[match(samples$sample, sample_nos$sample)]
+samples$t <- as.numeric(substr(samples$old_samplecode, 1,1))
+
+# Assemble fixed predictors (a1,a2, ci, ba1ci, ba2ci, i, ba1cii, ba2cii, spring) into a matrix, u
+samples$ba <- as.numeric(as.numeric(substr(samples$old_samplecode,1,1)) %in% c(3,4)) 
+samples$ba[as.numeric(as.numeric(substr(samples$old_samplecode,1,1))) %in% c(5,6)] <- 2
+samples$ba <- factor(samples$ba)
+# a1 and a2 are the two after periods treated as categories with b as a reference
+samples$ci <- as.numeric(sites$exp_treatment[match(samples$sitecode,sites$sitecode)] == "riffle") 
+# 0 = control, 1 = riffle
+samples$ai <- sites$ai[match(samples$sitecode, sites$sitecode)]
+i_scaled <- scale(log10(samples$ai*100 + 0.1))
+samples$i <- as.vector(i_scaled)
+samples$spring <- as.integer(substr(samples$old_samplecode,1,1) %in% c(1,3,5))
+u <- model.matrix(~ ba + ci + ba:ci + i + ba:ci:i + spring, data = samples)
+
+# Data list for Stan
+sdata <- list(n_obs = nrow(biota_ct),
+              n_taxa = ncol(biota_ct),
+              n_site = nrow(sites),
+              n_sample = nrow(sample_nos),
+              n_pred = ncol(u),
+              n_t = max(samples$t),
+              site_no = samples$site_no,
+              samp_no = samples$sample_no,
+              t = samples$t,
+              u = u,
+              c = as.matrix(biota_ct),
+              s = as.matrix(ss_ct)
+)
+
+# load object oe_stats from urban_riffle_exp_S3.qmd, chunk calc_abundance_fits
+oe_stats <- read.csv("small_data/riffle_baci_oe_stats.csv")
+# load object pa_stats from urban_riffle_exp_S3.qmd, chunk fig-nbinom_pa_stats
+pa_stats <- read.csv("small_data/riffle_baci_pa_stats.csv")
+```
+
+```{r}
+#| echo: true
+#| warning: false
+#| message: false
+
+# Load summary statistics for the fixed parameters (created in predy_summary chunk in `urban_riffle_exp_S3.qmd`)
+param_summs <- rio::import_list("small_data/param_summs.xlsx")
+
+# load summary statistics for the 4 contrasts (created in pred_cf chunk in `urban_riffle_exp_S3.qmd`)
+diff_summs <- rio::import_list("small_data/diff_summs.xlsx")
+
+# Identify those taxa for which a difference resulting from riffle construction can be inferred
+# (with 90% and 95% confidence)
+more_diff_90 <- more_diff_95 <- more_sim_90 <- more_sim_95 <- vector()
+for(i in 1:length(diff_summs)){
+more_diff_90 <- unique(c(more_diff_90,diff_summs[[i]]$shortcode[diff_summs[[i]]$lo90 > 0]))
+more_diff_95 <- unique(c(more_diff_95,diff_summs[[i]]$shortcode[diff_summs[[i]]$lo95 > 0]))
+more_sim_90 <- unique(c(more_sim_90,diff_summs[[i]]$shortcode[diff_summs[[i]]$hi90 < 0]))
+more_sim_95 <- unique(c(more_sim_95,diff_summs[[i]]$shortcode[diff_summs[[i]]$hi95 < 0]))
+}
+
+# Collect taxa of interest (effected by riffles or by EI) 
+taxa_to_plot <- unique(c(more_diff_90,more_sim_90,
+                         param_summs$b_i$shortcode[param_summs$b_i$lo90 > 0],
+                         param_summs$b_i$shortcode[param_summs$b_i$hi90 < 0]))
+# Prepare taxon text for figures
+higher_taxa_in_plot <- higher_taxa[higher_taxa$higher_taxon %in% 
+                                     unique(taxa$higher_taxon[taxa$taxoncode %in% taxa_to_plot]),]
+# R results for inclusion in figure caption:
+ht_string <- paste(paste0(higher_taxa_in_plot$taxon, " (", higher_taxa_in_plot$higher_taxon, ")"), collapse = "; ")
+```
+
+
+```{r}
+#| label: fig-experiment_map
+#| echo: true
+#| fig-width: 5
+#| fig-height: 6.5
+#| warning: false
+#| message: false
+
+tiff("figures/figure_1.tiff", width = 5*600, height = 6.5*600, res = 600, compression = 'lzw')
+streams <- sf::st_read("data/urban_riffle_experiment_map.gpkg", layer = "streams", quiet = TRUE)
+pipes <- sf::st_read("data/urban_riffle_experiment_map.gpkg", layer = "pipes", quiet = TRUE)
+cats <- sf::st_read("data/urban_riffle_experiment_map.gpkg", layer = "cats", quiet = TRUE)
+coast <- sf::st_read("data/urban_riffle_experiment_map.gpkg", layer = "coast", quiet = TRUE)
+victoria <- sf::st_read("data/urban_riffle_experiment_map.gpkg", layer = "victoria", quiet = TRUE)
+australia <- sf::st_read("data/urban_riffle_experiment_map.gpkg", layer = "australia", quiet = TRUE)
+ia <- terra::rast("data/ia_5m_raster.tif")
+#Colour sites by experimental treatment (see: https://colorbrewer2.org/)
+sites$col <- 
+  RColorBrewer::brewer.pal(3,"Dark2")[match(sites$exp_treatment == "riffle",0:1)]
+sites$reach <- substr(sites$sitecode, 1, nchar(sites$sitecode) - 1)
+
+layout(matrix(c(1,2,1,3,1,4,1,5),4,2,byrow = TRUE), 
+       widths = c(10,2.5), heights = c(8,8,4,4))
+par(mar = c(0,0,0,0))
+plot(cats$geom, pch = 21, border = "white")
+terra::plot(ia, col = gray(0.5), legend = FALSE, axes = FALSE, add = TRUE)
+plot(cats$geom, border = sites$col[match(cats$reach,sites$reach)], 
+     col = scales::alpha(sites$col[match(cats$reach,sites$reach)],0.25),
+     lwd = 2, add = TRUE)
+plot(streams$geom, col = "dodgerblue", add = TRUE)
+plot(pipes$geom, col = gray(0.25), add = TRUE)
+# # Function to find optimal point for polygon label. Result saved because
+# # rgeos is being retired in 2023
+# x <- rgeos::polygonsLabel(as_Spatial(cats), doPlot = FALSE)
+# x <- data.frame(sitecode = sites$sitecode[match(cats$site,sites$site)],
+#                 ei_label = 
+#                   paste0(round(100*sites$ai[match(cats$site,sites$site)]),"%"),
+#                 mgae = x[,1], mgan = x[,2])
+# write.csv(x, "small_data/cat_polygon_label_points.csv",row.names = FALSE)
+labels <- read.csv("small_data/cat_polygon_label_points.csv")
+text(labels$mgae, labels$mgan, labels$ei_label, font = 2)
+plot(coast$geom, lwd = 2, add = TRUE)
+plot(sites$geometry, pch = 21, bg = sites$col, add = TRUE) # so that the sites are on top
+rng <- par('usr')
+suppressWarnings(
+prettymapr::addscalebar(pos = "bottomright", label.cex = 1, plotepsg = 28355))
+box(lwd=2)
+rngPoly <- st_sfc(st_polygon(list(rbind(rng[c(1,3)], rng[c(1,4)], rng[c(2,4)], 
+                                 rng[c(2,3)],rng[c(1,3)]))))
+rngPoly <- st_sf(a = 1, geom = rngPoly)
+# Legends
+plot.new()
+legend("center", pch = c(21,21,15), pt.cex = c(1,1,2), 
+       pt.bg = c(RColorBrewer::brewer.pal(3,"Dark2"),NA),
+       col = c("black","black",gray(0.5)),
+       legend = c("Control","Riffle","Impervious"),bty = "n")
+box()
+plot.new()
+legend("center", lty = 1, col = c("dodgerblue",gray(0.25)),
+       legend = c("Stream","Piped stream"),bty = "n")
+box()
+# Location maps
+st_crs(rngPoly) <- 28355
+rngPoly <- rngPoly %>% st_transform(4283)
+par(mai = c(0.028,0.028,0.028,0.028) * 0)
+plot(australia$geom)
+plot(victoria$geom, col = "white", add = TRUE)
+polygon(c(142.9651,146.5656,146.5656,142.9651),c(-39.1122,-39.1122,-36.4374,-36.4374), col = scales::alpha(gray(0.5),0.5))
+plot(rngPoly$geom, col = "black", add = TRUE)
+title(main = "Australia", adj = 0, 
+      font.main = 1, line = -1, cex.main = 1)
+box(lwd = 1)
+bounds <- st_sfc(st_point(c(143.5,-36.5)), st_point(c(146.5,-39.1)),crs=4283)
+plot(bounds, col = "white")
+plot(victoria$geom, add = TRUE)
+rng_vic <- par("usr")
+plot(rngPoly$geom, col = scales::alpha(gray(0.5),0.5), add = TRUE)
+title(main = "Central Victoria ", 
+      adj = 1, font.main = 1, line = -1, cex.main = 1)
+box(lwd = 1)
+dev.off()
+```
+
+Figure 1
+
+```{r}
+#| label: fig-cf_env_vars
+#| echo: true
+#| warning: false
+#| message: false
+#| fig-width: 7
+#| fig-height: 6
+
+tiff("figures/figure_2.tiff", width = 7*600, height = 6*600, res = 600, compression = 'lzw')
+# load cfs, list of 12 data frames (one for each environmental variable), with
+# percentile statistics of posterior distributions for 60 counterfactual scenarios
+# including the 12 plotted here
+cfs <- rio::import_list("small_data/env_var_predy_cf.xlsx")
+# Do not plot max_phi
+cfs <- cfs[names(cfs) != "max_phi"]
+
+# load env_diff_summs, a data.frame with the percentile statistics of posterior
+# distributions of the four BACI contrasts for each of the 12 environmental variables
+env_diff_summs <- read.csv("small_data/env_diff_summs.csv")
+diffs <- c("delta_baci1_hi","delta_baci2_hi","delta_baci1_low","delta_baci2_low")
+nms <- c( bquote(Delta~"A2 4% EI"), bquote(Delta~"A1 4% EI"), 
+          bquote(Delta~"A2 32% EI"),bquote(Delta~"A1 32% EI"))
+ylabs <- c("A2,4%EI","A1,4%EI","A2,32%EI","A1,32%EI")
+ylabs1 = c("Variance of log(depth [m])", "Mean depth (m)","Variance of log(velocity [m/s])", 
+          "Mean velocity (m/s)", "Minimum Phi","Median Phi")
+# cols <- ggsci::pal_jco(palette = c("default"), alpha = 1)(4)
+# spell them out so that they are displayed in Rstudio
+cols <- c( "#CD534CFF","#EFC000FF","#868686FF","#0073C2FF")
+
+layout(matrix(c(1:12,rep(13,4)),4,4,byrow=TRUE), widths = c(10,10,10,10),heights = c(10,10,10,2))
+for(i in 1:6){
+  panel_index <- which(1:6 == i)
+# Difference distribution plot
+  miny <- 0.5; maxy <- 4.5
+  summp <- env_diff_summs[env_diff_summs$stat == names(cfs)[i],]
+  summp <- summp[match(diffs,summp$diff),]
+  par(mar = c(4,5,1,1))
+  xrange <- c(min(summp$lo95),max(summp$hi95))
+  plot(xrange,c(miny,maxy),type = 'n', axes = FALSE, xlab = "Difference",ylab = "")
+  for(j in 1:4){
+    lines(c(summp$lo95[j],summp$hi95[j]),rep(miny+maxy-j,2),lend = 2,
+          col = ifelse(summp$hi90[j] < 0,"red",ifelse(summp$lo90[j] > 0, "blue","grey")))
+    lines(c(summp$lo90[j],summp$hi90[j]),rep(miny+maxy-j,2), lwd = 2,lend = 2,
+          col = ifelse(summp$hi90[j] < 0,"red",ifelse(summp$lo90[j] > 0, "blue","grey")))
+    lines(c(summp$lo75[j],summp$hi75[j]),rep(miny+maxy-j,2), lwd = 4,lend = 2,
+          col = ifelse(summp$hi90[j] < 0,"red",ifelse(summp$lo90[j] > 0, "blue","grey")))
+    points(summp$mean[j],miny+maxy-j,pch = 21, 
+           bg = ifelse(summp$hi90[j] < 0,"red",ifelse(summp$lo90[j] > 0, "blue","grey")))
+  }
+  axis(1); 
+  axis(2, at = 1:4, labels = ylabs, las = 1) 
+  box(bty = 'l')
+  abline(v = 0, lty = 3)
+  title(main = paste0("(",letters[(panel_index-1)*2 + 1],")"), adj = 0)
+
+# Trend plot
+  cfi <- cfs[[i]]
+  combos <- list(control_hii = which(cfi$ci == 0 & cfi$i == max(cfi$i)),
+                 impact_hii = which(cfi$ci == 1 & cfi$i == max(cfi$i)),
+                 control_lowi = which(cfi$ci == 0 & cfi$i == min(cfi$i)),
+                 impact_lowi = which(cfi$ci == 1 & cfi$i == min(cfi$i)))
+  x_adjs <- c(-0.03, -0.01, 0.01, 0.03)
+  ylabi <- ylabs1[i]
+  names(cfi)[match(c("mean","X2.5.","X97.5."),names(cfi))] <- c("pred","lo","hi")
+  gofs <- read.csv("small_data/env_gofs.csv")
+  gofs <- gofs[gofs$model != "max_phi",]
+  cfi[c("pred","hi","lo")] <- unscale(cfi[c("pred","hi","lo")],
+                                        x = as.numeric(samples[,gofs$model[i]]),
+                                        scaled = TRUE,
+                                        log = c(TRUE, TRUE, TRUE, TRUE, FALSE, FALSE)[i],
+                                        log_add = c(1.75e-05,0,0.0007442,0,0,0)[i])$y_transformed
+  cfi1 <- cfi[combos[[1]],]
+       plot(0:2 + x_adjs[1], cfi1$pred, ylim = c(min(cfi$lo),max(cfi$hi)), 
+            type = 'b', col = cols[1], pch = 16, axes = FALSE, xlim = c(0,2),
+            xlab = "", ylab = ylabi)
+  lines(0:2 + x_adjs[2], cfi$pred[combos[[2]]],
+                                col = cols[2], pch = 16, type = 'b')
+  lines(0:2 + x_adjs[3], cfi$pred[combos[[3]]],
+                                col = cols[3], pch = 16, type = 'b')
+  lines(0:2 + x_adjs[4], cfi$pred[combos[[4]]],
+                                col = cols[4], pch = 16, type = 'b')
+  for(k in 1:ifelse(grepl("_g",names(cfs)[i]), 2,3)){
+    for(j in 1:4){
+      cfij <- cfi[combos[[j]],]
+      lines(rep(k-1,2) + x_adjs[j], c(cfij$lo[k],cfij$hi[k]), col = cols[j])
+    }
+  }
+  axis(1, at = 0:2, labels = c("B","A1","A2"))
+  if(i == 2){
+  axis(2, at = log(seq(0.1,1,0.1) - 1.75e-05), 
+       labels = seq(0.1,1,0.1), las= 1)
+  }else{
+    if(i == 4){
+  axis(2, at = log(c(0.001,0.01,0.1,1,10,100) - 0.0007442), 
+       labels = c(0.001,0.01,0.1,1,10,100), las= 1)
+    }else{
+  axis(2, las = 1)
+    }}
+  box(bty = "l")
+  title(main = paste0("(",letters[(panel_index-1)*2 + 2],")"), adj = 0)
+}
+  par(mar = c(0,0,0,0))
+  plot.new()
+  legend("center", pch = 16, col = cols, horiz = TRUE,
+   legend = c("Control, 32% EI", "Impact, 32% EI", "Control 4% EI","Impact 4% EI"),
+   cex = 1)
+ dev.off()
+```
+
+Figure 2
+
+```{r}
+#| label: fig-coeff_plot_alt
+#| echo: true
+#| warning: false
+#| message: false
+#| fig-width: 7
+#| fig-height: 5
+
+tiff("figures/figure_3.tiff", width = 7*600, height = 5*600, res = 600, compression = 'lzw')
+lo <- layout(matrix(c(1:5,0,rep(6,4)),2,5,byrow = TRUE),widths = c(25,rep(10,4)),heights = c(60,2))
+taxa$labs <- paste0(taxa$taxon," (", taxa$higher_taxon,")")
+taxa_to_plot_df <- taxa[taxa$taxoncode %in% taxa_to_plot,]
+taxa_in_order <- param_summs$b_i$shortcode[order(param_summs$b_i$mean, decreasing = FALSE)]
+taxa_in_order <- taxa_in_order[taxa_in_order %in% taxa_to_plot]
+taxa_to_plot_df <- taxa_to_plot_df[match(taxa_in_order, taxa_to_plot_df$taxoncode),]
+miny <- 1; maxy <- length(taxa_to_plot)
+
+  nms <- c("b_i", bquote(Delta~"A1 4% EI"), bquote(Delta~"A2 4% EI"), 
+                  bquote(Delta~"A1 32% EI"), bquote(Delta~"A2 32% EI"))
+for(p in 1:5){
+  if(p == 1){
+  summp <- param_summs[["b_i"]]
+  }else{
+    summp <- diff_summs[[p-1]]
+  }
+  summp <- summp[match(taxa_in_order,summp$shortcode),]
+par(mar = c(2,ifelse(p == 1, 13, 1),1,0))
+  plot(c(min(summp$lo95),max(summp$hi95)),c(miny+1,maxy-1),
+       type = 'n', axes = FALSE, xlab = "",ylab = "")
+for(i in miny:maxy){
+  lines(c(summp$lo95[i],summp$hi95[i]),rep(miny+maxy-i,2),lend = 2,
+        col = ifelse(summp$hi90[i] < 0,"red",ifelse(summp$lo90[i] > 0, "blue","grey")))
+  lines(c(summp$lo90[i],summp$hi90[i]),rep(miny+maxy-i,2), lwd = 2,lend = 2,
+        col = ifelse(summp$hi90[i] < 0,"red",ifelse(summp$lo90[i] > 0, "blue","grey")))
+  lines(c(summp$lo75[i],summp$hi75[i]),rep(miny+maxy-i,2), lwd = 4,lend = 2,
+        col = ifelse(summp$hi90[i] < 0,"red",ifelse(summp$lo90[i] > 0, "blue","grey")))
+  points(summp$mean[i],miny+maxy-i,pch = 21, 
+        bg = ifelse(summp$hi90[i] < 0,"red",ifelse(summp$lo90[i] > 0, "blue","grey")))
+}
+axis(1)
+if(p == 1){
+axis(2,at = (miny:maxy)[rev(taxa_to_plot_df$italic == 0)],
+     labels = rev(taxa_to_plot_df$labs[taxa_to_plot_df$italic == 0]), cex.axis = 0.9, las = 1)
+axis(2,at = (miny:maxy)[rev(taxa_to_plot_df$italic == 1)],
+     labels = rev(taxa_to_plot_df$labs[taxa_to_plot_df$italic == 1]), 
+     cex.axis = 0.9, font.axis = 3, las = 1)
+}
+abline(v = 0, lty = 3)
+title(main = nms[p])
+  }
+par(mar = c(0,0,0,0))
+plot.new()
+title(xlab = "Coefficient", line=-1, cex.lab = 1.25)
+# dev.off()
+```
+
+Figure 3
+
+```{r}
+#| label: fig-cf_taxon_abunds
+#| echo: true
+#| warning: false
+#| message: false
+#| fig-width: 7
+#| fig-height: 4
+
+tiff("figures/figure_4.tiff", width = 7*600, height = 4*600, res = 600, compression = 'lzw')
+# (Plot examples: 
+example_taxa <- c("QT06","QDAF07","QD10","LO060101","QDAI04","QDAE08","QDAF03")
+# 7 examples referred to in text: Hydropsychidae,  Thienemanniella, Simuliidae, 
+# Oligochaete  and chironomid examples of decline in low EI (Lumbriculus and Chironomus),  
+# and Parakiefferiella and Procladius from the last group
+
+predx_cf <- expand.grid(intercept = 1, ba = factor(c(0,1,2)), ci = c(0,1), 
+                        i = seq(min(u[,5]),max(u[,5]),length=10), spring = 0)
+predx_cf <- data.frame(model.matrix(~ ba + ci + ba:ci + i + ba:ci:i + spring, 
+                                    data = predx_cf))
+predx_cf$ai <- 10^(predx_cf$i * attr(i_scaled, 'scaled:scale') + 
+                attr(i_scaled, 'scaled:center')) - 0.1
+
+# The 12 scenarios for calculating differences  
+combos <- list(control_hii = which(predx_cf$ci == 0 & predx_cf$i == max(predx_cf$i)),
+               impact_hii = which(predx_cf$ci == 1 & predx_cf$i == max(predx_cf$i)),
+               control_lowi = which(predx_cf$ci == 0 & predx_cf$i == min(predx_cf$i)),
+               impact_lowi = which(predx_cf$ci == 1 & predx_cf$i == min(predx_cf$i)))
+
+taxa_baci <- unique(c(more_diff_90,more_sim_90))
+taxa_set <- example_taxa 
+
+# summary stats of posterior predictions for all taxa in 12 combos scenarios
+# Compiled in urban_riffile_S3.qmd, chunk "pred_cf"
+taxon_abun_cf_summs <- rio::import_list("small_data/taxon_abun_cf_summs.xlsx")
+predx_cfs <- predx_cf[unlist(combos),]
+lo <- layout(matrix(c(9,1:4,9,5:8,0,rep(10,4)),3,5,byrow = TRUE),
+widths = c(1,12,10,10,10),heights = c(10,12,1))
+for(i in 1:7){  #
+par(mar = c(ifelse(i %in% 5:8, 4,1), ifelse(i %in% c(1,5),5,1),1,1))
+cfi <- data.frame(predx_cfs, col = rep(cols,each=3),
+                  xpos = rep(0:2,4),
+                  x_adj = rep(c(-0.03,-0.01,0.01,0.03),each = 3),
+                  pred = NA, lo = NA, hi = NA)
+for( j in 1:nrow(cfi)){
+  predj <- taxon_abun_cf_summs[[j]]
+  cfi[j, c("pred","lo","hi")] <- predj[predj$taxoncode == taxa_set[i],
+                                       c("mean","lo95","hi95")]
+}
+
+with(cfi[1:3,], plot((0:2) + cfi$x_adj[1:3], pred, type = 'b',
+                                    col = cols[1], pch = 16, axes = FALSE,
+                                    ylim = c(-12,8), # ylim = c(-14,5), #
+                                    xlab = "", ylab = ""))
+with(cfi[4:6,], lines((0:2) + cfi$x_adj[4:6], pred,
+                    col = cols[2], pch = 16, type = 'b'))
+with(cfi[7:9,], lines((0:2) + cfi$x_adj[7:9], pred,
+                    col = cols[3], pch = 16, type = 'b'))
+with(cfi[10:12,], lines((0:2) + cfi$x_adj[10:12], pred,
+                    col = cols[4], pch = 16, type = 'b'))
+for(j in 1:12){
+lines(rep(cfi$xpos[j],2) + cfi$x_adj[j], c(cfi$lo[j],cfi$hi[j]), col = cfi$col[j])
+}
+if(i %in% 5:8){
+  xlabs <- c("B","A1","A2")
+      }else{
+  xlabs <- rep(" ",3)
+     }
+axis(1, at = 0:2, labels = xlabs)
+if(i %in% c(1,5,9)){
+  ylabs <- c("","0.0001",0.001,0.01,0.1,1,10,100,1000,"10000")
+      }else{
+  ylabs <- rep(" ",10)
+      }
+axis(2, las = 1, at = log(c(0.00001,0.0001,0.001,0.01,0.1,1,10,100,1000,10000)),
+labels = ylabs)
+box(bty = "l")
+if(taxa$italic[taxa$taxoncode == taxa_set[i]] == 1){
+title(main = bquote(paste("(",.(letters[i]),") ", italic(.(taxa$taxon[taxa$taxoncode == taxa_set[i]])))),
+adj = 0, cex.main = 1)
+}else{
+title(main = bquote(paste("(",.(letters[i]),") ", .(taxa$taxon[taxa$taxoncode == taxa_set[i]]))),
+adj = 0, cex.main = 1)
+}
+}
+par(mar = c(0,0,0,0))
+plot.new()
+legend("center", pch = 16, col = cols,
+legend = c("Control, 32% EI", "Impact, 32% EI", "Control 4% EI","Impact 4% EI"),
+cex = 1)
+plot.new()
+title(ylab = "Abundance per sample unit", line = -1, cex = 1.25)
+plot.new()
+title(xlab = "Occasion", line =2, cex = 1.25)
+par(mar = c(4,4,1,1))
+# dev.off()
+```
+
+Figure 4
+
+```{r}
+#| label: fig-assemb_diffs_dists
+#| echo: true
+#| warning: false
+#| message: false
+#| fig-width: 7
+#| fig-height: 4
+
+tiff("figures/figure_5.tiff", width = 7*600, height = 4*600, res = 600, compression = 'lzw')
+assemb_stat_summs <- readxl::read_excel("small_data/assemb_stat_diff_summs.xlsx")
+# Leave out evenness, which, like SIGNAL and H, did not differ with riffle construction
+assemb_stat_summs <- assemb_stat_summs[!assemb_stat_summs$stat %in% c("evenness"),]
+lab_names <- c("Total richness", "EPT richness", "QDLO richness", 
+               "1st-order Diversity", "Total abundance", "EPT abundance", 
+               "QDLO abundance","SIGNAL score")
+stat_names <- c("tot_rich","ept_rich","do_rich","H","tot_n","ept_n","do_n","signal")
+xlabs = c(bquote(Delta~"No. taxa"), bquote(Delta~"No. taxa"), bquote(Delta~"No. taxa"), 
+          bquote(Delta^1~D),bquote(Delta~"N"),bquote(Delta~"N"),bquote(Delta~"N"),
+          bquote(Delta~"SIGNAL"))
+  
+lo <- layout(matrix(c(1:8),2,4,byrow = TRUE),
+widths = c(14,10,10,10),heights = c(10,10))
+  diffs <- c("delta_baci1_hi","delta_baci2_hi","delta_baci1_low","delta_baci2_low")
+nms <- c( bquote(Delta~"A2 4% EI"), bquote(Delta~"A1 4% EI"), 
+          bquote(Delta~"A2 32% EI"),bquote(Delta~"A1 32% EI"))
+  miny <- 0.5; maxy <- 4.5
+for(j in 1:8){
+  summp <- assemb_stat_summs[assemb_stat_summs$stat == stat_names[j],]
+  summp <- summp[match(diffs,summp$diff),]
+par(mar = c(4,ifelse(j %in% c(1,5), 5, 1),1,0))
+xrange <- c(min(summp$lo95),max(summp$hi95))
+  plot(xrange,c(miny,maxy),type = 'n', axes = FALSE, xlab = "",ylab = "")
+title(xlab = xlabs[j], line = 2)
+for(i in 1:4){
+  lines(c(summp$lo95[i],summp$hi95[i]),rep(miny+maxy-i,2),lend = 2,
+        col = ifelse(summp$hi90[i] < 0,"red",ifelse(summp$lo90[i] > 0, "blue","grey")))
+  lines(c(summp$lo90[i],summp$hi90[i]),rep(miny+maxy-i,2), lwd = 2,lend = 2,
+        col = ifelse(summp$hi90[i] < 0,"red",ifelse(summp$lo90[i] > 0, "blue","grey")))
+  lines(c(summp$lo75[i],summp$hi75[i]),rep(miny+maxy-i,2), lwd = 4,lend = 2,
+        col = ifelse(summp$hi90[i] < 0,"red",ifelse(summp$lo90[i] > 0, "blue","grey")))
+  points(summp$mean[i],miny+maxy-i,pch = 21, 
+        bg = ifelse(summp$hi90[i] < 0,"red",ifelse(summp$lo90[i] > 0, "blue","grey")))
+}
+axis(1); 
+if(j %in% c(1,5)){
+  ylabs <- c("A2,4%EI","A1,4%EI","A2,32%EI","A1,32%EI")
+}else{
+    ylabs <- rep("",length=length(nms))
+    }
+axis(2, at = 1:4, 
+     labels = ylabs, las = 1) 
+box(bty = 'l')
+abline(v = 0, lty = 3)
+title(main = paste0("(",letters[j],") ",lab_names[j]), adj = 0)
+  }
+par(mar = c(0,0,0,0))
+dev.off()
+```
+
+Figure 5
+
+```{r}
+#| label: fig-assemb_trends
+#| echo: true
+#| warning: false
+#| message: false
+#| fig-width: 7
+#| fig-height: 4
+
+tiff("figures/figure_6.tiff", width = 7*600, height = 4*600, res = 600, compression = 'lzw')
+assemb_stat_summs <- rio::import_list("small_data/assemb_stat_summs.xlsx")
+ylabs = c("Total richness", "EPT richness", "DO richness",
+          "SIGNAL score", "log(total abundance)", "log(EPT abundance)","log(QDLO abundance)")
+plot_index <- match(c("tot_rich","ept_rich","do_rich","signal","tot_n","ept_n","do_n"),names(assemb_stat_summs))
+par(mar = c(2,4,1,1))
+par(mfrow = c(2,4))
+for(i in 1:7){
+  ylabi <- ylabs[i]
+  if(i < 5) {
+    predi <- assemb_stat_summs[[plot_index[i]]]
+  }else{
+      predi <- log(assemb_stat_summs[[i]])
+      }
+cfi <- data.frame(predx_cf, 
+                  pred = predi[,1], 
+                  lo= predi[,2],
+                  hi= predi[,3])
+with(cfi[combos$control_hii,], 
+     plot((0:2) + x_adjs[1], pred, ylim = c(min(cfi$lo),max(cfi$hi)), 
+          type = 'b', col = cols[1], pch = 16, axes = FALSE, 
+          xlab = "", ylab = ylabi))
+with(cfi[combos[[2]],], lines((0:2)+ x_adjs[2], pred,
+                              col = cols[2], pch = 16, type = 'b'))
+with(cfi[combos[[3]],], lines((0:2) + x_adjs[3], pred,
+                              col = cols[3], pch = 16, type = 'b'))
+with(cfi[combos[[4]],], lines((0:2) + x_adjs[4], pred,
+                              col = cols[4], pch = 16, type = 'b'))
+for(k in 1:3){
+  for(j in 1:4){
+    cfij <- cfi[combos[[j]],]
+    lines(rep(k-1,2) + x_adjs[j], c(cfij$lo[k],cfij$hi[k]), col = cols[j])
+  }
+}
+if(i > 2){
+axis(1, at = 0:2, labels = c("B","A1","A2"))
+}else{
+ axis(1, at = 0:2, labels = c("","",""))
+  }
+axis(2, las = 1); 
+box(bty = "l")
+title(main = paste0("(",letters[i],")"), adj = 0)
+}
+par(mar = c(0,0,0,0))
+plot.new()
+legend("center", pch = 16, col = cols, 
+       legend = c("Control, 32% EI", "Impact 32% EI","Control 4% EI", "Impact 4% EI"),
+       cex =1)
+dev.off()
+```
+
+Figure 6

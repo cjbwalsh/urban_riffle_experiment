@@ -1,11 +1,13 @@
 ---
-title: "Appendix S2 for 'Constructed rock riffles increase habitat heterogeneity but not biodiversity in streams constrained by urban impacts.'"
+title: "Constructed rock riffles increase habitat heterogeneity but not biodiversity in streams constrained by urban impacts"
 author: "Christopher J Walsh, J Angus Webb, Daniel C Gwinn, and Peter F Breen"
 format: docx
 editor: visual
 bibliography: references.bib
 csl: ecological-applications.csl
 ---
+
+# Appendix S2 
 
 ## Notes on biological data preparation
 
