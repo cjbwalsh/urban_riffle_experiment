@@ -244,7 +244,7 @@ nms <- c( bquote(Delta~"A2 4% EI"), bquote(Delta~"A1 4% EI"),
           bquote(Delta~"A2 32% EI"),bquote(Delta~"A1 32% EI"))
 ylabs <- c("A2,4%EI","A1,4%EI","A2,32%EI","A1,32%EI")
 ylabs1 = c("Variance of log(depth [m])", "Mean depth (m)","Variance of log(velocity [m/s])", 
-          "Mean velocity (m/s)", "Minimum Phi","Median Phi")
+          "Mean velocity (m/s)", expression(paste("Minimum ",Phi)), expression(paste("Median ", Phi)))
 # cols <- ggsci::pal_jco(palette = c("default"), alpha = 1)(4)
 # spell them out so that they are displayed in Rstudio
 cols <- c( "#CD534CFF","#EFC000FF","#868686FF","#0073C2FF")
@@ -348,7 +348,7 @@ taxa_in_order <- taxa_in_order[taxa_in_order %in% taxa_to_plot]
 taxa_to_plot_df <- taxa_to_plot_df[match(taxa_in_order, taxa_to_plot_df$taxoncode),]
 miny <- 1; maxy <- length(taxa_to_plot)
 
-  nms <- c("b_i", bquote(Delta~"A1 4% EI"), bquote(Delta~"A2 4% EI"), 
+  nms <- c("b_I", bquote(Delta~"A1 4% EI"), bquote(Delta~"A2 4% EI"), 
                   bquote(Delta~"A1 32% EI"), bquote(Delta~"A2 32% EI"))
 for(p in 1:5){
   if(p == 1){
@@ -384,7 +384,7 @@ title(main = nms[p])
 par(mar = c(0,0,0,0))
 plot.new()
 title(xlab = "Coefficient", line=-1, cex.lab = 1.25)
-# dev.off()
+dev.off()
 ```
 
 Figure 3
@@ -559,7 +559,7 @@ Figure 5
 
 tiff("figures/figure_6.tiff", width = 7*600, height = 4*600, res = 600, compression = 'lzw')
 assemb_stat_summs <- rio::import_list("small_data/assemb_stat_summs.xlsx")
-ylabs = c("Total richness", "EPT richness", "DO richness",
+ylabs = c("Total richness", "EPT richness", "QDLO richness",
           "SIGNAL score", "log(total abundance)", "log(EPT abundance)","log(QDLO abundance)")
 plot_index <- match(c("tot_rich","ept_rich","do_rich","signal","tot_n","ept_n","do_n"),names(assemb_stat_summs))
 par(mar = c(2,4,1,1))
